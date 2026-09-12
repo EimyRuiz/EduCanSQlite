@@ -1,9 +1,11 @@
 from django.shortcuts import render
-from apps.core.mongo import db
-# Create your views here.
+from apps.training.models import Servicio
+from apps.shop.models import Producto
+
+
 def home(request):
-    servicios = list(db.servicios.find().limit(4))
-    productos = list(db.productos.find().limit(3))
+    servicios = Servicio.objects.all()[:4]
+    productos = Producto.objects.all()[:3]
     return render(request, 'pages/home.html', {
         'servicios': servicios,
         'productos': productos,
@@ -11,21 +13,21 @@ def home(request):
 
 
 def services(request):
-    servicios = list(db.servicios.find())
+    servicios = Servicio.objects.all()
     return render(request, 'pages/services.html', {'servicios': servicios})
 
 
 def shop(request):
-    productos = list(db.productos.find())
+    productos = Producto.objects.all()
     return render(request, 'pages/shop.html', {'productos': productos})
-
-
-def admin_panel(request):
-    return render(request, 'pages/admin_panel.html')
 
 
 def request_service(request):
     return render(request, 'pages/request_service.html')
+
+
+def admin_panel(request):
+    return render(request, 'pages/admin_panel.html')
 
 
 def trainer_panel(request):

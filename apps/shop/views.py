@@ -1,49 +1,46 @@
-from django.shortcuts import render
-
-# Create your views here.
-from bson import ObjectId
-from bson.errors import InvalidId
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from apps.core.mongo import db
+from .models import Producto
 from .serializers import ProductSerializer
 
 
-def serialize_doc(doc):
-    doc['id'] = str(doc['_id'])
-    doc.pop('_id')
-    return doc
+def serialize_producto(p):
+    return {
+        'id': str(p.id),
+        'nombre': p.nombre,
+        'categoria': p.categoria,
+        'descripcion': p.descripcion,
+        'precio': p.precio,
+        'imagen': p.imagen,
+    }
 
 
 class ProductListCreateView(APIView):
     def get(self, request):
-        productos = list(db.productos.find())
-        return Response([serialize_doc(p) for p in productos])
+        productos = Producto.objects.all()
+        return Response([serialize_producto(p) for p in productos])
 
     def post(self, request):
         serializer = ProductSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        resultado = db.productos.insert_one(serializer.validated_data)
-        return Response(
-            {'mensaje': 'Producto creado.', 'id': str(resultado.inserted_id)},
-            status=status.HTTP_201_CREATED
-        )
+        producto = Producto.objects.create(**serializer.validated_data)
+        return Response({'mensaje': 'Producto creado.', 'id': str(producto.id)}, status=status.HTTP_201_CREATED)
 
 
 class ProductDetailView(APIView):
     def get_object(self, pk):
         try:
-            return db.productos.find_one({'_id': ObjectId(pk)})
-        except InvalidId:
+            return Producto.objects.get(id=pk)
+        except Producto.DoesNotExist:
             return None
 
     def get(self, request, pk):
         producto = self.get_object(pk)
         if not producto:
             return Response({'error': 'No encontrado.'}, status=status.HTTP_404_NOT_FOUND)
-        return Response(serialize_doc(producto))
+        return Response(serialize_producto(producto))
 
     def put(self, request, pk):
         producto = self.get_object(pk)
@@ -51,12 +48,14 @@ class ProductDetailView(APIView):
             return Response({'error': 'No encontrado.'}, status=status.HTTP_404_NOT_FOUND)
         serializer = ProductSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        db.productos.update_one({'_id': ObjectId(pk)}, {'$set': serializer.validated_data})
+        for campo, valor in serializer.validated_data.items():
+            setattr(producto, campo, valor)
+        producto.save()
         return Response({'mensaje': 'Producto actualizado.'})
 
     def delete(self, request, pk):
         producto = self.get_object(pk)
         if not producto:
             return Response({'error': 'No encontrado.'}, status=status.HTTP_404_NOT_FOUND)
-        db.productos.delete_one({'_id': ObjectId(pk)})
+        producto.delete()
         return Response({'mensaje': 'Producto eliminado.'}, status=status.HTTP_204_NO_CONTENT)

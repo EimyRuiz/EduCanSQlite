@@ -6,4 +6,3 @@ class ServiceSerializer(serializers.Serializer):
     descripcion = serializers.CharField()
     precio = serializers.FloatField()
     imagen = serializers.URLField(required=False, allow_blank=True)
-    categoria = serializers.CharField(max_length=50, required=False, default='general')
