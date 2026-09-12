@@ -24,9 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure--1-cguz!px5(@%b2%bvs^f$k$fyv0st)&6#xmw1-+=14v4x$qa'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
+ALLOWED_HOSTS = ['eimyruiz.pythonanywhere.com']
 
-ALLOWED_HOSTS = []
 
 
 # configure JWT authentication for Django REST Framework
