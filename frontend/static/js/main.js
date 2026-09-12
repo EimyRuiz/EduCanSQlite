@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ============================================
     // LOGIN, REGISTRO, Y EL BOTÓN DE SESIÓN DEL NAVBAR
     // ============================================
-    const API_BASE = 'http://127.0.0.1:8000/api';
+    const API_BASE = '/api';
 
     // Actualiza el botón "Iniciar sesión" del navbar según si hay sesión activa,
     // y ajusta el link del panel (Admin / Adiestrador) según el rol del usuario
