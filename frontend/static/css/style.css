@@ -595,3 +595,25 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
     inset: 0;
     background: rgba(0, 0, 0, 0.55);
 }
+
+/* Botón con borde y texto verde oliva */
+    
+.btn-outline-olive {
+    border: 1px solid var(--color-olive);
+    color: var(--color-olive);
+    background: transparent;
+}
+.btn-outline-olive:hover {
+    background: var(--color-olive);
+    color: white;
+}
+
+/* Tarjeta de vidrio (glass card) */
+.glass-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 20px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+}

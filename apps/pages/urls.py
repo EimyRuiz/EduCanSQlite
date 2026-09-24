@@ -8,4 +8,5 @@ urlpatterns = [
     path('admin-panel/', views.admin_panel, name='admin-panel'),
     path('solicitar-servicio/', views.request_service, name='request_service'),
     path('panel-adiestrador/', views.trainer_panel, name='trainer_panel'),
+    path('mi-perfil/', views.my_profile, name='my_profile'),
 ]

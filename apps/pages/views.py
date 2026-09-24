@@ -32,3 +32,7 @@ def admin_panel(request):
 
 def trainer_panel(request):
     return render(request, 'pages/trainer_panel.html')
+
+
+def my_profile(request):
+    return render(request, 'pages/my_profile.html')

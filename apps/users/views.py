@@ -81,7 +81,7 @@ class LoginView(APIView):
             'mensaje': 'Login exitoso.',
             'access': str(refresh.access_token),
             'refresh': str(refresh),
-            'usuario': {'id': str(usuario.id), 'nombre': usuario.nombre, 'email': usuario.email, 'rol': usuario.rol},
+            'usuario': {'id': str(usuario.id), 'nombre': usuario.nombre, 'email': usuario.email, 'rol': usuario.rol, 'foto': usuario.foto},
         })
 
 

@@ -1,0 +1,368 @@
+{% extends 'layouts/base_admin.html' %}
+{% block title %}Mi Perfil | EDUCAN{% endblock %}
+
+{% block content %}
+<div id="noAccess" class="alert alert-danger d-none m-5">Debes iniciar sesión como cliente para ver esta página.</div>
+
+<div id="profileContent" class="admin-dashboard d-none">
+    <aside class="admin-sidebar">
+        <div class="admin-sidebar-brand">
+            <i class="bi bi-heart-fill me-1"></i> EDUCAN
+        </div>
+        <nav class="admin-nav">
+            <a href="#" class="admin-nav-link active" data-section="datos"><i class="bi bi-person-fill"></i> Mis datos</a>
+            <a href="#" class="admin-nav-link" data-section="mascotas"><i class="bi bi-heart-fill"></i> Mis mascotas</a>
+            <a href="#" class="admin-nav-link" data-section="solicitudes"><i class="bi bi-clipboard2-check-fill"></i> Mis solicitudes</a>
+        </nav>
+        <a href="/" class="admin-nav-link mt-auto"><i class="bi bi-box-arrow-left"></i> Volver al sitio</a>
+    </aside>
+
+    <main class="admin-main">
+        <div class="admin-topbar">
+            <div>
+                <h4 class="fw-bold mb-0" id="welcomeText">Mi perfil</h4>
+                <span class="text-muted small">Gestiona tus datos, mascotas y solicitudes</span>
+            </div>
+            <div class="admin-avatar" id="profileAvatarTop">A</div>
+        </div>
+
+        <!-- ================= Mis datos ================= -->
+        <section class="admin-section" id="section-datos">
+            <div class="admin-card mb-4">
+                <h6 class="fw-bold mb-3">Foto de perfil</h6>
+                <div class="d-flex align-items-center gap-3">
+                    <img id="fotoPreview" src="https://via.placeholder.com/80" class="rounded-circle" width="80" height="80" style="object-fit: cover;">
+                    <div>
+                        <input type="file" id="fotoInput" accept="image/*" class="form-control mb-2">
+                        <!-- type="button" evita que este botón se comporte como submit de algún formulario cercano -->
+                        <button type="button" id="subirFotoBtn" class="btn btn-sm btn-olive">Subir foto</button>
+                    </div>
+                </div>
+            </div>
+            <div class="admin-card">
+                <h6 class="fw-bold mb-3">Mis datos</h6>
+                <div id="datosError" class="alert alert-danger d-none"></div>
+                <div id="datosSuccess" class="alert alert-success d-none"></div>
+                <form id="datosForm" class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Nombre</label>
+                        <input type="text" class="form-control" id="pNombre" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Apellido</label>
+                        <input type="text" class="form-control" id="pApellido" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Email</label>
+                        <input type="email" class="form-control" id="pEmail" disabled>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Teléfono</label>
+                        <input type="text" class="form-control" id="pTelefono" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Ciudad</label>
+                        <input type="text" class="form-control" id="pCiudad">
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-olive">Guardar cambios</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- ================= Mis mascotas ================= -->
+        <section class="admin-section d-none" id="section-mascotas">
+            <div class="admin-card mb-4">
+                <h6 class="fw-bold mb-3">Agregar / editar mascota</h6>
+                <form id="mascotaForm" class="row g-2">
+                    <input type="hidden" id="petId" value="">
+                    <div class="col-md-3"><input class="form-control" placeholder="Nombre" id="petNombre" required></div>
+                    <div class="col-md-3"><input class="form-control" placeholder="Raza" id="petRaza" required></div>
+                    <div class="col-md-2"><input class="form-control" type="number" placeholder="Edad (años)" id="petEdad" required></div>
+                    <div class="col-md-2"><input class="form-control" type="number" step="0.1" placeholder="Peso (kg)" id="petPeso" required></div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="petSexo" required>
+                            <option value="" disabled selected>Sexo</option>
+                            <option value="macho">Macho</option>
+                            <option value="hembra">Hembra</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="petEsterilizado" required>
+                            <option value="" disabled selected>¿Esterilizado?</option>
+                            <option value="true">Sí</option>
+                            <option value="false">No</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="petVacunas" required>
+                            <option value="" disabled selected>¿Vacunas al día?</option>
+                            <option value="true">Sí</option>
+                            <option value="false">No</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6"><input class="form-control" placeholder="Conducta / traumas (opcional)" id="petConducta"></div>
+                    <div class="col-12"><input class="form-control" placeholder="Salud / condiciones médicas (opcional)" id="petSalud"></div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">Foto (opcional)</label>
+                        <input type="file" class="form-control" id="petFotoForm" accept="image/*">
+                    </div>
+                    <!-- Un solo botón (antes estaba duplicado) -->
+                    <div class="col-md-3"><button type="submit" class="btn btn-olive w-100" id="petSubmitBtn">Agregar</button></div>
+                </form>
+            </div>
+            <div id="mascotasContainer" class="row g-3"></div>
+        </section>
+
+        <!-- Modal flotante tipo "vidrio" con el detalle de una mascota -->
+        <div class="modal fade" id="petDetailModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content glass-card">
+                    <div class="modal-body p-4">
+                        <button type="button" class="btn-close float-end" data-bs-dismiss="modal"></button>
+                        <div id="petDetailBody"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= Mis solicitudes ================= -->
+        <section class="admin-section d-none" id="section-solicitudes">
+            <div class="admin-card">
+                <h6 class="fw-bold mb-3">Mis solicitudes de servicio</h6>
+                <div id="misSolicitudesPerfil"></div>
+            </div>
+        </section>
+    </main>
+</div>
+
+{% block extra_js %}
+{% load static %}
+<script src="{% static 'js/main.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const rol = localStorage.getItem('user_rol');
+    const token = localStorage.getItem('access_token');
+    const nombre = localStorage.getItem('user_nombre') || 'Usuario';
+
+    if (rol !== 'cliente') {
+        document.getElementById('noAccess').classList.remove('d-none');
+        return;
+    }
+    document.getElementById('profileContent').classList.remove('d-none');
+    document.getElementById('profileAvatarTop').textContent = nombre.charAt(0).toUpperCase();
+
+    // Navegación entre pestañas del sidebar
+    document.querySelectorAll('.admin-nav-link[data-section]').forEach(link => {
+        link.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelectorAll('.admin-nav-link[data-section]').forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+            document.querySelectorAll('.admin-section').forEach(s => s.classList.add('d-none'));
+            document.getElementById('section-' + this.dataset.section).classList.remove('d-none');
+        });
+    });
+
+    const API = '/api';
+    const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+    // ============================================
+    // Mis datos
+    // ============================================
+    function cargarDatos() {
+        fetch(`${API}/users/me/`, { headers }).then(r => r.json()).then(u => {
+            document.getElementById('pNombre').value = u.nombre;
+            document.getElementById('pApellido').value = u.apellido;
+            document.getElementById('pEmail').value = u.email;
+            document.getElementById('pTelefono').value = u.telefono;
+            document.getElementById('pCiudad').value = u.ciudad || '';
+            if (u.foto) {
+                document.getElementById('fotoPreview').src = u.foto;
+                // Muestra la foto real en vez del círculo con la inicial, arriba del panel
+                document.getElementById('profileAvatarTop').innerHTML =
+                    `<img src="${u.foto}" class="rounded-circle" width="42" height="42" style="object-fit:cover;">`;
+            }
+        });
+    }
+    cargarDatos();
+
+    document.getElementById('datosForm').onsubmit = function (e) {
+        e.preventDefault();
+        const errorBox = document.getElementById('datosError');
+        const successBox = document.getElementById('datosSuccess');
+        errorBox.classList.add('d-none');
+        successBox.classList.add('d-none');
+
+        fetch(`${API}/users/me/`, {
+            method: 'PATCH', headers,
+            body: JSON.stringify({
+                nombre: document.getElementById('pNombre').value,
+                apellido: document.getElementById('pApellido').value,
+                telefono: document.getElementById('pTelefono').value,
+                ciudad: document.getElementById('pCiudad').value
+            })
+        }).then(r => r.json()).then(result => {
+            successBox.textContent = 'Datos actualizados correctamente.';
+            successBox.classList.remove('d-none');
+            localStorage.setItem('user_nombre', document.getElementById('pNombre').value);
+        }).catch(() => {
+            errorBox.textContent = 'No se pudieron guardar los cambios.';
+            errorBox.classList.remove('d-none');
+        });
+    };
+
+    // Subir/cambiar la foto de perfil del usuario
+    document.getElementById('subirFotoBtn').onclick = function () {
+        const archivo = document.getElementById('fotoInput').files[0];
+        if (!archivo) return;
+        const formData = new FormData();
+        formData.append('foto', archivo);
+        fetch(`${API}/users/upload-photo/`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData
+        }).then(r => r.json()).then(result => {
+            document.getElementById('fotoPreview').src = result.foto;
+            // Guarda la foto en localStorage para que el navbar la muestre también
+            localStorage.setItem('user_foto', result.foto);
+            document.getElementById('profileAvatarTop').innerHTML =
+                `<img src="${result.foto}" class="rounded-circle" width="42" height="42" style="object-fit:cover;">`;
+        });
+    };
+
+    // ============================================
+    // Mis mascotas
+    // ============================================
+    function cargarMascotas() {
+        fetch(`${API}/pets/`, { headers }).then(r => r.json()).then(mascotas => {
+            const cont = document.getElementById('mascotasContainer');
+            cont.innerHTML = mascotas.length ? mascotas.map(m => `
+                <div class="col-md-4">
+                    <div class="admin-card">
+                        <div class="d-flex align-items-center gap-2 mb-2" style="cursor:pointer" onclick='mostrarDetalleMascota(${JSON.stringify(m)})'>
+                            <img src="${m.foto || 'https://via.placeholder.com/50'}" class="rounded-circle" width="50" height="50" style="object-fit:cover;">
+                            <div>
+                                <strong>${m.nombre}</strong><br>
+                                <span class="text-muted small">${m.raza}, ${m.edad} años</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary me-1" onclick='editarMascota(${JSON.stringify(m)})'>Editar</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="eliminarMascota('${m.id}')">Eliminar</button>
+                    </div>
+                </div>
+            `).join('') : '<p class="text-muted">Aún no has registrado ninguna mascota.</p>';
+        });
+    }
+    cargarMascotas();
+
+    // Abre la tarjeta flotante con el detalle completo de la mascota
+    window.mostrarDetalleMascota = function (m) {
+        document.getElementById('petDetailBody').innerHTML = `
+            <div class="text-center mb-3">
+                <img src="${m.foto || 'https://via.placeholder.com/100'}" class="rounded-circle mb-2" width="100" height="100" style="object-fit:cover;">
+                <h5 class="fw-bold mb-0">${m.nombre}</h5>
+                <span class="text-muted">${m.raza}</span>
+            </div>
+            <p class="mb-1"><strong>Edad:</strong> ${m.edad} años</p>
+            <p class="mb-1"><strong>Peso:</strong> ${m.peso} kg</p>
+            <p class="mb-1"><strong>Sexo:</strong> ${m.sexo}</p>
+            <p class="mb-1"><strong>Esterilizado:</strong> ${m.esterilizado ? 'Sí' : 'No'}</p>
+            <p class="mb-1"><strong>Vacunas al día:</strong> ${m.vacunas_al_dia ? 'Sí' : 'No'}</p>
+            ${m.conducta ? `<p class="mb-1"><strong>Conducta:</strong> ${m.conducta}</p>` : ''}
+            ${m.salud ? `<p class="mb-0"><strong>Salud:</strong> ${m.salud}</p>` : ''}
+        `;
+        new bootstrap.Modal(document.getElementById('petDetailModal')).show();
+    };
+
+    window.editarMascota = function (m) {
+        document.getElementById('petId').value = m.id;
+        document.getElementById('petNombre').value = m.nombre;
+        document.getElementById('petRaza').value = m.raza;
+        document.getElementById('petEdad').value = m.edad;
+        document.getElementById('petPeso').value = m.peso;
+        document.getElementById('petSexo').value = m.sexo;
+        document.getElementById('petEsterilizado').value = String(m.esterilizado);
+        document.getElementById('petVacunas').value = String(m.vacunas_al_dia);
+        document.getElementById('petConducta').value = m.conducta || '';
+        document.getElementById('petSalud').value = m.salud || '';
+        document.getElementById('petSubmitBtn').textContent = 'Guardar cambios';
+        // Nota: el campo de foto (petFotoForm) se deja vacío a propósito al editar;
+        // si el usuario no selecciona una nueva, la foto actual de la mascota no se toca.
+    };
+
+    // Crea o actualiza una mascota, y si se seleccionó una foto, la sube justo después
+    document.getElementById('mascotaForm').onsubmit = function (e) {
+        e.preventDefault();
+        const form = this;
+        const id = document.getElementById('petId').value;
+        const datos = {
+            nombre: document.getElementById('petNombre').value,
+            raza: document.getElementById('petRaza').value,
+            edad: parseInt(document.getElementById('petEdad').value),
+            peso: parseFloat(document.getElementById('petPeso').value),
+            sexo: document.getElementById('petSexo').value,
+            esterilizado: document.getElementById('petEsterilizado').value === 'true',
+            vacunas_al_dia: document.getElementById('petVacunas').value === 'true',
+            conducta: document.getElementById('petConducta').value,
+            salud: document.getElementById('petSalud').value
+        };
+        const url = id ? `${API}/pets/${id}/` : `${API}/pets/`;
+        const metodo = id ? 'PUT' : 'POST';
+
+        fetch(url, { method: metodo, headers, body: JSON.stringify(datos) })
+            .then(r => r.json())
+            .then(result => {
+                const petId = id || result.id;
+                const foto = document.getElementById('petFotoForm').files[0];
+                const terminar = () => {
+                    form.reset();
+                    document.getElementById('petId').value = '';
+                    document.getElementById('petSubmitBtn').textContent = 'Agregar';
+                    cargarMascotas();
+                };
+                if (foto && petId) {
+                    const formData = new FormData();
+                    formData.append('foto', foto);
+                    fetch(`${API}/pets/${petId}/foto/`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        body: formData
+                    }).then(terminar);
+                } else {
+                    terminar();
+                }
+            });
+    };
+
+    window.eliminarMascota = function (id) {
+        fetch(`${API}/pets/${id}/`, { method: 'DELETE', headers }).then(() => cargarMascotas());
+    };
+
+    // ============================================
+    // Mis solicitudes
+    // ============================================
+    function cargarSolicitudesPerfil() {
+        fetch(`${API}/requests/`, { headers }).then(r => r.json()).then(solicitudes => {
+            const cont = document.getElementById('misSolicitudesPerfil');
+            if (!solicitudes.length) {
+                cont.innerHTML = '<p class="text-muted mb-0">Aún no has hecho ninguna solicitud.</p>';
+                return;
+            }
+            const badgeColor = { pendiente: 'bg-warning text-dark', aceptada: 'bg-success', rechazada: 'bg-danger' };
+            cont.innerHTML = solicitudes.map(s => `
+                <div class="border rounded-3 p-3 mb-2 d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>${s.servicio}</strong> — ${s.perro_nombre}
+                        <div class="text-muted small">Inicio: ${s.fecha_inicio}</div>
+                    </div>
+                    <span class="badge ${badgeColor[s.estado] || 'bg-secondary'}">${s.estado}</span>
+                </div>
+            `).join('');
+        });
+    }
+    cargarSolicitudesPerfil();
+});
+</script>
+{% endblock %}
+{% endblock %}

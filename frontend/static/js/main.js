@@ -84,7 +84,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const dropdownMenu = document.getElementById('authDropdownMenu');
 
         if (token && nombre && authButton) {
-            authButton.textContent = nombre;
+        const foto = localStorage.getItem('user_foto');
+        authButton.innerHTML = foto
+           ? `<img src="${foto}" class="rounded-circle me-2" width="26" height="26" style="object-fit:cover;">${nombre}`
+            : nombre;
             authButton.removeAttribute('data-bs-toggle');
             authButton.removeAttribute('data-bs-target');
             authButton.setAttribute('data-bs-toggle', 'dropdown');
@@ -142,6 +145,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 localStorage.setItem('access_token', result.access);
                 localStorage.setItem('user_nombre', result.usuario.nombre);
                 localStorage.setItem('user_rol', result.usuario.rol);
+                localStorage.setItem('user_foto', result.usuario.foto || '');
 
                 window.location.reload();
             } catch (err) {
