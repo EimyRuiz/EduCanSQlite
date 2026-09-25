@@ -31,6 +31,7 @@ def serialize_solicitud(s):
         'perro_conducta': s.perro_conducta,
         'perro_salud': s.perro_salud,
         'perro_foto': s.perro_foto,
+        'creado_en': s.creado_en.isoformat(),
     }
 
 
@@ -63,7 +64,29 @@ class ServiceRequestListCreateView(APIView):
         data = serializer.validated_data
 
         cliente = Usuario.objects.get(id=request.user.get('user_id'))
-        solicitud = Solicitud.objects.create(cliente=cliente, **data)
+
+        from apps.pets.models import Mascota
+        try:
+            mascota=Mascota.objects.get(id=data['mascota_id'], dueno_id=cliente.id)
+        except Mascota.DoesNotExist:
+            return Response({'error': 'Esa mascota no existe o no te pertenece.'}, status=status.HTTP_404_NOT_FOUND)
+
+        solicitud = Solicitud.objects.create(
+            cliente=cliente,
+            servicio=data['servicio'],
+            duracion=data['duracion'],
+            fecha_inicio=data['fecha_inicio'],
+            perro_nombre=mascota.nombre,
+            perro_raza=mascota.raza,
+            perro_edad=mascota.edad,
+            perro_peso=mascota.peso,
+            perro_sexo=mascota.sexo,
+            perro_esterilizado=mascota.esterilizado,
+            perro_vacunas_al_dia=mascota.vacunas_al_dia,
+            perro_conducta=mascota.conducta,
+            perro_salud=mascota.salud,
+            perro_foto=mascota.foto,
+        )
 
         return Response(
             {'mensaje': 'Solicitud creada.', 'id': str(solicitud.id)},

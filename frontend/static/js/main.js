@@ -9,6 +9,24 @@ function formatearPrecioCOP(valor) {
 // Espera a que todo el HTML esté cargado antes de ejecutar el script
 document.addEventListener('DOMContentLoaded', function () {
 
+    // ============================================
+    // Calcula hace cuánto tiempo se creó algo, en formato legible
+    // Ej: "hace 3 horas", "hace 2 días"
+    // ============================================
+    function tiempoTranscurrido(fechaISO) {
+        const ahora = new Date();
+        const fecha = new Date(fechaISO);
+        const segundos = Math.floor((ahora - fecha) / 1000);
+
+        if (segundos < 60) return 'hace un momento';
+        const minutos = Math.floor(segundos / 60);
+        if (minutos < 60) return `hace ${minutos} minuto${minutos !== 1 ? 's' : ''}`;
+        const horas = Math.floor(minutos / 60);
+        if (horas < 24) return `hace ${horas} hora${horas !== 1 ? 's' : ''}`;
+        const dias = Math.floor(horas / 24);
+        return `hace ${dias} día${dias !== 1 ? 's' : ''}`;
+    }
+
 
     // ============================================
     // SCROLL REVEAL: hace aparecer elementos (como las tarjetas del Inicio)
@@ -33,30 +51,28 @@ document.addEventListener('DOMContentLoaded', function () {
     // ============================================
     const counters = document.querySelectorAll('.counter');
 
-    // Anima un solo contador, desde 0 hasta su data-target
     function animateCounter(el) {
         const target = parseInt(el.getAttribute('data-target'));
-        const duration = 1500; // duración total de la animación, en milisegundos
+        const duration = 1500;
         const startTime = performance.now();
 
         function update(currentTime) {
             const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / duration, 1); // valor entre 0 y 1
+            const progress = Math.min(elapsed / duration, 1);
             const currentValue = Math.floor(progress * target);
 
             el.textContent = currentValue;
 
             if (progress < 1) {
-                requestAnimationFrame(update); // sigue animando hasta llegar a 1
+                requestAnimationFrame(update);
             } else {
-                el.textContent = target; // asegura el número exacto al final
+                el.textContent = target;
             }
         }
 
         requestAnimationFrame(update);
     }
 
-    // Detecta cuándo un contador entra en pantalla, para dispararlo solo una vez
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -74,8 +90,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // ============================================
     const API_BASE = '/api';
 
-    // Actualiza el botón "Iniciar sesión" del navbar según si hay sesión activa,
-    // y ajusta el link del panel (Admin / Adiestrador) según el rol del usuario
     function updateAuthButton() {
         const token = localStorage.getItem('access_token');
         const nombre = localStorage.getItem('user_nombre');
@@ -84,23 +98,24 @@ document.addEventListener('DOMContentLoaded', function () {
         const dropdownMenu = document.getElementById('authDropdownMenu');
 
         if (token && nombre && authButton) {
-        const foto = localStorage.getItem('user_foto');
-        authButton.innerHTML = foto
-           ? `<img src="${foto}" class="rounded-circle me-2" width="26" height="26" style="object-fit:cover;">${nombre}`
-            : nombre;
+            const foto = localStorage.getItem('user_foto');
+            authButton.innerHTML = foto
+                ? `<img src="${foto}" class="rounded-circle me-2" width="26" height="26" style="object-fit:cover;">${nombre}`
+                : nombre;
             authButton.removeAttribute('data-bs-toggle');
             authButton.removeAttribute('data-bs-target');
             authButton.setAttribute('data-bs-toggle', 'dropdown');
 
-            // Ajusta el link del panel según el rol: admin, adiestrador o cliente (sin panel)
             const panelLink = dropdownMenu.querySelector('a[href="/admin-panel/"]');
             if (panelLink) {
                 if (rolGuardado === 'adiestrador') {
                     panelLink.href = '/panel-adiestrador/';
                     panelLink.textContent = 'Panel Adiestrador';
-                } else if (rolGuardado !== 'administrador') {
-                    panelLink.remove(); // un cliente no ve ningún link de panel
+                } else if (rolGuardado === 'cliente') {
+                    panelLink.href = '/mi-perfil/';
+                    panelLink.textContent = 'Mi Perfil';
                 }
+                // si es administrador, se queda igual apuntando a /admin-panel/
             }
 
             dropdownMenu.classList.remove('d-none');
@@ -155,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function () {
         };
     }
 
-    // --- Mostrar/ocultar el bloque de certificado + especialidades según el rol elegido en el registro ---
+    // --- Mostrar/ocultar certificado + especialidades según el rol elegido en el registro ---
     const registerRolSelect = document.getElementById('registerRol');
     if (registerRolSelect) {
         registerRolSelect.onchange = function () {
@@ -176,7 +191,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const rol = document.getElementById('registerRol').value;
 
-            // Especialidades marcadas por el propio adiestrador al registrarse
             const especialidadesSeleccionadas = Array.from(
                 document.querySelectorAll('.especialidad-registro:checked')
             ).map(c => c.value);
@@ -206,8 +220,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     return;
                 }
 
-                // Si es adiestrador, hacemos un login automático (invisible) para poder
-                // subir su certificado justo después de registrarse
                 if (rol === 'adiestrador') {
                     const certificado = document.getElementById('registerCertificado').files[0];
 
@@ -245,32 +257,33 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 
+    // ============================================
+    // FILTRO Y BÚSQUEDA DE LA TIENDA (página /shop/)
+    // ============================================
+    const buscarProducto = document.getElementById('buscarProducto');
+    const filtroCategoria = document.getElementById('filtroCategoria');
 
-    // --- Filtro y búsqueda de la tienda ---
-const buscarProducto = document.getElementById('buscarProducto');
-const filtroCategoria = document.getElementById('filtroCategoria');
+    if (buscarProducto && filtroCategoria) {
+        function filtrarProductos() {
+            const texto = buscarProducto.value.toLowerCase();
+            const categoria = filtroCategoria.value;
+            let visibles = 0;
 
-if (buscarProducto && filtroCategoria) {
-    function filtrarProductos() {
-        const texto = buscarProducto.value.toLowerCase();
-        const categoria = filtroCategoria.value;
-        let visibles = 0;
+            document.querySelectorAll('.producto-item').forEach(item => {
+                const nombre = item.querySelector('h5').textContent.toLowerCase();
+                const coincideTexto = nombre.includes(texto);
+                const coincideCategoria = !categoria || item.dataset.categoria === categoria;
 
-        document.querySelectorAll('.producto-item').forEach(item => {
-            const nombre = item.querySelector('h5').textContent.toLowerCase();
-            const coincideTexto = nombre.includes(texto);
-            const coincideCategoria = !categoria || item.dataset.categoria === categoria;
+                const mostrar = coincideTexto && coincideCategoria;
+                item.classList.toggle('d-none', !mostrar);
+                if (mostrar) visibles++;
+            });
+            document.getElementById('sinResultados').classList.toggle('d-none', visibles > 0);
+        }
 
-            const mostrar = coincideTexto && coincideCategoria;
-            item.classList.toggle('d-none', !mostrar);
-            if (mostrar) visibles++;
-        });
-        document.getElementById('sinResultados').classList.toggle('d-none', visibles > 0);
+        buscarProducto.addEventListener('input', filtrarProductos);
+        filtroCategoria.addEventListener('change', filtrarProductos);
     }
-
-    buscarProducto.addEventListener('input', filtrarProductos);
-    filtroCategoria.addEventListener('change', filtrarProductos);
-}
 
 
     // ============================================
@@ -287,7 +300,23 @@ if (buscarProducto && filtroCategoria) {
         } else {
             document.getElementById('requestFormWrapper').classList.remove('d-none');
 
+            // reqHeaders se declara AQUÍ, antes de usarse en cualquier función de este bloque
             const reqHeaders = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+            // Llena el <select> de mascotas con las que el cliente ya tiene registradas
+            function cargarMisMascotas() {
+                fetch(`${API_BASE}/pets/`, { headers: reqHeaders }).then(r => r.json()).then(mascotas => {
+                    const select = document.getElementById('reqMascota');
+                    if (!mascotas.length) {
+                        document.getElementById('sinMascotasMsg').classList.remove('d-none');
+                        select.disabled = true;
+                        return;
+                    }
+                    select.innerHTML = '<option value="" disabled selected>Selecciona una mascota</option>' +
+                        mascotas.map(m => `<option value="${m.id}">${m.nombre} (${m.raza})</option>`).join('');
+                });
+            }
+            cargarMisMascotas();
 
             // Carga y pinta las solicitudes que este cliente ya ha hecho
             function cargarMisSolicitudes() {
@@ -305,6 +334,7 @@ if (buscarProducto && filtroCategoria) {
                                 <div>
                                     <strong>${s.servicio}</strong> — ${s.perro_nombre}
                                     <div class="text-muted small">Inicio: ${s.fecha_inicio}</div>
+                                    ${s.estado === 'pendiente' ? `<div class="text-warning small">Esperando desde ${tiempoTranscurrido(s.creado_en)}</div>` : ''}
                                 </div>
                                 <span class="badge ${badgeColor[s.estado] || 'bg-secondary'}">${s.estado}</span>
                             </div>
@@ -313,7 +343,7 @@ if (buscarProducto && filtroCategoria) {
             }
             cargarMisSolicitudes();
 
-            // Envía el formulario: crea la solicitud, y si adjuntó foto del perro, la sube aparte
+            // Envía el formulario: crea la solicitud usando la mascota seleccionada
             requestForm.onsubmit = async function (e) {
                 e.preventDefault();
                 const errorBox = document.getElementById('requestError');
@@ -325,15 +355,7 @@ if (buscarProducto && filtroCategoria) {
                     servicio: document.getElementById('reqServicio').value,
                     duracion: document.getElementById('reqDuracion').value,
                     fecha_inicio: document.getElementById('reqFecha').value,
-                    perro_nombre: document.getElementById('reqPerroNombre').value,
-                    perro_raza: document.getElementById('reqPerroRaza').value,
-                    perro_edad: parseInt(document.getElementById('reqPerroEdad').value),
-                    perro_peso: parseFloat(document.getElementById('reqPerroPeso').value),
-                    perro_sexo: document.getElementById('reqPerroSexo').value,
-                    perro_esterilizado: document.getElementById('reqPerroEsterilizado').value === 'true',
-                    perro_vacunas_al_dia: document.getElementById('reqPerroVacunas').value === 'true',
-                    perro_conducta: document.getElementById('reqPerroConducta').value,
-                    perro_salud: document.getElementById('reqPerroSalud').value
+                    mascota_id: parseInt(document.getElementById('reqMascota').value)
                 };
 
                 try {
@@ -346,18 +368,6 @@ if (buscarProducto && filtroCategoria) {
                         errorBox.textContent = result.error || JSON.stringify(result);
                         errorBox.classList.remove('d-none');
                         return;
-                    }
-
-                    // Si adjuntó foto, la subimos aparte (multipart/form-data, no JSON)
-                    const foto = document.getElementById('reqPerroFoto').files[0];
-                    if (foto) {
-                        const formData = new FormData();
-                        formData.append('foto', foto);
-                        await fetch(`${API_BASE}/requests/${result.id}/foto/`, {
-                            method: 'POST',
-                            headers: { 'Authorization': `Bearer ${token}` },
-                            body: formData
-                        });
                     }
 
                     successBox.textContent = 'Solicitud enviada correctamente.';

@@ -2,6 +2,8 @@
 {% block title %}Solicitar servicio | EDUCAN{% endblock %}
 
 {% block content %}
+
+<!-- Encabezado de la página -->
 <section class="page-header">
     <div class="page-header-overlay"></div>
     <div class="container position-relative text-center text-white py-5">
@@ -13,15 +15,19 @@
 <section class="py-5 my-4">
     <div class="container" style="max-width: 800px;">
 
+        <!-- Se muestra si NO hay sesión de cliente activa (controlado por JS en main.js) -->
         <div id="noAuthMsg" class="alert alert-warning d-none">
             Debes iniciar sesión como cliente para solicitar un servicio.
         </div>
 
+        <!-- El formulario real, oculto hasta confirmar que hay sesión de cliente -->
         <div id="requestFormWrapper" class="d-none">
             <div id="requestError" class="alert alert-danger d-none"></div>
             <div id="requestSuccess" class="alert alert-success d-none"></div>
 
             <form id="requestForm">
+
+                <!-- Datos del servicio que se quiere solicitar -->
                 <div class="admin-card mb-4">
                     <h6 class="fw-bold mb-3">Datos del servicio</h6>
                     <div class="row g-3">
@@ -55,68 +61,27 @@
                     </div>
                 </div>
 
+                <!-- Selección de la mascota ya registrada en "Mi perfil" -->
+                <!-- Ya NO se escriben los datos del perro a mano: se eligen de las mascotas del cliente -->
                 <div class="admin-card mb-4">
-                    <h6 class="fw-bold mb-3">Datos de tu perro</h6>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold">Nombre del perro</label>
-                            <input type="text" class="form-control" id="reqPerroNombre" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold">Raza</label>
-                            <input type="text" class="form-control" id="reqPerroRaza" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-bold">Edad (años)</label>
-                            <input type="number" min="0" class="form-control" id="reqPerroEdad" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-bold">Peso (kg)</label>
-                            <input type="number" step="0.1" min="0" class="form-control" id="reqPerroPeso" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label small fw-bold">Sexo</label>
-                            <select class="form-select" id="reqPerroSexo" required>
-                                <option value="" disabled selected>Selecciona</option>
-                                <option value="macho">Macho</option>
-                                <option value="hembra">Hembra</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold">¿Está esterilizado?</label>
-                            <select class="form-select" id="reqPerroEsterilizado" required>
-                                <option value="" disabled selected>Selecciona</option>
-                                <option value="true">Sí</option>
-                                <option value="false">No</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold">¿Vacunas al día?</label>
-                            <select class="form-select" id="reqPerroVacunas" required>
-                                <option value="" disabled selected>Selecciona</option>
-                                <option value="true">Sí</option>
-                                <option value="false">No</option>
-                            </select>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label small fw-bold">Conducta y traumas (si aplica)</label>
-                            <textarea class="form-control" id="reqPerroConducta" rows="3" placeholder="Ej: le tiene miedo a los ruidos fuertes, fue atacado por otro perro pequeño y ahora reacciona con miedo, etc."></textarea>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label small fw-bold">Salud y condiciones médicas (si aplica)</label>
-                            <textarea class="form-control" id="reqPerroSalud" rows="2" placeholder="Ej: soplo en el corazón, alergias, etc."></textarea>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label small fw-bold">Foto del perro (opcional)</label>
-                            <input type="file" class="form-control" id="reqPerroFoto" accept="image/*">
-                        </div>
+                    <h6 class="fw-bold mb-3">¿Para cuál de tus mascotas?</h6>
+
+                    <!-- Se muestra solo si el cliente todavía no ha registrado ninguna mascota -->
+                    <div id="sinMascotasMsg" class="alert alert-warning d-none">
+                        Aún no tienes mascotas registradas. <a href="/mi-perfil/">Regístrala primero en Mi Perfil</a>.
                     </div>
+
+                    <!-- Este select se llena dinámicamente desde main.js, con las mascotas reales del cliente -->
+                    <select class="form-select" id="reqMascota">
+                        <option value="" disabled selected>Selecciona una mascota</option>
+                    </select>
                 </div>
 
                 <button type="submit" class="btn btn-olive btn-lg w-100 rounded-pill">Enviar solicitud</button>
             </form>
         </div>
 
+        <!-- Historial de solicitudes que el cliente ya ha hecho, con su estado (pendiente/aceptada/rechazada) -->
         <div class="mt-5">
             <h5 class="fw-bold mb-3">Mis solicitudes</h5>
             <div id="misSolicitudes"></div>
