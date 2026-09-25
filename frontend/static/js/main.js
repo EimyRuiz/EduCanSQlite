@@ -6,26 +6,28 @@ function formatearPrecioCOP(valor) {
     return Math.round(valor).toLocaleString('es-CO');
 }
 
+// ============================================
+// Calcula hace cuánto tiempo se creó algo, en formato legible
+// Ej: "hace 3 horas", "hace 2 días"
+// Está aquí AFUERA del DOMContentLoaded para que cualquier página
+// que cargue main.js pueda usarla (igual que formatearPrecioCOP)
+// ============================================
+function tiempoTranscurrido(fechaISO) {
+    const ahora = new Date();
+    const fecha = new Date(fechaISO);
+    const segundos = Math.floor((ahora - fecha) / 1000);
+
+    if (segundos < 60) return 'hace un momento';
+    const minutos = Math.floor(segundos / 60);
+    if (minutos < 60) return `hace ${minutos} minuto${minutos !== 1 ? 's' : ''}`;
+    const horas = Math.floor(minutos / 60);
+    if (horas < 24) return `hace ${horas} hora${horas !== 1 ? 's' : ''}`;
+    const dias = Math.floor(horas / 24);
+    return `hace ${dias} día${dias !== 1 ? 's' : ''}`;
+}
+
 // Espera a que todo el HTML esté cargado antes de ejecutar el script
 document.addEventListener('DOMContentLoaded', function () {
-
-    // ============================================
-    // Calcula hace cuánto tiempo se creó algo, en formato legible
-    // Ej: "hace 3 horas", "hace 2 días"
-    // ============================================
-    function tiempoTranscurrido(fechaISO) {
-        const ahora = new Date();
-        const fecha = new Date(fechaISO);
-        const segundos = Math.floor((ahora - fecha) / 1000);
-
-        if (segundos < 60) return 'hace un momento';
-        const minutos = Math.floor(segundos / 60);
-        if (minutos < 60) return `hace ${minutos} minuto${minutos !== 1 ? 's' : ''}`;
-        const horas = Math.floor(minutos / 60);
-        if (horas < 24) return `hace ${horas} hora${horas !== 1 ? 's' : ''}`;
-        const dias = Math.floor(horas / 24);
-        return `hace ${dias} día${dias !== 1 ? 's' : ''}`;
-    }
 
 
     // ============================================
@@ -330,13 +332,26 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                         const badgeColor = { pendiente: 'bg-warning text-dark', aceptada: 'bg-success', rechazada: 'bg-danger' };
                         cont.innerHTML = solicitudes.map(s => `
-                            <div class="border rounded-3 p-3 mb-2 d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong>${s.servicio}</strong> — ${s.perro_nombre}
-                                    <div class="text-muted small">Inicio: ${s.fecha_inicio}</div>
-                                    ${s.estado === 'pendiente' ? `<div class="text-warning small">Esperando desde ${tiempoTranscurrido(s.creado_en)}</div>` : ''}
+                            <div class="border rounded-3 p-3 mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>${s.servicio}</strong> — ${s.perro_nombre}
+                                        <div class="text-muted small">Inicio: ${s.fecha_inicio}</div>
+                                        ${s.estado === 'pendiente' ? `<div class="text-warning small">Esperando desde ${tiempoTranscurrido(s.creado_en)}</div>` : ''}
+                                    </div>
+                                    <span class="badge ${badgeColor[s.estado] || 'bg-secondary'}">${s.estado}</span>
                                 </div>
-                                <span class="badge ${badgeColor[s.estado] || 'bg-secondary'}">${s.estado}</span>
+                                ${s.estado === 'aceptada' && s.adiestrador_info ? `
+                                    <hr>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <img src="${s.adiestrador_info.foto || 'https://via.placeholder.com/50'}" class="rounded-circle" width="50" height="50" style="object-fit:cover;">
+                                        <div>
+                                            <strong>${s.adiestrador_info.nombre} ${s.adiestrador_info.apellido}</strong>
+                                            <div class="text-muted small">${(s.adiestrador_info.especialidades || []).join(', ')}</div>
+                                            ${s.adiestrador_info.certificado ? `<a href="${s.adiestrador_info.certificado}" target="_blank" class="small">Ver certificado</a>` : ''}
+                                        </div>
+                                    </div>
+                                ` : ''}
                             </div>
                         `).join('');
                     });

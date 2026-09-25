@@ -12,7 +12,7 @@ from .serializers import ServiceRequestSerializer
 
 
 def serialize_solicitud(s):
-    return {
+    data = {
         'id': str(s.id),
         'servicio': s.servicio,
         'duracion': s.duracion,
@@ -33,6 +33,18 @@ def serialize_solicitud(s):
         'perro_foto': s.perro_foto,
         'creado_en': s.creado_en.isoformat(),
     }
+
+    if s.adiestrador_id:
+        adiestrador = Usuario.objects.get(id=s.adiestrador_id)
+        data['adiestrador_info'] = {
+            'nombre': adiestrador.nombre,
+            'apellido': adiestrador.apellido,
+            'foto': adiestrador.foto,
+            'certificado': adiestrador.certificado,
+            'especialidades': adiestrador.especialidades,
+        }
+
+    return data
 
 
 class ServiceRequestListCreateView(APIView):

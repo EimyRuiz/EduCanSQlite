@@ -350,19 +350,33 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
             const badgeColor = { pendiente: 'bg-warning text-dark', aceptada: 'bg-success', rechazada: 'bg-danger' };
-            cont.innerHTML = solicitudes.map(s => `
-                <div class="border rounded-3 p-3 mb-2 d-flex justify-content-between align-items-center">
-                    <div>
-                        <strong>${s.servicio}</strong> — ${s.perro_nombre}
-                        <div class="text-muted small">Inicio: ${s.fecha_inicio}</div>
+                cont.innerHTML = solicitudes.map(s => `
+                    <div class="border rounded-3 p-3 mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>${s.servicio}</strong> — ${s.perro_nombre}
+                                <div class="text-muted small">Inicio: ${s.fecha_inicio}</div>
+                                ${s.estado === 'pendiente' ? `<div class="text-warning small">Esperando desde ${tiempoTranscurrido(s.creado_en)}</div>` : ''}
+                            </div>
+                            <span class="badge ${badgeColor[s.estado] || 'bg-secondary'}">${s.estado}</span>
+                        </div>
+                        ${s.estado === 'aceptada' && s.adiestrador_info ? `
+                            <hr>
+                            <div class="d-flex align-items-center gap-2">
+                                <img src="${s.adiestrador_info.foto || 'https://via.placeholder.com/50'}" class="rounded-circle" width="50" height="50" style="object-fit:cover;">
+                                <div>
+                                    <strong>${s.adiestrador_info.nombre} ${s.adiestrador_info.apellido}</strong>
+                                    <div class="text-muted small">${(s.adiestrador_info.especialidades || []).join(', ')}</div>
+                                    ${s.adiestrador_info.certificado ? `<a href="${s.adiestrador_info.certificado}" target="_blank" class="small">Ver certificado</a>` : ''}
+                                </div>
+                            </div>
+                        ` : ''}
                     </div>
-                    <span class="badge ${badgeColor[s.estado] || 'bg-secondary'}">${s.estado}</span>
-                </div>
-            `).join('');
+                `).join('');
+            });
+        }
+        cargarSolicitudesPerfil();
         });
-    }
-    cargarSolicitudesPerfil();
-});
 </script>
 {% endblock %}
 {% endblock %}
