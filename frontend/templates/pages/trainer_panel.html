@@ -44,6 +44,18 @@
     </main>
 </div>
 
+<!-- Detalle flotante de una solicitud aceptada -->
+<div class="modal fade" id="agendaDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-card">
+            <div class="modal-body p-4">
+                <button type="button" class="btn-close float-end" data-bs-dismiss="modal"></button>
+                <div id="agendaDetailBody"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -111,12 +123,40 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function renderSolicitudAgenda(s) {
-        return `
-            <div class="border rounded-3 p-3 mb-3">
-                <strong>${s.servicio}</strong> — ${s.perro_nombre}
-                <div class="text-muted small">Inicio: ${s.fecha_inicio} · Duración: ${s.duracion}</div>
-            </div>`;
+    return `
+        <div class="border rounded-3 p-3 mb-3" style="cursor:pointer" onclick='mostrarDetalleAgenda(${JSON.stringify(s)})'>
+            <strong>${s.servicio}</strong> — ${s.perro_nombre}
+            <div class="text-muted small">Inicio: ${s.fecha_inicio} · Duración: ${s.duracion}</div>
+        </div>`;
     }
+
+    window.mostrarDetalleAgenda = function (s) {
+        const duracionTexto = {
+            corto: 'Corto plazo (menos de 1 mes)',
+            mediano: 'Mediano plazo (1 a 6 meses)',
+            largo: 'Largo plazo (6 meses a 1 año)',
+            muy_largo: 'Muy largo plazo (más de 1 año)'
+        };
+        document.getElementById('agendaDetailBody').innerHTML = `
+            <div class="text-center mb-3">
+                <img src="${s.perro_foto || 'https://via.placeholder.com/100'}" class="rounded-circle mb-2" width="100" height="100" style="object-fit:cover;">
+                <h5 class="fw-bold mb-0">${s.perro_nombre}</h5>
+                <span class="text-muted">${s.perro_raza}</span>
+            </div>
+            <p class="mb-1"><strong>Servicio:</strong> ${s.servicio}</p>
+            <p class="mb-1"><strong>Duración estimada:</strong> ${duracionTexto[s.duracion] || s.duracion}</p>
+            <p class="mb-1"><strong>Fecha de inicio:</strong> ${s.fecha_inicio}</p>
+            <hr>
+            <p class="mb-1"><strong>Edad:</strong> ${s.perro_edad} años</p>
+            <p class="mb-1"><strong>Peso:</strong> ${s.perro_peso} kg</p>
+            <p class="mb-1"><strong>Sexo:</strong> ${s.perro_sexo}</p>
+            <p class="mb-1"><strong>Esterilizado:</strong> ${s.perro_esterilizado ? 'Sí' : 'No'}</p>
+            <p class="mb-1"><strong>Vacunas al día:</strong> ${s.perro_vacunas_al_dia ? 'Sí' : 'No'}</p>
+            ${s.perro_conducta ? `<p class="mb-1"><strong>Conducta:</strong> ${s.perro_conducta}</p>` : ''}
+            ${s.perro_salud ? `<p class="mb-0"><strong>Salud:</strong> ${s.perro_salud}</p>` : ''}
+        `;
+        new bootstrap.Modal(document.getElementById('agendaDetailModal')).show();
+    };
 
     window.aceptarSolicitud = function (id) {
         fetch(`${API}/requests/${id}/aceptar/`, { method: 'POST', headers })
