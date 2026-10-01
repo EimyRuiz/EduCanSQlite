@@ -11,6 +11,7 @@ from .models import Solicitud
 from .serializers import ServiceRequestSerializer
 
 
+
 def serialize_solicitud(s):
     data = {
         'id': str(s.id),
@@ -165,3 +166,23 @@ class AceptarSolicitudView(APIView):
         solicitud.save()
 
         return Response({'mensaje': 'Solicitud aceptada.'})
+
+
+class CompletarSolicitudView(APIView):
+    permission_classes = [IsMongoAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            solicitud = Solicitud.objects.get(id=pk)
+        except Solicitud.DoesNotExist:
+            return Response({'error': 'No encontrada.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if str(solicitud.adiestrador_id) != str(request.user.get('user_id')):
+            return Response({'error': 'No autorizado.'}, status=status.HTTP_403_FORBIDDEN)
+
+        if solicitud.estado != 'aceptada':
+            return Response({'error': 'Solo se puede completar una solicitud aceptada.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        solicitud.estado = 'completado'
+        solicitud.save()
+        return Response({'mensaje': 'Solicitud marcada como completada.'})

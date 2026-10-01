@@ -34,7 +34,6 @@
                     <img id="fotoPreview" src="https://via.placeholder.com/80" class="rounded-circle" width="80" height="80" style="object-fit: cover;">
                     <div>
                         <input type="file" id="fotoInput" accept="image/*" class="form-control mb-2">
-                        <!-- type="button" evita que este botón se comporte como submit de algún formulario cercano -->
                         <button type="button" id="subirFotoBtn" class="btn btn-sm btn-olive">Subir foto</button>
                     </div>
                 </div>
@@ -108,7 +107,6 @@
                         <label class="form-label small fw-bold">Foto (opcional)</label>
                         <input type="file" class="form-control" id="petFotoForm" accept="image/*">
                     </div>
-                    <!-- Un solo botón (antes estaba duplicado) -->
                     <div class="col-md-3"><button type="submit" class="btn btn-olive w-100" id="petSubmitBtn">Agregar</button></div>
                 </form>
             </div>
@@ -179,7 +177,6 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('pCiudad').value = u.ciudad || '';
             if (u.foto) {
                 document.getElementById('fotoPreview').src = u.foto;
-                // Muestra la foto real en vez del círculo con la inicial, arriba del panel
                 document.getElementById('profileAvatarTop').innerHTML =
                     `<img src="${u.foto}" class="rounded-circle" width="42" height="42" style="object-fit:cover;">`;
             }
@@ -212,7 +209,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     };
 
-    // Subir/cambiar la foto de perfil del usuario
     document.getElementById('subirFotoBtn').onclick = function () {
         const archivo = document.getElementById('fotoInput').files[0];
         if (!archivo) return;
@@ -224,7 +220,6 @@ document.addEventListener('DOMContentLoaded', function () {
             body: formData
         }).then(r => r.json()).then(result => {
             document.getElementById('fotoPreview').src = result.foto;
-            // Guarda la foto en localStorage para que el navbar la muestre también
             localStorage.setItem('user_foto', result.foto);
             document.getElementById('profileAvatarTop').innerHTML =
                 `<img src="${result.foto}" class="rounded-circle" width="42" height="42" style="object-fit:cover;">`;
@@ -256,7 +251,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     cargarMascotas();
 
-    // Abre la tarjeta flotante con el detalle completo de la mascota
     window.mostrarDetalleMascota = function (m) {
         document.getElementById('petDetailBody').innerHTML = `
             <div class="text-center mb-3">
@@ -287,11 +281,8 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('petConducta').value = m.conducta || '';
         document.getElementById('petSalud').value = m.salud || '';
         document.getElementById('petSubmitBtn').textContent = 'Guardar cambios';
-        // Nota: el campo de foto (petFotoForm) se deja vacío a propósito al editar;
-        // si el usuario no selecciona una nueva, la foto actual de la mascota no se toca.
     };
 
-    // Crea o actualiza una mascota, y si se seleccionó una foto, la sube justo después
     document.getElementById('mascotaForm').onsubmit = function (e) {
         e.preventDefault();
         const form = this;
@@ -340,7 +331,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     // ============================================
-    // Mis solicitudes
+    // Mis solicitudes (incluye calificación de servicios completados)
     // ============================================
     function cargarSolicitudesPerfil() {
         fetch(`${API}/requests/`, { headers }).then(r => r.json()).then(solicitudes => {
@@ -349,34 +340,108 @@ document.addEventListener('DOMContentLoaded', function () {
                 cont.innerHTML = '<p class="text-muted mb-0">Aún no has hecho ninguna solicitud.</p>';
                 return;
             }
-            const badgeColor = { pendiente: 'bg-warning text-dark', aceptada: 'bg-success', rechazada: 'bg-danger' };
-                cont.innerHTML = solicitudes.map(s => `
-                    <div class="border rounded-3 p-3 mb-2">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>${s.servicio}</strong> — ${s.perro_nombre}
-                                <div class="text-muted small">Inicio: ${s.fecha_inicio}</div>
-                                ${s.estado === 'pendiente' ? `<div class="text-warning small">Esperando desde ${tiempoTranscurrido(s.creado_en)}</div>` : ''}
-                            </div>
-                            <span class="badge ${badgeColor[s.estado] || 'bg-secondary'}">${s.estado}</span>
+            const badgeColor = { pendiente: 'bg-warning text-dark', aceptada: 'bg-success', completado: 'bg-secondary', rechazada: 'bg-danger' };
+            cont.innerHTML = solicitudes.map(s => `
+                <div class="border rounded-3 p-3 mb-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${s.servicio}</strong> — ${s.perro_nombre}
+                            <div class="text-muted small">Inicio: ${s.fecha_inicio}</div>
+                            ${s.estado === 'pendiente' ? `<div class="text-warning small">Esperando desde ${tiempoTranscurrido(s.creado_en)}</div>` : ''}
                         </div>
-                        ${s.estado === 'aceptada' && s.adiestrador_info ? `
-                            <hr>
-                            <div class="d-flex align-items-center gap-2">
-                                <img src="${s.adiestrador_info.foto || 'https://via.placeholder.com/50'}" class="rounded-circle" width="50" height="50" style="object-fit:cover;">
-                                <div>
-                                    <strong>${s.adiestrador_info.nombre} ${s.adiestrador_info.apellido}</strong>
-                                    <div class="text-muted small">${(s.adiestrador_info.especialidades || []).join(', ')}</div>
-                                    ${s.adiestrador_info.certificado ? `<a href="${s.adiestrador_info.certificado}" target="_blank" class="small">Ver certificado</a>` : ''}
-                                </div>
-                            </div>
-                        ` : ''}
+                        <span class="badge ${badgeColor[s.estado] || 'bg-secondary'}">${s.estado}</span>
                     </div>
-                `).join('');
-            });
-        }
-        cargarSolicitudesPerfil();
+                    ${s.estado === 'aceptada' && s.adiestrador_info ? `
+                        <hr>
+                        <div class="d-flex align-items-center gap-2">
+                            <img src="${s.adiestrador_info.foto || 'https://via.placeholder.com/50'}" class="rounded-circle" width="50" height="50" style="object-fit:cover;">
+                            <div>
+                                <strong>${s.adiestrador_info.nombre} ${s.adiestrador_info.apellido}</strong>
+                                <div class="text-muted small">${(s.adiestrador_info.especialidades || []).join(', ')}</div>
+                                ${s.adiestrador_info.certificado ? `<a href="${s.adiestrador_info.certificado}" target="_blank" class="small">Ver certificado</a>` : ''}
+                            </div>
+                        </div>
+                    ` : ''}
+                    ${s.estado === 'completado' ? `<hr><div id="resenaZona-${s.id}"></div>` : ''}
+                </div>
+            `).join('');
+
+            // Para cada solicitud completada, revisa si ya tiene reseña o muestra el formulario
+            solicitudes.filter(s => s.estado === 'completado').forEach(s => cargarResenaDeSolicitud(s.id));
         });
+    }
+    // Esta llamada faltaba: sin ella, la función nunca se ejecutaba y "Mis solicitudes" quedaba vacío
+    cargarSolicitudesPerfil();
+
+    // Revisa si esta solicitud ya tiene una reseña (buscando entre todas las reseñas del cliente)
+    function cargarResenaDeSolicitud(solicitudId) {
+        fetch(`${API}/reviews/`, { headers }).then(r => r.json()).then(resenas => {
+            const resenaExistente = resenas.find(r => r.solicitud_id === solicitudId);
+            const zona = document.getElementById(`resenaZona-${solicitudId}`);
+            if (!zona) return;
+
+            if (resenaExistente) {
+                // Ya calificó este servicio: muestra lo que escribió (y la respuesta del admin, si existe)
+                zona.innerHTML = `
+                    <p class="small fw-bold mb-1">Tu calificación:</p>
+                    <div class="mb-1">${'★'.repeat(resenaExistente.estrellas)}${'☆'.repeat(5 - resenaExistente.estrellas)}</div>
+                    ${resenaExistente.comentario ? `<p class="small text-muted mb-1">"${resenaExistente.comentario}"</p>` : ''}
+                    ${resenaExistente.respuesta_admin ? `<div class="alert alert-light small mb-0 mt-2"><strong>Respuesta de EDUCAN:</strong> ${resenaExistente.respuesta_admin}</div>` : ''}
+                `;
+            } else {
+                // Aún no calificó: muestra el formulario con estrellas clicables
+                zona.innerHTML = `
+                    <p class="small fw-bold mb-2">Califica este servicio:</p>
+                    <div class="d-flex gap-1 mb-2 estrellas-select" data-solicitud="${solicitudId}">
+                        ${[1,2,3,4,5].map(n => `<i class="bi bi-star fs-5" style="cursor:pointer" data-valor="${n}"></i>`).join('')}
+                    </div>
+                    <textarea class="form-control form-control-sm mb-2" id="comentario-${solicitudId}" placeholder="Comentario (opcional)"></textarea>
+                    <button type="button" class="btn btn-sm btn-olive" onclick="enviarResena(${solicitudId})">Enviar calificación</button>
+                `;
+                activarEstrellas(zona.querySelector('.estrellas-select'));
+            }
+        });
+    }
+
+    // Hace que las estrellas se puedan seleccionar con clic (guarda el valor elegido en un atributo data-*)
+    function activarEstrellas(contenedor) {
+        const iconos = contenedor.querySelectorAll('i');
+        contenedor.dataset.valorElegido = 0;
+        iconos.forEach(icono => {
+            icono.addEventListener('click', function () {
+                const valor = parseInt(this.dataset.valor);
+                contenedor.dataset.valorElegido = valor;
+                iconos.forEach(i => {
+                    i.classList.toggle('bi-star-fill', parseInt(i.dataset.valor) <= valor);
+                    i.classList.toggle('bi-star', parseInt(i.dataset.valor) > valor);
+                    i.classList.toggle('text-warning', parseInt(i.dataset.valor) <= valor);
+                });
+            });
+        });
+    }
+
+    // Envía la calificación al backend
+    window.enviarResena = function (solicitudId) {
+        const contenedor = document.querySelector(`.estrellas-select[data-solicitud="${solicitudId}"]`);
+        const estrellas = parseInt(contenedor.dataset.valorElegido);
+        if (!estrellas) {
+            alert('Selecciona una calificación de estrellas primero.');
+            return;
+        }
+        const comentario = document.getElementById(`comentario-${solicitudId}`).value;
+
+        fetch(`${API}/reviews/`, {
+            method: 'POST', headers,
+            body: JSON.stringify({ solicitud_id: solicitudId, estrellas, comentario })
+        }).then(r => r.json()).then(result => {
+            if (result.error) {
+                alert(result.error);
+                return;
+            }
+            cargarResenaDeSolicitud(solicitudId);
+        });
+    };
+});
 </script>
 {% endblock %}
 {% endblock %}

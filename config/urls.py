@@ -28,7 +28,7 @@ urlpatterns = [
     path('api/config/', include('apps.core.urls')),
     path('api/requests/', include('apps.requests.urls')),
     path('api/pets/', include('apps.pets.urls')),
-]
+    path('api/reviews/', include('apps.reviews.urls')),]
 
 
 if settings.DEBUG:

@@ -12,6 +12,7 @@ class Solicitud(models.Model):
     ESTADOS = [
         ('pendiente', 'Pendiente'),
         ('aceptada', 'Aceptada'),
+        ('completado', 'Completado'),
         ('rechazada', 'Rechazada'),
     ]
     SEXOS = [('macho', 'Macho'), ('hembra', 'Hembra')]
