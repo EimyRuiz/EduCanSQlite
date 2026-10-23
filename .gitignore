@@ -1,7 +1,18 @@
+# Entornos virtuales y archivos de Python
 venv/
 .venv/
 __pycache__/
 *.pyc
-db.sqlite3
+
+# Secretos y base de datos local
 .env
-static/
+db.sqlite3
+
+# Archivos subidos por usuarios (fotos, certificados) y estáticos generados por collectstatic
+/media/
+/static/
+
+# Editor y sistema
+.vscode/
+.idea/
+.DS_Store
