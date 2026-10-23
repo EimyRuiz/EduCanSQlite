@@ -133,7 +133,7 @@
                 <form id="productoForm" class="row g-2">
                     <input type="hidden" id="prodId" value="">
                     <div class="col-md-3"><input class="form-control" placeholder="Nombre del producto" id="prodNombre" required></div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <select class="form-select" id="prodCategoria" required>
                             <option value="" disabled selected>Categoría</option>
                             <option value="Collar">Collar</option>
@@ -148,7 +148,7 @@
                     </div>
                     <div class="col-md-3"><input class="form-control" placeholder="Descripción" id="prodDescripcion" required></div>
                     <div class="col-md-2"><input class="form-control" type="number" placeholder="Precio" id="prodPrecio" required></div>
-                    <div class="col-md-1"><button class="btn btn-olive w-100" id="prodSubmitBtn">Agregar</button></div>
+                    <div class="col-md-2"><button class="btn btn-olive w-100" id="prodSubmitBtn">Agregar</button></div>
                 </form>
             </div>
             <div class="admin-card">
@@ -165,6 +165,7 @@
 {% block extra_js %}
 {% load static %}
 <script src="{% static 'js/main.js' %}"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/locales/es.global.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const rol = localStorage.getItem('user_rol');
@@ -282,6 +283,11 @@ document.addEventListener('DOMContentLoaded', function () {
         muy_largo: '#e74c3c'
     };
 
+        // Alto del calendario: se ajusta a la pantalla para que se vea completo sin scroll
+    function altoCalendario() {
+        return Math.max(420, window.innerHeight - 340);
+    }
+
     function cargarCalendario() {
         fetch(`${API}/requests/`, { headers }).then(r => r.json()).then(solicitudes => {
             const eventos = solicitudes
@@ -296,18 +302,25 @@ document.addEventListener('DOMContentLoaded', function () {
             const calendarEl = document.getElementById('calendarioServicios');
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
+                locale: 'es',                 // español (si el archivo es.global.min.js no carga, queda en inglés)
+                firstDay: 0,                  // la semana empieza en domingo
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 },
+                buttonText: { today: 'Hoy', month: 'Mes', week: 'Semana', day: 'Día' },
                 events: eventos,
+                dayMaxEvents: 2,              // si un día tiene más, muestra "+N más" en vez de agrandar la fila
                 eventClick: function (info) {
                     alert(`Servicio: ${info.event.extendedProps.servicio}\nCliente: ${info.event.extendedProps.cliente}`);
                 },
-                height: 650
+                height: altoCalendario()
             });
             calendar.render();
+
+            // Si cambian el tamaño de la ventana, el calendario se reajusta
+            window.addEventListener('resize', () => calendar.setOption('height', altoCalendario()));
         });
     }
 

@@ -1734,3 +1734,224 @@ section.py-5 .text-center.mb-5 {
 .auth-link-soft {
     color: var(--color-olive-dark);
 }
+
+
+
+/* =====================================================================
+   11) PÁGINAS INTERNAS: BUSCADOR DE LA TIENDA, ENCABEZADO Y PANEL ADMIN
+   ===================================================================== */
+
+/* ---------- Buscador con lupa (tienda) ---------- */
+.input-icon-group {
+    position: relative;
+}
+
+.input-icon-group i {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #777;
+    font-size: 0.95rem;
+    pointer-events: none;      /* el clic pasa al campo de texto */
+}
+
+.input-icon-group .form-control {
+    padding-left: 2.5rem;      /* deja espacio para la lupa */
+}
+
+/* Buscador y filtro de la tienda con la misma altura y letra moderada */
+#buscarProducto,
+#filtroCategoria {
+    height: 42px;
+    font-size: 0.92rem;
+}
+
+/* ---------- Encabezado de Servicios y Tienda ---------- */
+.page-header {
+    padding-top: 80px;
+}
+
+.page-header h1.display-5 {
+    font-size: 2rem;
+}
+
+.page-header .container {
+    padding-top: 0.6rem !important;
+    padding-bottom: 0.6rem !important;
+}
+
+/* ---------- Panel de administrador: tamaños moderados ---------- */
+.admin-sidebar {
+    width: 230px;
+    padding: 1.5rem 1rem;
+}
+
+.admin-sidebar-brand {
+    font-size: 1.15rem;
+    margin-bottom: 1.5rem;
+    padding-top: 3.5rem;
+}
+
+.admin-nav-link {
+    font-size: 0.85rem;
+    padding: 0.55rem 0.85rem;
+}
+
+.admin-main {
+    margin-left: 230px;
+    padding: 1.8rem;
+    padding-top: 5.5rem;
+}
+
+.admin-topbar {
+    margin-bottom: 1.3rem;
+}
+
+.admin-topbar h4 {
+    font-size: 1.25rem;
+}
+
+.admin-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+}
+
+.admin-stat-card {
+    border-radius: 14px;
+    padding: 1.1rem;
+}
+
+.admin-stat-card h2 {
+    font-size: 1.6rem;
+}
+
+.admin-card {
+    border-radius: 14px;
+    padding: 1.3rem;
+}
+
+.admin-card h6 {
+    font-size: 0.95rem;
+}
+
+.admin-main .form-control,
+.admin-main .form-select {
+    font-size: 0.88rem;
+    padding: 0.4rem 0.7rem;
+}
+
+/* Botones de los formularios y de las tablas */
+.admin-main .btn {
+    font-size: 0.85rem;
+    white-space: nowrap;       /* el texto del botón nunca se parte ni se corta */
+}
+
+.admin-table {
+    font-size: 0.88rem;
+}
+
+.admin-table th {
+    font-size: 0.85rem;
+}
+
+.admin-table .btn-sm {
+    padding: 0.2rem 0.6rem;
+    font-size: 0.8rem;
+}
+
+@media (max-width: 768px) {
+    .admin-main { margin-left: 0; }
+}
+
+
+
+/* =====================================================================
+   12) PANEL ADMIN: SALUDO MÁS ARRIBA Y CALENDARIO COMPLETO SIN SCROLL
+   ===================================================================== */
+
+/* Saludo "Bienvenido, Admin" más arriba (aplica a TODAS las secciones del panel).
+   Si lo quieres aún más arriba, baja el 1.5rem; si lo quieres más abajo, súbelo. */
+.admin-main {
+    padding-top: 1.5rem;
+    padding-bottom: 1.2rem;
+    min-height: 0;                 /* antes 100vh: hacía que la página sobrara y apareciera scroll */
+}
+
+.admin-topbar {
+    margin-bottom: 0.9rem;
+}
+
+/* Tarjeta del calendario más compacta */
+#section-calendario .admin-card {
+    padding: 1rem 1.2rem;
+}
+
+#section-calendario .admin-card h6 {
+    margin-bottom: 0.4rem !important;
+}
+
+#section-calendario .d-flex.mb-3 {
+    margin-bottom: 0.5rem !important;     /* leyenda de colores */
+    font-size: 0.8rem;
+}
+
+/* ---------- FullCalendar con el estilo del sitio ---------- */
+.fc {
+    --fc-today-bg-color: rgba(122, 141, 40, 0.12);
+    --fc-border-color: #E4E0D8;
+    font-size: 0.85rem;
+}
+
+/* Quita el azul y el subrayado de los enlaces (días y encabezados) */
+.fc a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.fc .fc-toolbar.fc-header-toolbar {
+    margin-bottom: 0.6rem;
+}
+
+.fc .fc-toolbar-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    text-transform: capitalize;
+}
+
+.fc .fc-col-header-cell-cushion {
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 4px;
+    text-transform: capitalize;
+}
+
+.fc .fc-daygrid-day-number {
+    font-size: 0.78rem;
+    padding: 3px 6px;
+}
+
+/* Botones del calendario en verde oliva */
+.fc .fc-button-primary {
+    background: var(--color-olive);
+    border-color: var(--color-olive);
+    font-size: 0.8rem;
+    padding: 0.3rem 0.7rem;
+    text-transform: capitalize;
+}
+
+.fc .fc-button-primary:hover {
+    background: var(--color-olive-dark);
+    border-color: var(--color-olive-dark);
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+    background: var(--color-olive-dark);
+    border-color: var(--color-olive-dark);
+}
+
+.fc .fc-button-primary:focus {
+    box-shadow: 0 0 0 0.2rem rgba(122, 141, 40, 0.3);
+}

@@ -1,6 +1,7 @@
 # Entornos virtuales y archivos de Python
 venv/
 .venv/
+prueba/
 __pycache__/
 *.pyc
 
