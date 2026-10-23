@@ -1,29 +1,58 @@
+{% url 'services' as url_services %}
+{% url 'shop' as url_shop %}
+
 <nav class="navbar navbar-expand-lg navbar-dark navbar-floating py-3" id="mainNavbar">
     <div class="container">
-        <a class="navbar-brand fw-bold text-olive fs-4" href="#">
-            <i class="bi bi-heart-fill me-1"></i>EDUCAN
-        </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+        <a class="navbar-brand fw-bold fs-4" href="/">EDUCAN</a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-label="Abrir menú">
             <span class="navbar-toggler-icon"></span>
         </button>
+
         <div class="collapse navbar-collapse" id="navbarMain">
-            <ul class="navbar-nav mx-auto gap-lg-2">
-                <li class="nav-item"><a class="nav-link" href="#">Inicio</a></li>
-                <li class="nav-item"><a class="nav-link" href="#">Nosotros</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'services' %}">Servicios</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'shop' %}">Tienda</a></li>
-                <li class="nav-item"><a class="nav-link" href="#">Blog</a></li>
-                <li class="nav-item"><a class="nav-link" href="#">Contacto</a></li>
+            <ul class="navbar-nav mx-auto gap-lg-1">
+                <li class="nav-item"><a class="nav-link {% if request.path == '/' %}active{% endif %}" href="/">Inicio</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/nosotros/' %}active{% endif %}" href="/nosotros/">Nosotros</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == url_services %}active{% endif %}" href="{{ url_services }}">Servicios</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == url_shop %}active{% endif %}" href="{{ url_shop }}">Tienda</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/blog/' %}active{% endif %}" href="/blog/">Blog</a></li>
+                <li class="nav-item"><a class="nav-link {% if request.path == '/contacto/' %}active{% endif %}" href="/contacto/">Contacto</a></li>
             </ul>
 
-            <div class="dropdown" id="authButtonWrapper">
-                <a href="#" class="btn btn-olive rounded-pill px-4" id="authButton" data-bs-toggle="modal" data-bs-target="#loginModal">Iniciar sesión</a>
-                <ul class="dropdown-menu dropdown-menu-end d-none" id="authDropdownMenu">
-                    <li><a class="dropdown-item" href="/admin-panel/">Panel Admin</a></li>
-                    <li><a class="dropdown-item" href="#" id="logoutBtn">Cerrar sesión</a></li>
-                </ul>
+            <!-- ============ SIN SESIÓN ============ -->
+            <div id="navGuest" class="d-flex align-items-center gap-2 mt-3 mt-lg-0">
+                <a href="#" class="btn-nav-login" data-bs-toggle="modal" data-bs-target="#loginModal">
+                    <i class="bi bi-person me-1"></i>Iniciar sesión
+                </a>
+                <a href="#" class="btn-nav-register" data-bs-toggle="modal" data-bs-target="#registerModal">Registrarse</a>
             </div>
 
+            <!-- ============ CON SESIÓN (auth-ui.js lo rellena) ============ -->
+            <div id="navUser" class="dropdown d-none mt-3 mt-lg-0">
+                <button class="nav-user-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="nav-avatar" id="navAvatar"></span>
+                    <span id="navUserName"></span>
+                    <span class="nav-role-badge" id="navUserRole"></span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                        <a class="dropdown-item" id="navPanelLink" href="#">
+                            <i class="bi bi-speedometer2 me-2"></i><span id="navPanelText">Mi panel</span>
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <a class="dropdown-item text-danger" href="#" id="logoutBtn">
+                            <i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
 </nav>
+
+<!-- Evita el "parpadeo" de los botones de invitado cuando ya hay sesión iniciada -->
+<script>
+try { if (localStorage.getItem('access_token')) document.getElementById('navGuest').classList.add('d-none'); } catch (e) {}
+</script>

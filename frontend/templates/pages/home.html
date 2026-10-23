@@ -13,8 +13,11 @@
             <div class="col-lg-7">
                 <h1 class="hero-title mb-3">Entrenamiento canino profesional</h1>
                 <p class="hero-subtitle mb-4">Ayudamos a tu mejor amigo a ser su mejor versión.</p>
-                <a href="{% url 'request_service' %}" class="btn btn-olive btn-lg rounded-pill px-4 me-2">Agendar entrenamiento</a>
-                <a href="{% url 'services' %}" class="btn btn-outline-light btn-lg rounded-pill px-4">Conocer servicios</a>
+                <!-- Botones del hero: esquinas redondeadas (no píldora) + ícono. Estilos: .btn-hero-primary / .btn-hero-ghost -->
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="{% url 'request_service' %}" class="btn-hero btn-hero-primary"><i class="bi bi-calendar-check"></i>Agendar entrenamiento</a>
+                    <a href="{% url 'services' %}" class="btn-hero btn-hero-ghost"><i class="bi bi-compass"></i>Conocer servicios</a>
+                </div>
             </div>
         </div>
     </div>
@@ -27,8 +30,8 @@
     <div class="container">
         <div class="row g-4">
             <div class="col-md-6 col-lg-3 reveal-up">
-                <div class="feature-card text-center p-4 h-100">
-                    <div class="feature-icon mb-3">
+                <div class="feature-card h-100">
+                    <div class="feature-icon">
                         <i class="bi bi-person-walking fs-2"></i>
                     </div>
                     <h5 class="fw-bold mb-2">Entrenamiento personalizado</h5>
@@ -36,8 +39,8 @@
                 </div>
             </div>
             <div class="col-md-6 col-lg-3 reveal-up">
-                <div class="feature-card text-center p-4 h-100">
-                    <div class="feature-icon mb-3">
+                <div class="feature-card h-100">
+                    <div class="feature-icon">
                         <i class="bi bi-shield-plus fs-2"></i>
                     </div>
                     <h5 class="fw-bold mb-2">Cuidado integral</h5>
@@ -45,8 +48,8 @@
                 </div>
             </div>
             <div class="col-md-6 col-lg-3 reveal-up">
-                <div class="feature-card text-center p-4 h-100">
-                    <div class="feature-icon mb-3">
+                <div class="feature-card h-100">
+                    <div class="feature-icon">
                         <i class="bi bi-cart fs-2"></i>
                     </div>
                     <h5 class="fw-bold mb-2">Productos seleccionados</h5>
@@ -54,8 +57,8 @@
                 </div>
             </div>
             <div class="col-md-6 col-lg-3 reveal-up">
-                <div class="feature-card text-center p-4 h-100">
-                    <div class="feature-icon mb-3">
+                <div class="feature-card h-100">
+                    <div class="feature-icon">
                         <i class="bi bi-mortarboard fs-2"></i>
                     </div>
                     <h5 class="fw-bold mb-2">Entrenadores certificados</h5>
@@ -68,50 +71,50 @@
 
 
 <!--sobre educan-->
+<!-- Imagen a la izquierda (cambia al pasar el cursor) + texto y 3 tarjetas con contadores animados a la derecha -->
 <section class="py-5 my-5">
     <div class="container">
         <div class="row align-items-center g-5">
+            <div class="col-lg-6 reveal-up">
+                <div class="about-media">
+                    <img src="https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=900" class="about-img about-img-1" alt="Perro jugando">
+                    <img src="https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=900" class="about-img about-img-2" alt="Perro feliz">
+                    <span class="about-chip"><i class="bi bi-shield-check me-1"></i>Garantía de bienestar</span>
+                </div>
+            </div>
             <div class="col-lg-6">
-                <p class="text-olive fw-bold text-uppercase small mb-2">Sobre EDUCAN</p>
+                <p class="text-olive fw-bold text-uppercase small mb-2 eyebrow">Sobre EDUCAN</p>
                 <h2 class="fw-bold mb-3">Mucho más que entrenamiento</h2>
                 <p class="text-muted mb-4">
                     En EDUCAN creemos en el vínculo entre tú y tu perro. Nuestro objetivo es
                     educar con amor, respeto y técnicas efectivas para lograr una convivencia feliz.
                 </p>
-                <a href="#" class="btn btn-olive rounded-pill px-4">Conócenos más</a>
-            </div>
-            <div class="col-lg-6">
-    <div class="about-image-wrapper position-relative">
-        <img src="https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600"
-             class="about-image about-image-1 rounded-4" alt="Perro jugando">
-        <img src="https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=600"
-             class="about-image about-image-2 rounded-4" alt="Perro feliz">
 
-        <div class="stats-badge">
-            <div class="stats-item">
-                <i class="bi bi-award-fill"></i>
-                <div>
-                    <strong><span class="counter" data-target="500">0</span><span class="counter-suffix">+</span></strong>
-                    <span>Perros entrenados</span>
+                <!-- Los números arrancan en 0 y "corren" hasta data-target cuando entran en pantalla (main.js).
+                     OJO: por ahora son valores fijos; en el Bloque B se conectan a /api/reviews/estadisticas/ -->
+                <div class="row g-3 mb-4">
+                    <div class="col-4">
+                        <div class="stat-card">
+                            <strong><span class="counter-suffix">+</span><span class="counter" data-target="500">0</span></strong>
+                            <span>Perros graduados con éxito</span>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stat-card">
+                            <strong><span class="counter-suffix">+</span><span class="counter" data-target="8">0</span></strong>
+                            <span>Años liderando adiestramiento</span>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stat-card">
+                            <strong><span class="counter" data-target="98">0</span><span class="counter-suffix">%</span></strong>
+                            <span>Familias satisfechas y felices</span>
+                        </div>
+                    </div>
                 </div>
+
+                <a href="/nosotros/" class="btn-brown">Saber más de nuestra metodología <i class="bi bi-arrow-right ms-2"></i></a>
             </div>
-            <div class="stats-item">
-                <i class="bi bi-patch-check-fill"></i>
-                <div>
-                    <strong><span class="counter-suffix">+</span><span class="counter" data-target="8">0</span></strong>
-                    <span>Años de experiencia</span>
-                </div>
-            </div>
-            <div class="stats-item">
-                <i class="bi bi-heart-fill"></i>
-                <div>
-                    <strong><span class="counter" data-target="98">0</span><span class="counter-suffix">%</span></strong>
-                    <span>Clientes satisfechos</span>
-                </div>
-            </div>
-        </div>
-    </div>
-</div></div>
         </div>
     </div>
 </section>
@@ -121,18 +124,20 @@
 <section class="py-5 my-5 bg-beige">
     <div class="container">
         <div class="text-center mb-5">
-            <p class="text-olive fw-bold text-uppercase small mb-2">Lo que ofrecemos</p>
-            <h2 class="fw-bold">Nuestros servicios</h2>
+            <p class="text-olive fw-bold text-uppercase small mb-2 eyebrow">Nuestros servicios</p>
+            <h2 class="fw-bold">Programas diseñados para cada<br>etapa y necesidad</h2>
+            <p class="text-muted">Pasa el cursor sobre cada programa para descubrir el detalle de cada sesión formativa.</p>
         </div>
         <div class="row g-4">
             {% for s in servicios %}
-            <div class="col-md-6 col-lg-3">
+            <div class="col-md-6 col-lg-4">
                 <div class="service-card" data-title="{{ s.nombre }}" data-text="{{ s.descripcion }}">
-                    <img src="{{ s.imagen|default:'https://images.unsplash.com/photo-1568572933382-74d440642117?w=500' }}" alt="{{ s.nombre }}">
+                    <img src="{{ s.imagen|default:'https://images.unsplash.com/photo-1568572933382-74d440642117?w=700' }}" alt="{{ s.nombre }}">
                     <div class="service-overlay">
+                        <span class="service-badge">Desde ${{ s.precio|precio_cop }}</span>
                         <h5>{{ s.nombre }}</h5>
                         <p>{{ s.descripcion }}</p>
-                        <p class="fw-bold text-olive mb-2">${{ s.precio|precio_cop }}</p>
+                        <a href="{% url 'services' %}" class="service-more">Ver detalles <i class="bi bi-arrow-right ms-1"></i></a>
                     </div>
                 </div>
             </div>

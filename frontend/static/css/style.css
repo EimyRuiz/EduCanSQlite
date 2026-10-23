@@ -1,6 +1,23 @@
+/* =====================================================================
+   EDUCAN · style.css
+   Hoja de estilos única del sitio. Cada regla aparece UNA sola vez, con
+   el valor final. Orden:
+     1. Base (variables, tipografía, botones generales)
+     2. Botones unificados (todos del mismo tamaño)
+     3. Navbar
+     4. Inicio: portada, tarjetas, Sobre EDUCAN, servicios, tienda,
+        testimonios, galería
+     5. Panel de administrador
+     6. Modales de inicio de sesión y registro
+     7. Páginas en mantenimiento, encabezado de páginas internas
+     8. Paneles de cliente y adiestrador
+     9. Ventanas flotantes (fichas de mascota y servicio)
+    10. Reglas que quizá ya no se usen (ver nota al final)
+   ===================================================================== */
+
+
 /* ============================================
-   VARIABLES GLOBALES DE COLOR Y TIPOGRAFÍA
-   Se usan en todo el sitio (botones, textos, fondos)
+   1) BASE: VARIABLES, TIPOGRAFÍA Y UTILIDADES
    ============================================ */
 :root {
     --color-olive: #7A8D28;
@@ -12,16 +29,37 @@
 body {
     font-family: 'Open Sans', sans-serif;
     color: var(--color-text);
+    background-color: var(--color-beige);
 }
 
 h1, h2, h3, h4, h5, h6, .navbar-brand {
     font-family: 'Poppins', sans-serif;
 }
 
+/* Banda de sección un poco más oscura que el fondo (servicios, galería) */
+.bg-beige {
+    background-color: #F0E9DD;
+}
+
+.bg-olive {
+    background-color: var(--color-olive) !important;
+}
+
 .text-olive {
     color: var(--color-olive) !important;
 }
 
+/* Etiqueta pequeña sobre los títulos ("SOBRE EDUCAN", "NUESTROS SERVICIOS") */
+.eyebrow {
+    letter-spacing: 1.5px;
+    font-size: 0.75rem !important;
+}
+
+.min-vh-75 {
+    min-height: 75vh;
+}
+
+/* Botones verdes y con borde verde */
 .btn-olive {
     background-color: var(--color-olive);
     color: white;
@@ -34,111 +72,18 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
     color: white;
 }
 
-.bg-dark-olive {
-    background-color: var(--color-olive-dark);
+.btn-outline-olive {
+    border: 1px solid var(--color-olive);
+    color: var(--color-olive);
+    background: transparent;
 }
 
-
-/* ============================================
-   HERO (portada de Inicio)
-   ============================================ */
-.hero-section {
-    position: relative;
-    background-image: url('https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=1600');
-    background-size: cover;
-    background-position: center;
-    min-height: 85vh;
-    display: flex;
-    align-items: center;
-}
-
-.hero-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to right, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 60%, rgba(0,0,0,0.1) 100%);
-}
-
-.hero-title {
-    font-size: 3.2rem;
-    font-weight: 700;
+.btn-outline-olive:hover {
+    background: var(--color-olive);
     color: white;
-    line-height: 1.15;
 }
 
-.hero-subtitle {
-    font-size: 1.15rem;
-    color: rgba(255,255,255,0.85);
-}
-
-.min-vh-75 {
-    min-height: 75vh;
-}
-
-@media (max-width: 768px) {
-    .hero-title {
-        font-size: 2.2rem;
-    }
-}
-
-
-/* ============================================
-   NAVBAR flotante tipo vidrio (visible en toda la página)
-   ============================================ */
-.navbar-floating {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 1000;
-    background: rgba(20, 20, 20, 0.35);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-}
-
-.navbar-floating .nav-link,
-.navbar-floating .navbar-brand {
-    color: white !important;
-}
-
-
-/* ============================================
-   TARJETAS DESTACADAS de Inicio (las 4 de "Entrenamiento personalizado", etc.)
-   ============================================ */
-.feature-card {
-    background: rgba(247, 242, 234, 0.6);
-    backdrop-filter: blur(8px);
-    border-radius: 20px;
-    border: 1px solid rgba(0,0,0,0.05);
-    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
-}
-
-.feature-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.12);
-    background: rgba(247, 242, 234, 0.9);
-}
-
-.feature-icon {
-    width: 60px;
-    height: 60px;
-    background-color: var(--color-olive);
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto;
-}
-
-/* Sección que "muerde" la parte de abajo del hero */
-.cards-overlap-section {
-    margin-top: -100px;
-    position: relative;
-    z-index: 10;
-}
-
-/* Animación de aparición al hacer scroll (usada junto con IntersectionObserver en main.js) */
+/* Animación de aparición al hacer scroll (la activa main.js con IntersectionObserver) */
 .reveal-up {
     opacity: 0;
     transform: translateY(40px);
@@ -152,142 +97,545 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 
 
 /* ============================================
-   SECCIÓN "SOBRE EDUCAN" (imagen + estadísticas animadas)
+   2) BOTONES: TODOS DEL MISMO TAMAÑO
+   40px de alto, letra de 0.88rem y el mismo relleno.
+   Cada botón conserva su color y su forma (más abajo).
    ============================================ */
-.about-image-wrapper {
-    position: relative;
-    padding-right: 20px;
-    padding-bottom: 20px;
-}
-
-.about-image {
-    width: 100%;
-    height: 450px;
-    object-fit: cover;
-    border-radius: 20px;
-    transition: opacity 0.5s ease;
-}
-
-.about-image-2 {
-    position: absolute;
-    top: 0;
-    left: 0;
-    opacity: 0;
-}
-
-.about-image-wrapper:hover .about-image-2 {
-    opacity: 1;
-}
-
-.stats-badge {
-    position: absolute;
-    bottom: -20px;
-    right: -20px;
-    background: var(--color-olive-dark);
-    color: white;
-    padding: 1.5rem;
-    border-radius: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-}
-
-.about-image-wrapper:hover .stats-badge {
-    transform: scale(1.05);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-}
-
-.stats-item {
-    display: flex;
+.btn-hero,
+.btn-brown,
+.btn-auth,
+.btn-auth-outline,
+.btn-nav-login,
+.btn-nav-register,
+section .btn.rounded-pill {
+    display: inline-flex;
     align-items: center;
-    gap: 0.75rem;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 40px;
+    padding: 0 1.4rem !important;      /* !important: gana sobre px-4 de Bootstrap */
+    font-size: 0.88rem !important;
+    font-weight: 600;
+    line-height: 1.2;
+    text-decoration: none;
 }
 
-.stats-item i {
-    font-size: 1.3rem;
+.btn-hero i,
+.btn-brown i,
+.btn-auth i,
+.btn-auth-outline i {
+    font-size: 0.95rem;
+    margin: 0 !important;
 }
 
-.stats-item strong {
-    display: block;
-    font-size: 1.1rem;
-    line-height: 1.1;
+/* Botón de la portada: esquinas redondeadas + ícono */
+.btn-hero {
+    border-radius: 12px;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
 }
 
-.stats-item span {
-    font-size: 0.75rem;
-    opacity: 0.8;
+.btn-hero:hover {
+    transform: translateY(-3px);
 }
 
-/* Números "+500", "+8", "98%" y sus símbolos, para que se vean del mismo tamaño/alineación */
-.counter,
-.counter-suffix {
-    font-family: 'Poppins', sans-serif;
-    font-weight: 700;
-    font-size: 1.1rem;
-    vertical-align: baseline;
+.btn-hero-primary {
+    background: var(--color-olive);
+    color: #fff;
+    border: 2px solid var(--color-olive);
+}
+
+.btn-hero-primary:hover {
+    color: #fff;
+    background: var(--color-olive-dark);
+    border-color: var(--color-olive-dark);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+
+.btn-hero-ghost {
+    background: rgba(255,255,255,0.18);
+    color: #fff;
+    border: 2px solid rgba(255,255,255,0.8);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+.btn-hero-ghost:hover {
+    color: #fff;
+    background: rgba(255,255,255,0.32);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+
+/* Botón café oscuro con flecha */
+.btn-brown {
+    background: #4B3826;
+    color: #fff;
+    border-radius: 999px;
+    transition: background 0.25s ease, transform 0.25s ease;
+}
+
+.btn-brown:hover {
+    background: #33261a;
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+/* Botón principal de los modales y de las páginas en mantenimiento */
+.btn-auth {
+    background: var(--color-olive);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    text-align: center;
+    transition: background 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.btn-auth:hover {
+    background: var(--color-olive-dark);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px rgba(92, 107, 30, 0.35);
+}
+
+/* Botón secundario con borde verde (ej. "Atrás") */
+.btn-auth-outline {
+    background: transparent;
+    color: var(--color-olive-dark);
+    border: 1.5px solid var(--color-olive);
+    border-radius: 999px;
+    transition: background 0.25s ease, color 0.25s ease;
+}
+
+.btn-auth-outline:hover {
+    background: var(--color-olive);
+    color: #fff;
 }
 
 
 /* ============================================
-   PREVIEW DE SERVICIOS (Inicio y página Servicios)
+   3) NAVBAR flotante tipo vidrio
    ============================================ */
+.navbar-floating {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    background: rgba(20, 20, 20, 0.35);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.12);
+}
+
+/* Logo: "EDUCAN" blanco, sin corazón */
+.navbar-floating .navbar-brand {
+    color: #fff !important;
+    letter-spacing: 0.5px;
+    font-size: 1.2rem;
+}
+
+/* Links del menú: el activo/hover se marca con una "píldora" translúcida */
+.navbar-floating .nav-link {
+    color: rgba(255,255,255,0.92) !important;
+    font-size: 0.88rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.navbar-floating .nav-link:hover {
+    background: rgba(255,255,255,0.12);
+}
+
+.navbar-floating .nav-link.active {
+    background: rgba(255,255,255,0.18);
+    border-color: rgba(255,255,255,0.55);
+    font-weight: 600;
+}
+
+/* "Iniciar sesión": borde blanco; al pasar el mouse se rellena de verde */
+.btn-nav-login {
+    border: 1.5px solid #fff;
+    color: #fff;
+    background: transparent;
+    border-radius: 999px;
+    transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+.btn-nav-login:hover {
+    background: var(--color-olive);
+    border-color: var(--color-olive);
+    color: #fff;
+}
+
+/* "Registrarse": verde; al pasar el mouse "alumbra" (resplandor verde) */
+.btn-nav-register {
+    background: var(--color-olive);
+    border: 1.5px solid var(--color-olive);
+    color: #fff;
+    border-radius: 999px;
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.btn-nav-register:hover {
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 0 0 3px rgba(122, 141, 40, 0.35), 0 0 22px 4px rgba(160, 182, 52, 0.75);
+}
+
+/* Usuario con sesión iniciada: foto + nombre + rol + flecha */
+.nav-user-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 999px;
+    color: #fff;
+    font-size: 0.85rem;
+    padding: 0.3rem 0.9rem 0.3rem 0.35rem;
+    transition: background 0.2s ease;
+}
+
+.nav-user-btn:hover,
+.nav-user-btn:focus {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+}
+
+.nav-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--color-olive);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.nav-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.nav-role-badge {
+    background: var(--color-olive);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 0.15rem 0.6rem;
+}
+
+
+/* ============================================
+   4) INICIO
+   ============================================ */
+
+/* ---------- Portada (llena toda la pantalla, sin franja beige abajo) ---------- */
+.hero-section {
+    position: relative;
+    background-image: url('https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=1600');
+    background-size: cover;
+    background-position: center;
+    min-height: 100vh;          /* respaldo para navegadores viejos */
+    min-height: 100svh;
+    padding-top: 80px;          /* espacio para el navbar fijo */
+    display: flex;
+    align-items: center;
+}
+
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 60%, rgba(0,0,0,0.1) 100%);
+}
+
+.hero-title {
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: white;
+    line-height: 1.15;
+}
+
+.hero-subtitle {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.85);
+}
+
+@media (max-width: 768px) {
+    .hero-title { font-size: 1.8rem; }
+}
+
+/* ---------- Secciones: espacio moderado y contenido más angosto ---------- */
+section.py-5 {
+    padding-top: 2.2rem !important;     /* !important: ganan sobre py-5 / my-5 de Bootstrap */
+    padding-bottom: 2.2rem !important;
+}
+
+section.my-5 {
+    margin-top: 1.5rem !important;
+    margin-bottom: 1.5rem !important;
+}
+
+section.py-5 > .container {
+    max-width: 1040px;
+}
+
+section.py-5 h2 {
+    font-size: 1.65rem;
+}
+
+section.py-5 .lead,
+section.py-5 .text-muted:not(.small) {
+    font-size: 0.92rem;
+}
+
+section.py-5 .text-center.mb-5 {
+    margin-bottom: 1.6rem !important;
+}
+
+/* ---------- 4 tarjetas que "muerden" la portada ---------- */
+.cards-overlap-section {
+    margin-top: -60px;
+    position: relative;
+    z-index: 10;
+}
+
+.feature-card {
+    background: #fff;
+    border-radius: 18px;
+    border: 1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+    padding: 1.2rem;
+    text-align: left;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--color-olive);
+    box-shadow: 0 18px 40px rgba(122, 141, 40, 0.22);
+}
+
+.feature-card h5 {
+    font-size: 1rem;
+}
+
+.feature-card p {
+    font-size: 0.82rem;
+}
+
+/* Cuadro del ícono: verde clarito; en hover se rellena de verde */
+.feature-icon {
+    width: 46px;
+    height: 46px;
+    background-color: #E9ECDD;
+    color: var(--color-olive);
+    border-radius: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 0 0.8rem 0;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.feature-icon i {
+    font-size: 1.3rem !important;       /* gana sobre fs-2 de Bootstrap */
+}
+
+.feature-card:hover .feature-icon {
+    background-color: var(--color-olive);
+    color: #fff;
+}
+
+/* ---------- Sobre EDUCAN (imagen que cambia al hover + estadísticas animadas) ---------- */
+.about-media {
+    position: relative;
+    height: 370px;
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.18);
+}
+
+.about-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity 0.6s ease, transform 0.8s ease;
+}
+
+/* La segunda imagen está escondida y aparece al pasar el cursor */
+.about-img-2 {
+    opacity: 0;
+}
+
+.about-media:hover .about-img-2 {
+    opacity: 1;
+}
+
+.about-media:hover .about-img {
+    transform: scale(1.04);
+}
+
+.about-chip {
+    position: absolute;
+    left: 14px;
+    bottom: 14px;
+    z-index: 2;
+    background: rgba(255,255,255,0.92);
+    color: #3b2f25;
+    font-weight: 600;
+    font-size: 0.78rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+}
+
+/* Tarjetas blancas con el número grande (los números los anima main.js con .counter) */
+.stat-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 0.75rem 0.4rem;
+    text-align: center;
+    height: 100%;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+
+.stat-card strong {
+    display: block;
+    color: var(--color-olive);
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.5rem;
+    line-height: 1.1;
+}
+
+.stat-card span {
+    display: block;
+    font-size: 0.74rem;
+    color: #666;
+    margin-top: 0.3rem;
+}
+
+/* Números y símbolos (+, %) del mismo tamaño y alineados */
+.counter,
+.counter-suffix {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    vertical-align: baseline;
+}
+
+.stat-card .counter,
+.stat-card .counter-suffix {
+    font-size: 1.5rem;
+}
+
+/* ---------- Servicios (Inicio y página Servicios) ---------- */
 .service-card {
     position: relative;
-    border-radius: 20px;
+    border-radius: 18px;
     overflow: hidden;
-    height: 320px;
+    height: 300px;
     cursor: pointer;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
 }
 
 .service-card img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.4s ease;
+    transition: transform 0.5s ease;
 }
 
 .service-card:hover img {
-    transform: scale(1.08);
+    transform: scale(1.06);
 }
 
 .service-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.2) 50%, transparent 100%);
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.15) 45%, transparent 100%);
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    padding: 1.5rem;
+    padding: 1.1rem;
     color: white;
+    transition: background 0.4s ease;
+}
+
+.service-card:hover .service-overlay {
+    background: rgba(28, 24, 22, 0.88);
+}
+
+.service-badge {
+    align-self: flex-start;
+    background: var(--color-olive);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    border-radius: 8px;
+    padding: 0.2rem 0.6rem;
+    margin-bottom: 0.5rem;
 }
 
 .service-overlay h5 {
     font-weight: 700;
-    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+    margin-bottom: 0.3rem;
+}
+
+/* Descripción y botón: escondidos hasta pasar el cursor */
+.service-overlay p,
+.service-more {
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity 0.3s ease, max-height 0.4s ease;
 }
 
 .service-overlay p {
     font-size: 0.85rem;
-    opacity: 0;
-    max-height: 0;
-    overflow: hidden;
-    transition: opacity 0.3s ease, max-height 0.3s ease;
 }
 
 .service-card:hover .service-overlay p {
     opacity: 1;
-    max-height: 100px;
+    max-height: 110px;
 }
 
+.service-more {
+    align-self: flex-start;
+    background: var(--color-olive);
+    color: #fff;
+    font-size: 0.88rem;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: 0 1.2rem;
+    text-decoration: none;
+}
 
-/* ============================================
-   PREVIEW DE TIENDA (Inicio y página Tienda)
-   ============================================ */
+.service-card:hover .service-more {
+    opacity: 1;
+    max-height: 60px;
+    padding: 0.55rem 1.2rem;
+    margin-top: 0.4rem;
+}
+
+.service-more:hover {
+    background: var(--color-olive-dark);
+    color: #fff;
+}
+
+/* ---------- Tienda (Inicio y página Tienda) ---------- */
 .shop-card {
     background: white;
-    border-radius: 20px;
+    border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 5px 15px rgba(0,0,0,0.05);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -299,7 +647,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 }
 
 .shop-card-img {
-    height: 220px;
+    height: 170px;
     overflow: hidden;
 }
 
@@ -315,12 +663,21 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
     filter: blur(2px) brightness(0.85);
 }
 
+.shop-card .p-4 {
+    padding: 1rem !important;
+}
 
-/* ============================================
-   TESTIMONIOS (Inicio)
-   ============================================ */
+.shop-card h5 {
+    font-size: 1rem;
+}
+
+.shop-card p {
+    font-size: 0.82rem;
+}
+
+/* ---------- Testimonios ---------- */
 .testimonial-card {
-    padding: 2rem 1.5rem;
+    padding: 1.2rem 1rem;
     transition: transform 0.3s ease;
 }
 
@@ -328,9 +685,13 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
     transform: translateY(-4px);
 }
 
+.testimonial-card h6 {
+    font-size: 0.92rem;
+}
+
 .testimonial-avatar {
-    width: 70px;
-    height: 70px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
     object-fit: cover;
     border: 3px solid var(--color-beige);
@@ -338,31 +699,28 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 
 .testimonial-stars {
     color: #E0B040;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
 }
 
 .testimonial-text {
     font-style: italic;
     color: var(--color-text);
-    font-size: 0.95rem;
-    line-height: 1.6;
+    font-size: 0.86rem;
+    line-height: 1.5;
 }
 
-
-/* ============================================
-   GALERÍA (Inicio)
-   ============================================ */
+/* ---------- Galería ---------- */
 .gallery-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
+    gap: 0.7rem;
 }
 
 .gallery-grid img {
     width: 100%;
-    height: 220px;
+    height: 165px;
     object-fit: cover;
-    border-radius: 16px;
+    border-radius: 13px;
     filter: grayscale(20%);
     transition: filter 0.4s ease, transform 0.4s ease;
 }
@@ -380,7 +738,7 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 
 
 /* ============================================
-   DASHBOARD DEL PANEL ADMIN (/admin-panel/)
+   5) DASHBOARD DEL PANEL ADMIN (/admin-panel/)
    ============================================ */
 .admin-dashboard {
     display: flex;
@@ -507,67 +865,188 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 
 
 /* ============================================
-   MODALES DE LOGIN Y REGISTRO
-   (SIN imágenes de banner — solo encabezado con color)
+   6) MODALES DE INICIO DE SESIÓN Y REGISTRO
    ============================================ */
 
-/* Contenedor general del modal: quita el borde y recorta las esquinas redondeadas */
+/* Ancho: login 420px, registro 640px */
+#loginModal .modal-dialog    { --bs-modal-width: 420px; }
+#registerModal .modal-dialog { --bs-modal-width: 640px; }
+
 .auth-card {
-    overflow: hidden;
     border: none;
+    background: #FFFDFB;
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 18px 45px rgba(0,0,0,0.28);
 }
 
-/* Botón "X" para cerrar, flotando sobre el encabezado de color */
+.auth-body {
+    padding: 1.6rem 1.8rem 1.4rem;
+}
+
 .auth-close {
     position: absolute;
-    top: 1rem;
-    right: 1rem;
+    top: 0.8rem;
+    right: 0.8rem;
     z-index: 10;
-    background: white;
-    border-radius: 50%;
-    opacity: 1;
 }
 
-/* Encabezado con degradado verde oliva (reemplaza el banner de imagen) */
-.auth-header {
-    background: linear-gradient(135deg, var(--color-olive) 0%, var(--color-olive-dark) 100%);
-    color: white;
-    padding: 2rem 1.5rem 1.5rem;
-    text-align: center;
-}
-
-/* Versión más compacta del encabezado, usada en el modal de Registro (formulario más largo) */
-.auth-header-sm {
-    padding: 1.5rem;
-}
-
-.auth-header i {
-    font-size: 1.8rem;
-    margin-bottom: 0.4rem;
-    display: block;
-}
-
-/* Inputs con ícono a la izquierda (correo, contraseña, teléfono, etc.) */
-.input-icon-group {
-    position: relative;
-}
-
-.input-icon-group i {
-    position: absolute;
-    left: 14px;
-    top: 50%;
-    transform: translateY(-50%);
+/* Cuadrito verde claro con el ícono arriba del título */
+.auth-icon-box {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    background: #E9ECDD;
     color: var(--color-olive);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin: 0 auto 0.7rem;
+}
+
+.auth-title {
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.6rem;
+    margin-bottom: 0.25rem;
+}
+
+.auth-subtitle {
+    text-align: center;
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 1.1rem;
+}
+
+/* Campo con ícono a la izquierda (el ícono se centra con la altura de 50px del input) */
+.auth-field {
+    position: relative;
+    margin-bottom: 0.8rem;
+}
+
+.auth-field-icon {
+    position: absolute;
+    left: 16px;
+    top: 25px;
+    transform: translateY(-50%);
+    z-index: 5;
+    color: #555;
+    pointer-events: none;
+}
+
+.auth-field .form-control,
+.auth-field .form-select {
+    height: calc(3rem + 2px);
+    border-radius: 14px;
+    border: 1px solid #D9D6E6;
+    background-color: #fff;
     font-size: 0.95rem;
+    padding-left: 2.7rem;
 }
 
-.input-icon-group .form-control,
-.input-icon-group .form-select {
-    padding-left: 2.4rem;
-    border-radius: 12px;
+.auth-field .form-control:focus,
+.auth-field .form-select:focus {
+    border-color: var(--color-olive);
+    box-shadow: 0 0 0 0.2rem rgba(122, 141, 40, 0.2);
 }
 
-/* Cuadro de aviso informativo (usado para avisar al adiestrador que su cuenta queda pendiente) */
+/* Etiqueta flotante (registro): deja espacio para el ícono */
+.auth-field .form-floating > label {
+    padding-left: 2.7rem;
+    color: #6c757d;
+}
+
+/* Estados de validación */
+.auth-field .form-control.is-invalid,
+.auth-field .form-select.is-invalid {
+    border-color: #dc3545;
+}
+
+.auth-field .form-control.is-valid,
+.auth-field .form-select.is-valid {
+    border-color: #198754;
+}
+
+.auth-field .invalid-feedback {
+    margin-left: 0.2rem;
+}
+
+/* Casilla (Recordarme / Términos) */
+.auth-check .form-check-input {
+    width: 1.05rem;
+    height: 1.05rem;
+    border-radius: 6px;
+    border-color: #9aa39a;
+}
+
+.auth-check .form-check-input:checked {
+    background-color: var(--color-olive);
+    border-color: var(--color-olive);
+}
+
+.auth-check .form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(122, 141, 40, 0.2);
+    border-color: var(--color-olive);
+}
+
+.auth-link {
+    color: var(--color-olive-dark);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.auth-link:hover {
+    text-decoration: underline;
+    color: var(--color-olive-dark);
+}
+
+/* Requisitos de la contraseña: cada uno se pone verde al cumplirse */
+.pw-rules {
+    list-style: none;
+    padding: 0;
+    margin: -0.2rem 0 1rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.15rem 0.75rem;
+    font-size: 0.76rem;
+    color: #6c757d;
+}
+
+.pw-rules li i {
+    margin-right: 0.4rem;
+}
+
+.pw-rules li.ok {
+    color: #198754;
+}
+
+/* Especialidades del adiestrador como "chips" seleccionables */
+.chip-check input {
+    display: none;
+}
+
+.chip-check label {
+    border: 1px solid #cdd3b0;
+    border-radius: 999px;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+    background: #fff;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.chip-check label:hover {
+    border-color: var(--color-olive);
+}
+
+.chip-check input:checked + label {
+    background: var(--color-olive);
+    border-color: var(--color-olive);
+    color: #fff;
+}
+
+/* Cuadro de aviso informativo (cuenta de adiestrador pendiente) */
 .auth-note {
     background: rgba(122, 141, 40, 0.1);
     border: 1px solid rgba(122, 141, 40, 0.25);
@@ -577,11 +1056,227 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
     color: var(--color-olive-dark);
 }
 
+/* ---------- Registro en 2 pasos: indicador de pasos ---------- */
+.reg-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.reg-step-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #E9ECDD;
+    color: var(--color-olive);
+    font-size: 0.8rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+.reg-step-dot.active,
+.reg-step-dot.done {
+    background: var(--color-olive);
+    color: #fff;
+}
+
+.reg-step-line {
+    width: 38px;
+    height: 2px;
+    background: #D9D6E6;
+    transition: background 0.3s ease;
+}
+
+.reg-step-line.done {
+    background: var(--color-olive);
+}
+
+/* ---------- Registro compacto: que entre completo en pantalla, sin scroll
+   (todo limitado a #registerModal, así que el login no cambia) ---------- */
+#registerModal .modal-dialog {
+    --bs-modal-margin: 0.75rem;
+}
+
+#registerModal .auth-body {
+    padding: 1.3rem 2rem 1.1rem;
+}
+
+#registerModal .auth-icon-box {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    font-size: 1.4rem;
+    margin-bottom: 0.5rem;
+}
+
+#registerModal .auth-title {
+    margin-bottom: 0.15rem;
+}
+
+#registerModal .auth-subtitle {
+    font-size: 0.88rem;
+    margin-bottom: 0.8rem;
+}
+
+#registerModal .reg-steps {
+    margin-bottom: 0.8rem;
+}
+
+#registerModal .auth-field {
+    margin-bottom: 0.65rem;
+}
+
+#registerModal .auth-field .form-control,
+#registerModal .auth-field .form-select {
+    min-height: calc(3rem + 2px);
+    padding-top: 1.35rem;
+    padding-bottom: 0.25rem;
+}
+
+#registerModal .auth-field .form-floating > label {
+    padding-top: 0.8rem;
+    padding-bottom: 0.8rem;
+}
+
+#registerModal .invalid-feedback {
+    font-size: 0.78rem;
+    margin-top: 0.15rem;
+}
+
+#registerModal .pw-rules {
+    margin: -0.1rem 0 0.6rem;
+}
+
+#registerModal .auth-check {
+    margin-bottom: 0.7rem !important;
+}
+
+#registerModal .auth-body > p.text-center {
+    margin-top: 0.8rem !important;
+}
+
+/* Bloque del adiestrador (certificado + servicios) */
+#registerModal #certificadoWrapper {
+    margin-bottom: 0.6rem !important;
+}
+
+#registerModal #certificadoWrapper p {
+    margin: 0.5rem 0 0.35rem !important;
+}
+
+#registerModal .auth-note {
+    padding: 0.45rem 0.7rem;
+    font-size: 0.76rem;
+}
+
+#registerModal #registerCertificado {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.85rem;
+}
+
+#registerModal .chip-check label {
+    padding: 0.2rem 0.65rem;
+    font-size: 0.76rem;
+}
+
+/* Pantallas bajitas: se esconden el ícono y el subtítulo para ganar espacio */
+@media (max-height: 760px) {
+    #registerModal .auth-icon-box,
+    #registerModal .auth-subtitle {
+        display: none;
+    }
+
+    #registerModal .auth-title {
+        font-size: 1.4rem;
+        margin-bottom: 0.6rem;
+    }
+}
+
 
 /* ============================================
-   ENCABEZADO reutilizable para páginas internas
-   (Servicios, Tienda, y cualquier página nueva con foto de fondo arriba)
+   7) PÁGINAS "EN MANTENIMIENTO" Y ENCABEZADO DE PÁGINAS INTERNAS
    ============================================ */
+
+/* Nosotros, Blog, Contacto...: tarjeta centrada y completa en pantalla, sin scroll */
+.maintenance-section {
+    background: var(--color-beige);
+    min-height: 100vh;
+    min-height: 100svh;
+    padding: 90px 0 24px;
+    display: flex;
+    align-items: center;
+}
+
+.maintenance-card {
+    max-width: 540px;
+    margin: 0 auto;
+    background: #FFFDFB;
+    border-radius: 22px;
+    padding: 1.6rem 1.8rem;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+}
+
+.maintenance-tag {
+    display: inline-block;
+    background: var(--color-olive);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    border-radius: 8px;
+    padding: 0.2rem 0.6rem;
+}
+
+.maintenance-title {
+    font-weight: 700;
+    font-size: 2rem;
+    margin: 0.6rem 0 0.3rem;
+}
+
+.maintenance-lead {
+    color: #6c757d;
+    font-size: 0.95rem;
+    margin-bottom: 0;
+}
+
+.maintenance-box {
+    border: 1px solid #DEE2E6;
+    border-radius: 14px;
+    padding: 1rem 1.2rem;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.maintenance-box i {
+    display: block;
+    font-size: 1.8rem;
+    color: var(--color-olive);
+    margin-bottom: 0.3rem;
+}
+
+.maintenance-box p {
+    margin-bottom: 0;
+}
+
+/* Espacios que trae la plantilla (mb-4, mt-4...) dentro de la tarjeta */
+.maintenance-card .mt-4,
+.maintenance-card .mt-5 {
+    margin-top: 1rem !important;
+}
+
+.maintenance-card .mb-4,
+.maintenance-card .mb-5 {
+    margin-bottom: 0.8rem !important;
+}
+
+/* Encabezado reutilizable (Servicios, Tienda y páginas nuevas con foto arriba) */
 .page-header {
     position: relative;
     background-image: url('https://images.unsplash.com/photo-1560807707-8cc77767d783?w=1600');
@@ -596,19 +1291,433 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
     background: rgba(0, 0, 0, 0.55);
 }
 
-/* Botón con borde y texto verde oliva */
-    
-.btn-outline-olive {
-    border: 1px solid var(--color-olive);
-    color: var(--color-olive);
-    background: transparent;
-}
-.btn-outline-olive:hover {
-    background: var(--color-olive);
-    color: white;
+
+/* ============================================
+   8) PANELES DE CLIENTE Y ADIESTRADOR
+   ============================================ */
+.panel-wrap {
+    padding: 100px 0 50px;
+    min-height: 100vh;
 }
 
-/* Tarjeta de vidrio (glass card) */
+/* El contenido del panel no se estira por toda la pantalla */
+.panel-wrap .container {
+    max-width: 1040px;
+}
+
+/* Menos espacio entre tarjetas */
+.panel-wrap .row.g-4 {
+    --bs-gutter-x: 1rem;
+    --bs-gutter-y: 1rem;
+}
+
+/* Aviso "no tienes acceso" */
+.panel-alert {
+    max-width: 700px;
+    margin: 120px auto;
+}
+
+/* Tarjeta de bienvenida */
+.welcome-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 1.3rem 1.6rem;
+    box-shadow: 0 10px 35px rgba(0,0,0,0.07);
+    margin-bottom: 1rem;
+}
+
+.welcome-avatar {
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    background: var(--color-olive);
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.welcome-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.session-badge {
+    display: inline-flex;
+    align-items: center;
+    background: var(--color-olive);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    border-radius: 8px;
+    padding: 0.2rem 0.65rem;
+}
+
+.welcome-title {
+    font-weight: 700;
+    font-size: 1.8rem;
+    margin: 0.3rem 0 0.1rem;
+}
+
+.welcome-sub {
+    color: #6c757d;
+    font-size: 0.95rem;
+}
+
+.btn-logout {
+    border: 1px solid #dc3545;
+    color: #dc3545;
+    background: #fff;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    padding: 0.35rem 0.85rem;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.btn-logout:hover {
+    background: #dc3545;
+    color: #fff;
+}
+
+/* Tarjetas de acceso: al hacer clic abren su sección más abajo */
+.panel-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 1.1rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.panel-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 30px rgba(0,0,0,0.1);
+}
+
+.panel-card.active {
+    border-color: var(--color-olive);
+}
+
+.panel-card-head {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin-bottom: 0.6rem;
+}
+
+.panel-card-head h5 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 1.02rem;
+}
+
+.panel-card-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    background: #E9ECDD;
+    color: var(--color-olive);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+}
+
+.panel-card p {
+    color: #555;
+    flex-grow: 1;
+    font-size: 0.86rem;
+    margin-bottom: 0.8rem;
+}
+
+.btn-panel {
+    width: 100%;
+    border: 1px solid #444;
+    background: #fff;
+    color: #555;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    padding: 0.35rem;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-panel:hover,
+.panel-card.active .btn-panel {
+    background: var(--color-olive);
+    border-color: var(--color-olive);
+    color: #fff;
+}
+
+.panel-section {
+    scroll-margin-top: 90px;
+}
+
+/* Cuadros de contenido dentro del panel (datos, mascotas, solicitudes) */
+.panel-wrap .admin-card {
+    border-radius: 16px;
+    padding: 1.2rem;
+}
+
+.panel-wrap .admin-card h6 {
+    font-size: 0.95rem;
+}
+
+.panel-wrap .form-label {
+    font-size: 0.8rem;
+    margin-bottom: 0.2rem;
+}
+
+.panel-wrap .form-control,
+.panel-wrap .form-select {
+    font-size: 0.88rem;
+    padding: 0.4rem 0.7rem;
+}
+
+.panel-wrap .btn {
+    font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+    .welcome-card { padding: 1.1rem; }
+    .welcome-title { font-size: 1.5rem; }
+}
+
+
+/* ============================================
+   9) VENTANAS FLOTANTES CON INFORMACIÓN (ficha de mascota / servicio)
+   Las genera renderPetCard() de ui-cards.js
+   ============================================ */
+.pet-modal {
+    background: #FBF9F6;
+    border: none;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+}
+
+@media (min-width: 576px) {
+    .pet-dialog { max-width: 560px; }
+}
+
+/* Botón de cerrar redondo, arriba a la derecha */
+.pet-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 5;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    background: #EFEBE4;
+    color: #333;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+}
+
+.pet-close:hover {
+    background: #E3DED5;
+}
+
+.pet-card {
+    position: relative;
+    padding: 1.5rem 1.5rem 1.2rem;
+    overflow: hidden;
+}
+
+/* Huella grande de fondo (decoración) */
+.pet-watermark {
+    position: absolute;
+    right: -10px;
+    top: 40px;
+    width: 130px;
+    color: #F0ECE5;
+    z-index: 0;
+}
+
+.pet-card-top {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    margin-bottom: 1.1rem;
+}
+
+.pet-photo-wrap {
+    position: relative;
+    flex: none;
+    padding: 6px;
+    border-radius: 50%;
+    background: #F4EFE8;
+}
+
+.pet-photo {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    border: 3px solid #fff;
+}
+
+/* Cuando la mascota no tiene foto */
+.pet-photo-empty {
+    background: #E9ECDD;
+    color: var(--color-olive);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pet-photo-empty svg {
+    width: 48px;
+}
+
+.pet-photo-badge {
+    position: absolute;
+    right: 2px;
+    bottom: 6px;
+    width: 30px;
+    height: 30px;
+    font-size: 0.8rem;
+    border-radius: 50%;
+    background: #9CAA82;
+    color: #fff;
+    border: 3px solid #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pet-title h2 {
+    font-weight: 800;
+    font-size: 1.8rem;
+    line-height: 1.1;
+    margin: 0;
+}
+
+.pet-title p {
+    color: #8a8a8a;
+    font-size: 1.05rem;
+    margin: 0.1rem 0 0.4rem;
+}
+
+.pet-title-line {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-olive);
+}
+
+.pet-title-line span {
+    width: 34px;
+    height: 3px;
+    border-radius: 3px;
+    background: #9CAA82;
+}
+
+.pet-title-line svg {
+    width: 14px;
+}
+
+/* Cuadrículas de tarjetas */
+.pet-tiles {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 0.6rem;
+    margin-bottom: 0.6rem;
+}
+
+.pet-tiles-3 { grid-template-columns: repeat(3, 1fr); }
+.pet-tiles-2 { grid-template-columns: repeat(2, 1fr); }
+.pet-tiles-1 { grid-template-columns: 1fr; }
+
+.pet-tile {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: #FDFCFA;
+    border: 1px solid #ECE7DF;
+    border-radius: 14px;
+    padding: 0.55rem 0.75rem;
+}
+
+.pet-tile-icon {
+    width: 34px;
+    height: 34px;
+    flex: none;
+    border-radius: 50%;
+    background: #EDEFE6;
+    color: #3b3b3b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+}
+
+.pet-tile-label {
+    color: #777;
+    font-size: 0.75rem;
+}
+
+.pet-tile-value {
+    color: #222;
+    font-weight: 700;
+    font-size: 0.92rem;
+    line-height: 1.2;
+    text-transform: capitalize;
+}
+
+/* Textos largos (conducta, salud): se respeta lo que escribió el usuario */
+.pet-tile-text {
+    text-transform: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+/* Etiqueta "Sí" / "No" a la derecha de la tarjeta */
+.pet-badge {
+    margin-left: auto;
+    padding: 0.15rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    background: #DDE3C8;
+    color: #4B5A1A;
+}
+
+.pet-badge.no {
+    background: #F6DADA;
+    color: #9B2C2C;
+}
+
+@media (max-width: 640px) {
+    .pet-card-top { flex-direction: column; text-align: center; }
+    .pet-title-line { justify-content: center; }
+    .pet-tiles-3, .pet-tiles-2 { grid-template-columns: 1fr; }
+    .pet-watermark { display: none; }
+}
+
+
+/* ============================================
+   10) REGLAS QUE QUIZÁ YA NO SE USEN
+   Las plantillas que tengo a la vista ya no las usan. Busca el nombre de
+   cada clase en todo el proyecto (Ctrl+Shift+F en VS Code). Si no aparece
+   en ninguna plantilla ni en ningún .js, borra la regla.
+   ============================================ */
 .glass-card {
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(16px);
@@ -618,6 +1727,10 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
     box-shadow: 0 15px 40px rgba(0,0,0,0.2);
 }
 
-.bg-olive {
-    background-color: var(--color-olive) !important;
+.bg-dark-olive {
+    background-color: var(--color-olive-dark);
+}
+
+.auth-link-soft {
+    color: var(--color-olive-dark);
 }

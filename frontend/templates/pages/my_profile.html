@@ -1,39 +1,79 @@
-{% extends 'layouts/base_admin.html' %}
-{% block title %}Mi Perfil | EDUCAN{% endblock %}
+{% extends 'layouts/base.html' %}
+{% block title %}Mi Panel | EDUCAN{% endblock %}
 
 {% block content %}
-<div id="noAccess" class="alert alert-danger d-none m-5">Debes iniciar sesión como cliente para ver esta página.</div>
 
-<div id="profileContent" class="admin-dashboard d-none">
-    <aside class="admin-sidebar">
-        <div class="admin-sidebar-brand">
-            <i class="bi bi-heart-fill me-1"></i> EDUCAN
+<div id="noAccess" class="alert alert-danger d-none panel-alert">
+    Debes iniciar sesión como cliente para ver esta página.
+</div>
+
+<div id="panelContent" class="panel-wrap d-none">
+    <div class="container">
+
+        <!-- Aviso de bienvenida (aparece solo justo después de iniciar sesión) -->
+        <div id="welcomeFlash" class="alert alert-success alert-dismissible d-none mb-3">
+            <i class="bi bi-check-circle-fill me-2"></i><span id="welcomeFlashText"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
         </div>
-        <nav class="admin-nav">
-            <a href="#" class="admin-nav-link active" data-section="datos"><i class="bi bi-person-fill"></i> Mis datos</a>
-            <a href="#" class="admin-nav-link" data-section="mascotas"><i class="bi bi-heart-fill"></i> Mis mascotas</a>
-            <a href="#" class="admin-nav-link" data-section="solicitudes"><i class="bi bi-clipboard2-check-fill"></i> Mis solicitudes</a>
-        </nav>
-        <a href="/" class="admin-nav-link mt-auto"><i class="bi bi-box-arrow-left"></i> Volver al sitio</a>
-    </aside>
 
-    <main class="admin-main">
-        <div class="admin-topbar">
-            <div>
-                <h4 class="fw-bold mb-0" id="welcomeText">Mi perfil</h4>
-                <span class="text-muted small">Gestiona tus datos, mascotas y solicitudes</span>
+        <!-- Tarjeta de bienvenida -->
+        <div class="welcome-card">
+            <div class="d-flex align-items-center gap-4 flex-wrap">
+                <div class="welcome-avatar" id="welcomeAvatar">A</div>
+                <div class="flex-grow-1">
+                    <span class="session-badge"><i class="bi bi-shield-check me-1"></i>Sesión activa</span>
+                    <h1 class="welcome-title" id="welcomeTitle">¡Hola!</h1>
+                    <p class="welcome-sub mb-0">Bienvenido a tu panel de control como <span class="text-olive">Cliente</span>.</p>
+                </div>
+                <button type="button" class="btn-logout" id="panelLogoutBtn">
+                    <i class="bi bi-box-arrow-right me-1"></i>Cerrar sesión
+                </button>
             </div>
-            <div class="admin-avatar" id="profileAvatarTop">A</div>
         </div>
 
-        <!-- ================= Mis datos ================= -->
-        <section class="admin-section" id="section-datos">
+        <!-- Tarjetas de acceso -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="panel-card" data-section="datos">
+                    <div class="panel-card-head">
+                        <span class="panel-card-icon"><i class="bi bi-person-fill"></i></span>
+                        <h5>Mi perfil</h5>
+                    </div>
+                    <p>Actualiza tus datos personales y tu foto de perfil.</p>
+                    <button type="button" class="btn-panel">Editar perfil</button>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="panel-card" data-section="mascotas">
+                    <div class="panel-card-head">
+                        <span class="panel-card-icon"><i class="bi bi-heart-fill"></i></span>
+                        <h5>Mis mascotas</h5>
+                    </div>
+                    <p id="cardMascotasText">Cargando...</p>
+                    <button type="button" class="btn-panel">Gestionar mascotas</button>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="panel-card" data-section="solicitudes">
+                    <div class="panel-card-head">
+                        <span class="panel-card-icon"><i class="bi bi-clipboard2-check-fill"></i></span>
+                        <h5>Mis solicitudes</h5>
+                    </div>
+                    <p id="cardSolicitudesText">Cargando...</p>
+                    <button type="button" class="btn-panel">Ver solicitudes</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= Sección: Mi perfil ================= -->
+        <section class="panel-section d-none" id="section-datos">
             <div class="admin-card mb-4">
                 <h6 class="fw-bold mb-3">Foto de perfil</h6>
                 <div class="d-flex align-items-center gap-3">
                     <img id="fotoPreview" src="https://via.placeholder.com/80" class="rounded-circle" width="80" height="80" style="object-fit: cover;">
                     <div>
                         <input type="file" id="fotoInput" accept="image/*" class="form-control mb-2">
+                        <!-- type="button" evita que este botón se comporte como submit de un formulario -->
                         <button type="button" id="subirFotoBtn" class="btn btn-sm btn-olive">Subir foto</button>
                     </div>
                 </div>
@@ -70,8 +110,8 @@
             </div>
         </section>
 
-        <!-- ================= Mis mascotas ================= -->
-        <section class="admin-section d-none" id="section-mascotas">
+        <!-- ================= Sección: Mis mascotas ================= -->
+        <section class="panel-section d-none" id="section-mascotas">
             <div class="admin-card mb-4">
                 <h6 class="fw-bold mb-3">Agregar / editar mascota</h6>
                 <form id="mascotaForm" class="row g-2">
@@ -107,69 +147,137 @@
                         <label class="form-label small fw-bold">Foto (opcional)</label>
                         <input type="file" class="form-control" id="petFotoForm" accept="image/*">
                     </div>
-                    <div class="col-md-3"><button type="submit" class="btn btn-olive w-100" id="petSubmitBtn">Agregar</button></div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-olive w-100" id="petSubmitBtn">Agregar</button>
+                    </div>
                 </form>
             </div>
             <div id="mascotasContainer" class="row g-3"></div>
         </section>
 
-        <!-- Modal flotante tipo "vidrio" con el detalle de una mascota -->
-        <div class="modal fade" id="petDetailModal" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content glass-card">
-                    <div class="modal-body p-4">
-                        <button type="button" class="btn-close float-end" data-bs-dismiss="modal"></button>
-                        <div id="petDetailBody"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ================= Mis solicitudes ================= -->
-        <section class="admin-section d-none" id="section-solicitudes">
+        <!-- ================= Sección: Mis solicitudes ================= -->
+        <section class="panel-section d-none" id="section-solicitudes">
             <div class="admin-card">
-                <h6 class="fw-bold mb-3">Mis solicitudes de servicio</h6>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0">Mis solicitudes de servicio</h6>
+                    <a href="{% url 'request_service' %}" class="btn btn-sm btn-olive"><i class="bi bi-plus-lg me-1"></i>Nueva solicitud</a>
+                </div>
                 <div id="misSolicitudesPerfil"></div>
             </div>
         </section>
-    </main>
+    </div>
 </div>
+
+<!-- Ventana flotante con la ficha de la mascota (fuera de los bloques ocultos).
+     El contenido lo genera renderPetCard() de ui-cards.js; los estilos son .pet-* en style.css -->
+<div class="modal fade" id="petDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable pet-dialog">
+        <div class="modal-content pet-modal">
+            <button type="button" class="pet-close" data-bs-dismiss="modal" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button>
+            <div class="modal-body p-0" id="petDetailBody"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
 
 {% block extra_js %}
 {% load static %}
-<script src="{% static 'js/main.js' %}"></script>
+<!-- Generador de las fichas flotantes (debe cargarse antes del script de esta página) -->
+<script src="{% static 'js/ui-cards.js' %}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const SESSION_KEYS = ['access_token', 'user_nombre', 'user_rol', 'user_foto'];
     const rol = localStorage.getItem('user_rol');
     const token = localStorage.getItem('access_token');
     const nombre = localStorage.getItem('user_nombre') || 'Usuario';
 
-    if (rol !== 'cliente') {
+    // Solo un cliente con sesión puede ver este panel
+    if (rol !== 'cliente' || !token) {
         document.getElementById('noAccess').classList.remove('d-none');
         return;
     }
-    document.getElementById('profileContent').classList.remove('d-none');
-    document.getElementById('profileAvatarTop').textContent = nombre.charAt(0).toUpperCase();
-
-    // Navegación entre pestañas del sidebar
-    document.querySelectorAll('.admin-nav-link[data-section]').forEach(link => {
-        link.addEventListener('click', function (e) {
-            e.preventDefault();
-            document.querySelectorAll('.admin-nav-link[data-section]').forEach(l => l.classList.remove('active'));
-            this.classList.add('active');
-            document.querySelectorAll('.admin-section').forEach(s => s.classList.add('d-none'));
-            document.getElementById('section-' + this.dataset.section).classList.remove('d-none');
-        });
-    });
+    document.getElementById('panelContent').classList.remove('d-none');
 
     const API = '/api';
     const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+    const authOnly = { 'Authorization': `Bearer ${token}` };   // para subir archivos (sin Content-Type)
+
+    // Escapa texto del usuario antes de ponerlo en el HTML (evita que un nombre con <, > o comillas rompa la página)
+    function esc(t) {
+        return String(t == null ? '' : t).replace(/[&<>"']/g, c =>
+            ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    // Llama a la API y devuelve el JSON; si el token venció (401) cierra la sesión
+    function api(path, options) {
+        return fetch(API + path, options).then(r => {
+            if (r.status === 401) {
+                SESSION_KEYS.forEach(k => localStorage.removeItem(k));
+                window.location.href = '/';
+                throw new Error('Sesión vencida');
+            }
+            return r.json();
+        });
+    }
 
     // ============================================
-    // Mis datos
+    // Bienvenida, aviso y cerrar sesión
+    // ============================================
+    document.getElementById('welcomeTitle').textContent = `¡Hola, ${nombre}!`;
+
+    function setAvatar(url) {
+        const av = document.getElementById('welcomeAvatar');
+        av.textContent = '';
+        if (url) {
+            const img = document.createElement('img');
+            img.src = url;
+            img.alt = nombre;
+            av.appendChild(img);
+        } else {
+            av.textContent = nombre.charAt(0).toUpperCase();
+        }
+    }
+    setAvatar(localStorage.getItem('user_foto'));
+
+    // Mensaje de bienvenida guardado por main.js al iniciar sesión (se muestra una sola vez)
+    try {
+        const msg = sessionStorage.getItem('welcome_msg');
+        if (msg) {
+            document.getElementById('welcomeFlashText').textContent = msg;
+            document.getElementById('welcomeFlash').classList.remove('d-none');
+            sessionStorage.removeItem('welcome_msg');
+        }
+    } catch (e) { /* sessionStorage no disponible */ }
+
+    document.getElementById('panelLogoutBtn').onclick = function () {
+        SESSION_KEYS.forEach(k => localStorage.removeItem(k));
+        window.location.href = '/';
+    };
+
+    // ============================================
+    // Tarjetas de acceso -> abren su sección
+    // ============================================
+    function mostrarSeccion(nombreSeccion) {
+        const seccion = document.getElementById('section-' + nombreSeccion);
+        const yaAbierta = !seccion.classList.contains('d-none');
+
+        document.querySelectorAll('.panel-section').forEach(s => s.classList.add('d-none'));
+        document.querySelectorAll('.panel-card').forEach(c => c.classList.remove('active'));
+        if (yaAbierta) return;   // segundo clic: se cierra
+
+        seccion.classList.remove('d-none');
+        document.querySelector(`.panel-card[data-section="${nombreSeccion}"]`).classList.add('active');
+        seccion.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    document.querySelectorAll('.panel-card').forEach(card => {
+        card.addEventListener('click', () => mostrarSeccion(card.dataset.section));
+    });
+
+    // ============================================
+    // Mi perfil
     // ============================================
     function cargarDatos() {
-        fetch(`${API}/users/me/`, { headers }).then(r => r.json()).then(u => {
+        api('/users/me/', { headers }).then(u => {
             document.getElementById('pNombre').value = u.nombre;
             document.getElementById('pApellido').value = u.apellido;
             document.getElementById('pEmail').value = u.email;
@@ -177,8 +285,7 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('pCiudad').value = u.ciudad || '';
             if (u.foto) {
                 document.getElementById('fotoPreview').src = u.foto;
-                document.getElementById('profileAvatarTop').innerHTML =
-                    `<img src="${u.foto}" class="rounded-circle" width="42" height="42" style="object-fit:cover;">`;
+                setAvatar(u.foto);
             }
         });
     }
@@ -191,7 +298,7 @@ document.addEventListener('DOMContentLoaded', function () {
         errorBox.classList.add('d-none');
         successBox.classList.add('d-none');
 
-        fetch(`${API}/users/me/`, {
+        api('/users/me/', {
             method: 'PATCH', headers,
             body: JSON.stringify({
                 nombre: document.getElementById('pNombre').value,
@@ -199,7 +306,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 telefono: document.getElementById('pTelefono').value,
                 ciudad: document.getElementById('pCiudad').value
             })
-        }).then(r => r.json()).then(result => {
+        }).then(() => {
             successBox.textContent = 'Datos actualizados correctamente.';
             successBox.classList.remove('d-none');
             localStorage.setItem('user_nombre', document.getElementById('pNombre').value);
@@ -209,40 +316,50 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     };
 
+    // Subir/cambiar la foto de perfil
     document.getElementById('subirFotoBtn').onclick = function () {
         const archivo = document.getElementById('fotoInput').files[0];
         if (!archivo) return;
         const formData = new FormData();
         formData.append('foto', archivo);
-        fetch(`${API}/users/upload-photo/`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` },
-            body: formData
-        }).then(r => r.json()).then(result => {
-            document.getElementById('fotoPreview').src = result.foto;
-            localStorage.setItem('user_foto', result.foto);
-            document.getElementById('profileAvatarTop').innerHTML =
-                `<img src="${result.foto}" class="rounded-circle" width="42" height="42" style="object-fit:cover;">`;
-        });
+        api('/users/upload-photo/', { method: 'POST', headers: authOnly, body: formData })
+            .then(result => {
+                if (!result.foto) { alert(result.error || 'No se pudo subir la foto.'); return; }
+                document.getElementById('fotoPreview').src = result.foto;
+                localStorage.setItem('user_foto', result.foto);   // para que el navbar también la muestre
+                setAvatar(result.foto);
+            });
     };
 
     // ============================================
     // Mis mascotas
     // ============================================
+    let mascotasCache = {};   // id -> mascota (así los botones no necesitan meter JSON dentro del HTML)
+
     function cargarMascotas() {
-        fetch(`${API}/pets/`, { headers }).then(r => r.json()).then(mascotas => {
+        api('/pets/', { headers }).then(mascotas => {
+            if (!Array.isArray(mascotas)) return;
+            mascotasCache = {};
+            mascotas.forEach(m => { mascotasCache[m.id] = m; });
+
+            // Texto real de la tarjeta de acceso
+            const n = mascotas.length;
+            document.getElementById('cardMascotasText').textContent = n
+                ? `Tienes ${n} mascota${n !== 1 ? 's' : ''} registrada${n !== 1 ? 's' : ''}.`
+                : 'Aún no has registrado ninguna mascota. Agrega la primera.';
+
             const cont = document.getElementById('mascotasContainer');
-            cont.innerHTML = mascotas.length ? mascotas.map(m => `
+            cont.innerHTML = n ? mascotas.map(m => `
                 <div class="col-md-4">
                     <div class="admin-card">
-                        <div class="d-flex align-items-center gap-2 mb-2" style="cursor:pointer" onclick='mostrarDetalleMascota(${JSON.stringify(m)})'>
-                            <img src="${m.foto || 'https://via.placeholder.com/50'}" class="rounded-circle" width="50" height="50" style="object-fit:cover;">
+                        <div class="d-flex align-items-center gap-2 mb-2" style="cursor:pointer" onclick="mostrarDetalleMascota('${m.id}')">
+                            <img src="${esc(m.foto || 'https://via.placeholder.com/50')}" class="rounded-circle" width="50" height="50" style="object-fit:cover;">
                             <div>
-                                <strong>${m.nombre}</strong><br>
-                                <span class="text-muted small">${m.raza}, ${m.edad} años</span>
+                                <strong>${esc(m.nombre)}</strong><br>
+                                <span class="text-muted small">${esc(m.raza)}, ${esc(m.edad)} años</span>
                             </div>
                         </div>
-                        <button class="btn btn-sm btn-outline-secondary me-1" onclick='editarMascota(${JSON.stringify(m)})'>Editar</button>
+                        <button class="btn btn-sm btn-outline-secondary me-1" onclick="editarMascota('${m.id}')">Editar</button>
                         <button class="btn btn-sm btn-outline-danger" onclick="eliminarMascota('${m.id}')">Eliminar</button>
                     </div>
                 </div>
@@ -251,25 +368,19 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     cargarMascotas();
 
-    window.mostrarDetalleMascota = function (m) {
-        document.getElementById('petDetailBody').innerHTML = `
-            <div class="text-center mb-3">
-                <img src="${m.foto || 'https://via.placeholder.com/100'}" class="rounded-circle mb-2" width="100" height="100" style="object-fit:cover;">
-                <h5 class="fw-bold mb-0">${m.nombre}</h5>
-                <span class="text-muted">${m.raza}</span>
-            </div>
-            <p class="mb-1"><strong>Edad:</strong> ${m.edad} años</p>
-            <p class="mb-1"><strong>Peso:</strong> ${m.peso} kg</p>
-            <p class="mb-1"><strong>Sexo:</strong> ${m.sexo}</p>
-            <p class="mb-1"><strong>Esterilizado:</strong> ${m.esterilizado ? 'Sí' : 'No'}</p>
-            <p class="mb-1"><strong>Vacunas al día:</strong> ${m.vacunas_al_dia ? 'Sí' : 'No'}</p>
-            ${m.conducta ? `<p class="mb-1"><strong>Conducta:</strong> ${m.conducta}</p>` : ''}
-            ${m.salud ? `<p class="mb-0"><strong>Salud:</strong> ${m.salud}</p>` : ''}
-        `;
+    // Ventana flotante con la ficha completa de la mascota
+    // (el diseño lo arma renderPetCard en ui-cards.js)
+    window.mostrarDetalleMascota = function (id) {
+        const m = mascotasCache[id];
+        if (!m) return;
+        document.getElementById('petDetailBody').innerHTML = renderPetCard(m);
         new bootstrap.Modal(document.getElementById('petDetailModal')).show();
     };
 
-    window.editarMascota = function (m) {
+    // Carga la mascota en el formulario para editarla
+    window.editarMascota = function (id) {
+        const m = mascotasCache[id];
+        if (!m) return;
         document.getElementById('petId').value = m.id;
         document.getElementById('petNombre').value = m.nombre;
         document.getElementById('petRaza').value = m.raza;
@@ -281,8 +392,11 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('petConducta').value = m.conducta || '';
         document.getElementById('petSalud').value = m.salud || '';
         document.getElementById('petSubmitBtn').textContent = 'Guardar cambios';
+        document.getElementById('mascotaForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // El campo de foto se deja vacío a propósito: si no eliges una nueva, la actual no se toca.
     };
 
+    // Crea o actualiza una mascota y, si se eligió foto, la sube justo después
     document.getElementById('mascotaForm').onsubmit = function (e) {
         e.preventDefault();
         const form = this;
@@ -298,67 +412,79 @@ document.addEventListener('DOMContentLoaded', function () {
             conducta: document.getElementById('petConducta').value,
             salud: document.getElementById('petSalud').value
         };
-        const url = id ? `${API}/pets/${id}/` : `${API}/pets/`;
+        const path = id ? `/pets/${id}/` : '/pets/';
         const metodo = id ? 'PUT' : 'POST';
 
-        fetch(url, { method: metodo, headers, body: JSON.stringify(datos) })
-            .then(r => r.json())
-            .then(result => {
-                const petId = id || result.id;
-                const foto = document.getElementById('petFotoForm').files[0];
-                const terminar = () => {
-                    form.reset();
-                    document.getElementById('petId').value = '';
-                    document.getElementById('petSubmitBtn').textContent = 'Agregar';
-                    cargarMascotas();
-                };
-                if (foto && petId) {
-                    const formData = new FormData();
-                    formData.append('foto', foto);
-                    fetch(`${API}/pets/${petId}/foto/`, {
-                        method: 'POST',
-                        headers: { 'Authorization': `Bearer ${token}` },
-                        body: formData
-                    }).then(terminar);
-                } else {
-                    terminar();
-                }
-            });
+        api(path, { method: metodo, headers, body: JSON.stringify(datos) }).then(result => {
+            const petId = id || result.id;
+            const foto = document.getElementById('petFotoForm').files[0];
+            const terminar = () => {
+                form.reset();
+                document.getElementById('petId').value = '';
+                document.getElementById('petSubmitBtn').textContent = 'Agregar';
+                cargarMascotas();
+            };
+            if (foto && petId) {
+                const formData = new FormData();
+                formData.append('foto', foto);
+                fetch(`${API}/pets/${petId}/foto/`, { method: 'POST', headers: authOnly, body: formData }).then(terminar);
+            } else {
+                terminar();
+            }
+        });
     };
 
     window.eliminarMascota = function (id) {
-        fetch(`${API}/pets/${id}/`, { method: 'DELETE', headers }).then(() => cargarMascotas());
+        if (!confirm('¿Seguro que quieres eliminar esta mascota?')) return;
+        fetch(`${API}/pets/${id}/`, { method: 'DELETE', headers }).then(r => {
+            if (!r.ok) alert('No se pudo eliminar la mascota (puede tener solicitudes asociadas).');
+            cargarMascotas();
+        });
     };
 
     // ============================================
-    // Mis solicitudes (incluye calificación de servicios completados)
+    // Mis solicitudes (+ calificación de las completadas)
     // ============================================
     function cargarSolicitudesPerfil() {
-        fetch(`${API}/requests/`, { headers }).then(r => r.json()).then(solicitudes => {
+        // Se piden las solicitudes y las reseñas una sola vez
+        Promise.all([
+            api('/requests/', { headers }),
+            api('/reviews/', { headers }).catch(() => [])
+        ]).then(([solicitudes, resenas]) => {
+            if (!Array.isArray(solicitudes)) return;
+            if (!Array.isArray(resenas)) resenas = [];
             const cont = document.getElementById('misSolicitudesPerfil');
+
+            // Texto real de la tarjeta de acceso
+            const cuenta = e => solicitudes.filter(s => s.estado === e).length;
+            document.getElementById('cardSolicitudesText').textContent = solicitudes.length
+                ? `${cuenta('pendiente')} pendiente(s) · ${cuenta('aceptada')} en curso · ${cuenta('completado')} completada(s).`
+                : 'Aún no has hecho ninguna solicitud.';
+
             if (!solicitudes.length) {
                 cont.innerHTML = '<p class="text-muted mb-0">Aún no has hecho ninguna solicitud.</p>';
                 return;
             }
+
             const badgeColor = { pendiente: 'bg-warning text-dark', aceptada: 'bg-success', completado: 'bg-secondary', rechazada: 'bg-danger' };
             cont.innerHTML = solicitudes.map(s => `
                 <div class="border rounded-3 p-3 mb-2">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <strong>${s.servicio}</strong> — ${s.perro_nombre}
-                            <div class="text-muted small">Inicio: ${s.fecha_inicio}</div>
+                            <strong>${esc(s.servicio)}</strong> — ${esc(s.perro_nombre)}
+                            <div class="text-muted small">Inicio: ${esc(s.fecha_inicio)}</div>
                             ${s.estado === 'pendiente' ? `<div class="text-warning small">Esperando desde ${tiempoTranscurrido(s.creado_en)}</div>` : ''}
                         </div>
-                        <span class="badge ${badgeColor[s.estado] || 'bg-secondary'}">${s.estado}</span>
+                        <span class="badge ${badgeColor[s.estado] || 'bg-secondary'}">${esc(s.estado)}</span>
                     </div>
                     ${s.estado === 'aceptada' && s.adiestrador_info ? `
                         <hr>
                         <div class="d-flex align-items-center gap-2">
-                            <img src="${s.adiestrador_info.foto || 'https://via.placeholder.com/50'}" class="rounded-circle" width="50" height="50" style="object-fit:cover;">
+                            <img src="${esc(s.adiestrador_info.foto || 'https://via.placeholder.com/50')}" class="rounded-circle" width="50" height="50" style="object-fit:cover;">
                             <div>
-                                <strong>${s.adiestrador_info.nombre} ${s.adiestrador_info.apellido}</strong>
-                                <div class="text-muted small">${(s.adiestrador_info.especialidades || []).join(', ')}</div>
-                                ${s.adiestrador_info.certificado ? `<a href="${s.adiestrador_info.certificado}" target="_blank" class="small">Ver certificado</a>` : ''}
+                                <strong>${esc(s.adiestrador_info.nombre)} ${esc(s.adiestrador_info.apellido)}</strong>
+                                <div class="text-muted small">${esc((s.adiestrador_info.especialidades || []).join(', '))}</div>
+                                ${s.adiestrador_info.certificado ? `<a href="${esc(s.adiestrador_info.certificado)}" target="_blank" class="small">Ver certificado</a>` : ''}
                             </div>
                         </div>
                     ` : ''}
@@ -366,44 +492,39 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
             `).join('');
 
-            // Para cada solicitud completada, revisa si ya tiene reseña o muestra el formulario
-            solicitudes.filter(s => s.estado === 'completado').forEach(s => cargarResenaDeSolicitud(s.id));
+            // Para cada solicitud completada: muestra su reseña o el formulario para calificar
+            solicitudes.filter(s => s.estado === 'completado').forEach(s => {
+                pintarResena(s.id, resenas.find(r => r.solicitud_id === s.id));
+            });
         });
     }
-    // Esta llamada faltaba: sin ella, la función nunca se ejecutaba y "Mis solicitudes" quedaba vacío
     cargarSolicitudesPerfil();
 
-    // Revisa si esta solicitud ya tiene una reseña (buscando entre todas las reseñas del cliente)
-    function cargarResenaDeSolicitud(solicitudId) {
-        fetch(`${API}/reviews/`, { headers }).then(r => r.json()).then(resenas => {
-            const resenaExistente = resenas.find(r => r.solicitud_id === solicitudId);
-            const zona = document.getElementById(`resenaZona-${solicitudId}`);
-            if (!zona) return;
+    function pintarResena(solicitudId, resena) {
+        const zona = document.getElementById(`resenaZona-${solicitudId}`);
+        if (!zona) return;
 
-            if (resenaExistente) {
-                // Ya calificó este servicio: muestra lo que escribió (y la respuesta del admin, si existe)
-                zona.innerHTML = `
-                    <p class="small fw-bold mb-1">Tu calificación:</p>
-                    <div class="mb-1">${'★'.repeat(resenaExistente.estrellas)}${'☆'.repeat(5 - resenaExistente.estrellas)}</div>
-                    ${resenaExistente.comentario ? `<p class="small text-muted mb-1">"${resenaExistente.comentario}"</p>` : ''}
-                    ${resenaExistente.respuesta_admin ? `<div class="alert alert-light small mb-0 mt-2"><strong>Respuesta de EDUCAN:</strong> ${resenaExistente.respuesta_admin}</div>` : ''}
-                `;
-            } else {
-                // Aún no calificó: muestra el formulario con estrellas clicables
-                zona.innerHTML = `
-                    <p class="small fw-bold mb-2">Califica este servicio:</p>
-                    <div class="d-flex gap-1 mb-2 estrellas-select" data-solicitud="${solicitudId}">
-                        ${[1,2,3,4,5].map(n => `<i class="bi bi-star fs-5" style="cursor:pointer" data-valor="${n}"></i>`).join('')}
-                    </div>
-                    <textarea class="form-control form-control-sm mb-2" id="comentario-${solicitudId}" placeholder="Comentario (opcional)"></textarea>
-                    <button type="button" class="btn btn-sm btn-olive" onclick="enviarResena(${solicitudId})">Enviar calificación</button>
-                `;
-                activarEstrellas(zona.querySelector('.estrellas-select'));
-            }
-        });
+        if (resena) {
+            zona.innerHTML = `
+                <p class="small fw-bold mb-1">Tu calificación:</p>
+                <div class="mb-1 text-warning">${'★'.repeat(resena.estrellas)}${'☆'.repeat(5 - resena.estrellas)}</div>
+                ${resena.comentario ? `<p class="small text-muted mb-1">"${esc(resena.comentario)}"</p>` : ''}
+                ${resena.respuesta_admin ? `<div class="alert alert-light small mb-0 mt-2"><strong>Respuesta de EDUCAN:</strong> ${esc(resena.respuesta_admin)}</div>` : ''}
+            `;
+        } else {
+            zona.innerHTML = `
+                <p class="small fw-bold mb-2">Califica este servicio:</p>
+                <div class="d-flex gap-1 mb-2 estrellas-select" data-solicitud="${solicitudId}">
+                    ${[1, 2, 3, 4, 5].map(n => `<i class="bi bi-star fs-5" style="cursor:pointer" data-valor="${n}"></i>`).join('')}
+                </div>
+                <textarea class="form-control form-control-sm mb-2" id="comentario-${solicitudId}" placeholder="Comentario (opcional)"></textarea>
+                <button type="button" class="btn btn-sm btn-olive" onclick="enviarResena(${solicitudId})">Enviar calificación</button>
+            `;
+            activarEstrellas(zona.querySelector('.estrellas-select'));
+        }
     }
 
-    // Hace que las estrellas se puedan seleccionar con clic (guarda el valor elegido en un atributo data-*)
+    // Las estrellas se eligen con clic; el valor se guarda en un atributo del contenedor
     function activarEstrellas(contenedor) {
         const iconos = contenedor.querySelectorAll('i');
         contenedor.dataset.valorElegido = 0;
@@ -412,15 +533,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 const valor = parseInt(this.dataset.valor);
                 contenedor.dataset.valorElegido = valor;
                 iconos.forEach(i => {
-                    i.classList.toggle('bi-star-fill', parseInt(i.dataset.valor) <= valor);
-                    i.classList.toggle('bi-star', parseInt(i.dataset.valor) > valor);
-                    i.classList.toggle('text-warning', parseInt(i.dataset.valor) <= valor);
+                    const activa = parseInt(i.dataset.valor) <= valor;
+                    i.classList.toggle('bi-star-fill', activa);
+                    i.classList.toggle('bi-star', !activa);
+                    i.classList.toggle('text-warning', activa);
                 });
             });
         });
     }
 
-    // Envía la calificación al backend
     window.enviarResena = function (solicitudId) {
         const contenedor = document.querySelector(`.estrellas-select[data-solicitud="${solicitudId}"]`);
         const estrellas = parseInt(contenedor.dataset.valorElegido);
@@ -430,18 +551,14 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         const comentario = document.getElementById(`comentario-${solicitudId}`).value;
 
-        fetch(`${API}/reviews/`, {
+        api('/reviews/', {
             method: 'POST', headers,
             body: JSON.stringify({ solicitud_id: solicitudId, estrellas, comentario })
-        }).then(r => r.json()).then(result => {
-            if (result.error) {
-                alert(result.error);
-                return;
-            }
-            cargarResenaDeSolicitud(solicitudId);
+        }).then(result => {
+            if (result.error) { alert(result.error); return; }
+            cargarSolicitudesPerfil();
         });
     };
 });
 </script>
-{% endblock %}
 {% endblock %}

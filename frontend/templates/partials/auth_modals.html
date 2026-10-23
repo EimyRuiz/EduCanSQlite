@@ -1,146 +1,228 @@
-<!-- Modal Login -->
-<div class="modal fade" id="loginModal" tabindex="-1">
+<!-- ===================== MODAL: INICIAR SESIÓN ===================== -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginTitle" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content rounded-4 auth-card">
-      <button type="button" class="btn-close auth-close" data-bs-dismiss="modal"></button>
-      <div class="auth-header">
-        <i class="bi bi-heart-fill"></i>
-        <h4 class="fw-bold mb-1">¡Bienvenido de nuevo!</h4>
-        <p class="mb-0 small">Inicia sesión para continuar en EDUCAN</p>
-      </div>
-      <div class="modal-body p-4">
+    <div class="modal-content auth-card">
+      <button type="button" class="btn-close auth-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+
+      <div class="auth-body modal-body">
+        <div class="auth-icon-box"><i class="bi bi-shield-lock-fill"></i></div>
+        <h3 class="auth-title" id="loginTitle">Iniciar Sesión</h3>
+        <p class="auth-subtitle">Ingresa tus credenciales para acceder a EDUCAN</p>
+
+        <!-- Errores que devuelve el servidor (los escribe main.js) y avisos informativos -->
         <div id="loginError" class="alert alert-danger d-none"></div>
-        <form id="loginForm">
-          <div class="mb-3">
-            <label class="form-label small fw-bold">Correo electrónico</label>
-            <div class="input-icon-group">
-              <i class="bi bi-envelope"></i>
-              <input type="email" class="form-control" id="loginEmail" placeholder="Ingresa tu correo electrónico" required>
-            </div>
+        <div id="loginInfo" class="alert alert-info d-none"></div>
+
+        <form id="loginForm" novalidate>
+          <div class="auth-field">
+            <i class="bi bi-envelope auth-field-icon"></i>
+            <input type="email" class="form-control" id="loginEmail" placeholder="Correo electrónico" autocomplete="email">
+            <div class="invalid-feedback"></div>
           </div>
-          <div class="mb-2">
-            <label class="form-label small fw-bold">Contraseña</label>
-            <div class="input-icon-group">
-              <i class="bi bi-lock"></i>
-              <input type="password" class="form-control" id="loginPassword" placeholder="Ingresa tu contraseña" required>
-            </div>
+
+          <div class="auth-field">
+            <i class="bi bi-lock auth-field-icon"></i>
+            <input type="password" class="form-control" id="loginPassword" placeholder="Contraseña" autocomplete="current-password">
+            <div class="invalid-feedback"></div>
           </div>
-          <button type="submit" class="btn btn-olive w-100 rounded-pill mt-3 py-2">Entrar</button>
+
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="form-check auth-check mb-0">
+              <input class="form-check-input" type="checkbox" id="loginRemember">
+              <label class="form-check-label small text-muted" for="loginRemember">Recordarme</label>
+            </div>
+            <a href="#" class="auth-link small" id="forgotPasswordLink">¿Olvidaste tu contraseña?</a>
+          </div>
+
+          <button type="submit" class="btn-auth w-100">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
+          </button>
         </form>
-        <p class="text-center small mt-3 mb-0">
-          ¿No tienes cuenta? <a href="#" class="text-olive fw-bold" data-bs-toggle="modal" data-bs-target="#registerModal" data-bs-dismiss="modal">Regístrate</a>
+
+        <p class="text-center text-muted small mt-4 mb-0">
+          ¿Aún no tienes una cuenta?
+          <a href="#" class="auth-link" data-bs-toggle="modal" data-bs-target="#registerModal" data-bs-dismiss="modal">Regístrate aquí</a>
         </p>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Modal Registro -->
-<div class="modal fade" id="registerModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content rounded-4 auth-card">
-      <button type="button" class="btn-close auth-close" data-bs-dismiss="modal"></button>
-      <div class="auth-header auth-header-sm">
-        <i class="bi bi-heart-fill"></i>
-        <h5 class="fw-bold mb-0">¡Crea tu cuenta!</h5>
-      </div>
-      <div class="modal-body p-4">
+
+<!-- ===================== MODAL: REGISTRO (2 pasos) ===================== -->
+<div class="modal fade" id="registerModal" tabindex="-1" aria-labelledby="registerTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+    <div class="modal-content auth-card">
+      <button type="button" class="btn-close auth-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+
+      <div class="auth-body modal-body">
+        <div class="auth-icon-box"><i class="bi bi-person-plus-fill"></i></div>
+        <h3 class="auth-title" id="registerTitle">Crear Cuenta</h3>
+        <p class="auth-subtitle">Únete a la mayor red de adiestramiento y bienestar canino</p>
+
+        <!-- Indicador de pasos -->
+        <div class="reg-steps">
+          <span class="reg-step-dot active" id="regDot1">1</span>
+          <span class="reg-step-line" id="regLine"></span>
+          <span class="reg-step-dot" id="regDot2">2</span>
+          <span class="ms-2" id="regStepLabel">Paso 1 de 2 · Datos personales</span>
+        </div>
+
         <div id="registerError" class="alert alert-danger d-none"></div>
         <div id="registerSuccess" class="alert alert-success d-none"></div>
 
-        <form id="registerForm">
-          <div class="row g-2">
-            <div class="col-md-6">
-              <label class="form-label small fw-bold">Nombre</label>
-              <div class="input-icon-group">
-                <i class="bi bi-person"></i>
-                <input type="text" class="form-control" id="registerNombre" placeholder="Tu nombre" required>
+        <form id="registerForm" novalidate>
+
+          <!-- ============ PASO 1: DATOS PERSONALES ============ -->
+          <div id="regStep1">
+            <div class="row gx-3">
+              <div class="col-md-6">
+                <div class="auth-field">
+                  <i class="bi bi-person auth-field-icon"></i>
+                  <div class="form-floating">
+                    <input type="text" class="form-control" id="registerNombre" placeholder=" " autocomplete="given-name">
+                    <label for="registerNombre">Nombre</label>
+                    <div class="invalid-feedback"></div>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-bold">Apellido</label>
-              <div class="input-icon-group">
-                <i class="bi bi-person"></i>
-                <input type="text" class="form-control" id="registerApellido" placeholder="Tu apellido" required>
+              <div class="col-md-6">
+                <div class="auth-field">
+                  <i class="bi bi-person auth-field-icon"></i>
+                  <div class="form-floating">
+                    <input type="text" class="form-control" id="registerApellido" placeholder=" " autocomplete="family-name">
+                    <label for="registerApellido">Apellido</label>
+                    <div class="invalid-feedback"></div>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-bold">Correo</label>
-              <div class="input-icon-group">
-                <i class="bi bi-envelope"></i>
-                <input type="email" class="form-control" id="registerEmail" placeholder="Tu correo" required>
+              <div class="col-md-6">
+                <div class="auth-field">
+                  <i class="bi bi-envelope auth-field-icon"></i>
+                  <div class="form-floating">
+                    <input type="email" class="form-control" id="registerEmail" placeholder=" " autocomplete="email">
+                    <label for="registerEmail">Correo electrónico</label>
+                    <div class="invalid-feedback"></div>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-bold">Teléfono</label>
-              <div class="input-icon-group">
-                <i class="bi bi-telephone"></i>
-                <input type="tel" class="form-control" id="registerTelefono" placeholder="Tu teléfono" required>
+              <div class="col-md-6">
+                <div class="auth-field">
+                  <i class="bi bi-telephone auth-field-icon"></i>
+                  <div class="form-floating">
+                    <input type="tel" class="form-control" id="registerTelefono" placeholder=" " autocomplete="tel">
+                    <label for="registerTelefono">Teléfono</label>
+                    <div class="invalid-feedback"></div>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label small fw-bold">Ciudad</label>
-              <div class="input-icon-group">
-                <i class="bi bi-geo-alt"></i>
-                <input type="text" class="form-control" id="registerCiudad" placeholder="Ciudad">
+              <div class="col-12">
+                <div class="auth-field">
+                  <i class="bi bi-geo-alt auth-field-icon"></i>
+                  <div class="form-floating">
+                    <input type="text" class="form-control" id="registerCiudad" placeholder=" " autocomplete="address-level2">
+                    <label for="registerCiudad">Ciudad</label>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label small fw-bold">Rol</label>
-              <select class="form-select" id="registerRol" required>
-                <option value="cliente" selected>Cliente</option>
-                <option value="adiestrador">Adiestrador</option>
-              </select>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label small fw-bold">Contraseña</label>
-              <input type="password" class="form-control" id="registerPassword" placeholder="Contraseña" minlength="6" required>
             </div>
 
-            <div class="col-12 d-none" id="certificadoWrapper">
-                <div class="auth-note mt-2">
-                    <i class="bi bi-info-circle me-1"></i> Como adiestrador, adjunta tu certificado y selecciona en qué servicios quieres trabajar. Tu cuenta quedará pendiente de aprobación.
-                </div>
-                <input type="file" class="form-control mt-2" id="registerCertificado" accept=".pdf,image/*">
-
-                <p class="small fw-bold mt-3 mb-1">¿En qué servicios quieres trabajar?</p>
-                <div class="d-flex flex-wrap gap-3">
-                    <div class="form-check">
-                        <input class="form-check-input especialidad-registro" type="checkbox" value="Adiestramiento básico" id="regEsp1">
-                        <label class="form-check-label small" for="regEsp1">Adiestramiento básico</label>
-                    </div>
-                    <div class="form-check">
-                      <input class="form-check-input especialidad-registro" type="checkbox" value="Cachorros y socialización" id="regEsp2">
-                        <label class="form-check-label small" for="regEsp2">Cachorros y socialización</label>
-                   </div>
-                    <div class="form-check">
-                        <input class="form-check-input especialidad-registro" type="checkbox" value="Modificación de conducta" id="regEsp3">
-                        <label class="form-check-label small" for="regEsp3">Modificación de conducta</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input especialidad-registro" type="checkbox" value="Ansiedad por separación" id="regEsp4">
-                        <label class="form-check-label small" for="regEsp4">Ansiedad por separación</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input especialidad-registro" type="checkbox" value="Entrenamiento avanzado" id="regEsp5">
-                        <label class="form-check-label small" for="regEsp5">Entrenamiento avanzado</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input especialidad-registro" type="checkbox" value="Agility y deportes caninos" id="regEsp6">
-                        <label class="form-check-label small" for="regEsp6">Agility y deportes caninos</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input especialidad-registro" type="checkbox" value="Paseos y ejercicio" id="regEsp7">
-                      <label class="form-check-label small" for="regEsp7">Paseos y ejercicio</label>
-                    </div>
-                </div>
-            </div>
+            <button type="submit" class="btn-auth w-100 mt-2">
+              Continuar<i class="bi bi-arrow-right ms-2"></i>
+            </button>
           </div>
 
-          <button type="submit" class="btn btn-olive w-100 rounded-pill mt-3 py-2">Crear cuenta</button>
+          <!-- ============ PASO 2: PERFIL, CONTRASEÑA Y TÉRMINOS ============ -->
+          <div id="regStep2" class="d-none">
+            <div class="auth-field">
+              <i class="bi bi-person-badge auth-field-icon"></i>
+              <div class="form-floating">
+                <!-- Los value (cliente / adiestrador) son los que espera el backend -->
+                <select class="form-select" id="registerRol">
+                  <option value="cliente" selected>Cliente (Propietario de perro)</option>
+                  <option value="adiestrador">Adiestrador (Entrenador certificado)</option>
+                </select>
+                <label for="registerRol">Tipo de perfil</label>
+              </div>
+            </div>
+
+            <!-- Solo para adiestradores (main.js lo muestra/oculta según el rol) -->
+            <div class="d-none mb-3" id="certificadoWrapper">
+              <div class="auth-note">
+                <i class="bi bi-info-circle me-1"></i>
+                Como adiestrador, adjunta tu certificado (PDF o imagen) y elige en qué servicios quieres trabajar.
+                Tu cuenta quedará pendiente de aprobación por el administrador.
+              </div>
+              <input type="file" class="form-control mt-2" id="registerCertificado" accept=".pdf,image/*">
+              <div class="small text-danger mt-1 d-none" id="certificadoError"></div>
+
+              <p class="small fw-bold mt-3 mb-2">¿En qué servicios quieres trabajar?</p>
+              <div class="d-flex flex-wrap gap-2">
+                <div class="chip-check"><input class="especialidad-registro" type="checkbox" value="Adiestramiento básico" id="regEsp1"><label for="regEsp1">Adiestramiento básico</label></div>
+                <div class="chip-check"><input class="especialidad-registro" type="checkbox" value="Cachorros y socialización" id="regEsp2"><label for="regEsp2">Cachorros y socialización</label></div>
+                <div class="chip-check"><input class="especialidad-registro" type="checkbox" value="Modificación de conducta" id="regEsp3"><label for="regEsp3">Modificación de conducta</label></div>
+                <div class="chip-check"><input class="especialidad-registro" type="checkbox" value="Ansiedad por separación" id="regEsp4"><label for="regEsp4">Ansiedad por separación</label></div>
+                <div class="chip-check"><input class="especialidad-registro" type="checkbox" value="Entrenamiento avanzado" id="regEsp5"><label for="regEsp5">Entrenamiento avanzado</label></div>
+                <div class="chip-check"><input class="especialidad-registro" type="checkbox" value="Agility y deportes caninos" id="regEsp6"><label for="regEsp6">Agility y deportes caninos</label></div>
+                <div class="chip-check"><input class="especialidad-registro" type="checkbox" value="Paseos y ejercicio" id="regEsp7"><label for="regEsp7">Paseos y ejercicio</label></div>
+              </div>
+            </div>
+
+            <div class="row gx-3">
+              <div class="col-md-6">
+                <div class="auth-field">
+                  <i class="bi bi-lock auth-field-icon"></i>
+                  <div class="form-floating">
+                    <input type="password" class="form-control" id="registerPassword" placeholder=" " autocomplete="new-password">
+                    <label for="registerPassword">Contraseña</label>
+                    <div class="invalid-feedback"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="auth-field">
+                  <i class="bi bi-check-circle auth-field-icon"></i>
+                  <div class="form-floating">
+                    <input type="password" class="form-control" id="registerPasswordConfirm" placeholder=" " autocomplete="new-password">
+                    <label for="registerPasswordConfirm">Confirmar</label>
+                    <div class="invalid-feedback"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Requisitos de la contraseña: se van poniendo en verde mientras se escribe -->
+            <ul class="pw-rules" id="pwRules">
+              <li data-rule="length"><i class="bi bi-circle"></i>Mínimo 8 caracteres</li>
+              <li data-rule="upper"><i class="bi bi-circle"></i>Una letra mayúscula</li>
+              <li data-rule="lower"><i class="bi bi-circle"></i>Una letra minúscula</li>
+              <li data-rule="number"><i class="bi bi-circle"></i>Un número</li>
+            </ul>
+
+            <!-- Términos -->
+            <div class="form-check auth-check mb-3">
+              <input class="form-check-input" type="checkbox" id="registerTerminos">
+              <label class="form-check-label small" for="registerTerminos">
+                Acepto los <a href="/terminos/" target="_blank" class="auth-link-soft">Términos de Servicio</a>
+                y la <a href="/privacidad/" target="_blank" class="auth-link-soft">Política de Privacidad</a>.
+              </label>
+              <div class="invalid-feedback">Debes aceptar los términos para continuar.</div>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="button" class="btn-auth-outline" id="regBackBtn">
+                <i class="bi bi-arrow-left me-2"></i>Atrás
+              </button>
+              <button type="submit" class="btn-auth flex-grow-1">
+                <i class="bi bi-arrow-right-circle me-2"></i>Completar Registro
+              </button>
+            </div>
+          </div>
         </form>
-        <p class="text-center small mt-2 mb-0">
-          ¿Ya tienes cuenta? <a href="#" class="text-olive fw-bold" data-bs-toggle="modal" data-bs-target="#loginModal" data-bs-dismiss="modal">Inicia sesión</a>
+
+        <p class="text-center text-muted small mt-4 mb-0">
+          ¿Ya tienes una cuenta registrada?
+          <a href="#" class="auth-link" data-bs-toggle="modal" data-bs-target="#loginModal" data-bs-dismiss="modal">Inicia sesión aquí</a>
         </p>
       </div>
     </div>

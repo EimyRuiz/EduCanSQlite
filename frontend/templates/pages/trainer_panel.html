@@ -1,42 +1,77 @@
-{% extends 'layouts/base_admin.html' %}
+{% extends 'layouts/base.html' %}
 {% block title %}Panel Adiestrador | EDUCAN{% endblock %}
 
 {% block content %}
-<div id="noAccess" class="alert alert-danger d-none m-5">No tienes permiso para ver esta página.</div>
-<div id="noAprobado" class="alert alert-warning d-none m-5">Tu cuenta de adiestrador aún está pendiente de aprobación.</div>
 
-<div id="trainerContent" class="admin-dashboard d-none">
-    <aside class="admin-sidebar">
-        <div class="admin-sidebar-brand">
-            <i class="bi bi-heart-fill me-1"></i> EDUCAN
+<div id="noAccess" class="alert alert-danger d-none panel-alert">No tienes permiso para ver esta página.</div>
+
+<div id="panelContent" class="panel-wrap d-none">
+    <div class="container">
+
+        <div id="welcomeFlash" class="alert alert-success alert-dismissible d-none mb-3">
+            <i class="bi bi-check-circle-fill me-2"></i><span id="welcomeFlashText"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
         </div>
-        <nav class="admin-nav">
-            <a href="#" class="admin-nav-link" data-section="miperfil"><i class="bi bi-person-fill"></i> Mi perfil</a>
-            <a href="#" class="admin-nav-link active" data-section="disponibles"><i class="bi bi-list-check"></i> Solicitudes disponibles</a>
-            <a href="#" class="admin-nav-link" data-section="agenda"><i class="bi bi-calendar-week"></i> Mi agenda</a>
-        </nav>
-        <a href="/" class="admin-nav-link mt-auto"><i class="bi bi-box-arrow-left"></i> Volver al sitio</a>
-    </aside>
 
-    <main class="admin-main">
-        <div class="admin-topbar">
-            <div>
-                <h4 class="fw-bold mb-0" id="welcomeText">Bienvenido</h4>
-                <span class="text-muted small">Panel de adiestrador</span>
+        <!-- Tarjeta de bienvenida -->
+        <div class="welcome-card">
+            <div class="d-flex align-items-center gap-4 flex-wrap">
+                <div class="welcome-avatar" id="welcomeAvatar">A</div>
+                <div class="flex-grow-1">
+                    <span class="session-badge"><i class="bi bi-shield-check me-1"></i>Sesión activa</span>
+                    <h1 class="welcome-title" id="welcomeTitle">¡Hola!</h1>
+                    <p class="welcome-sub mb-0">Bienvenido a tu panel de control como <span class="text-olive">Adiestrador</span>.</p>
+                </div>
+                <button type="button" class="btn-logout" id="panelLogoutBtn">
+                    <i class="bi bi-box-arrow-right me-1"></i>Cerrar sesión
+                </button>
             </div>
-            <div class="admin-avatar" id="adminAvatar">A</div>
         </div>
 
-        <!-- Solicitudes disponibles (según su especialidad) -->
-        <section class="admin-section" id="section-disponibles">
+        <!-- Tarjetas de acceso -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="panel-card" data-section="disponibles">
+                    <div class="panel-card-head">
+                        <span class="panel-card-icon"><i class="bi bi-list-check"></i></span>
+                        <h5>Solicitudes disponibles</h5>
+                    </div>
+                    <p id="cardDisponiblesText">Cargando...</p>
+                    <button type="button" class="btn-panel">Ver solicitudes</button>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="panel-card" data-section="agenda">
+                    <div class="panel-card-head">
+                        <span class="panel-card-icon"><i class="bi bi-calendar-week"></i></span>
+                        <h5>Mi agenda</h5>
+                    </div>
+                    <p id="cardAgendaText">Cargando...</p>
+                    <button type="button" class="btn-panel">Ver agenda</button>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="panel-card" data-section="miperfil">
+                    <div class="panel-card-head">
+                        <span class="panel-card-icon"><i class="bi bi-person-fill"></i></span>
+                        <h5>Mi perfil</h5>
+                    </div>
+                    <p id="cardPerfilText">Cargando...</p>
+                    <button type="button" class="btn-panel">Editar perfil</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= Solicitudes disponibles (según su especialidad) ================= -->
+        <section class="panel-section d-none" id="section-disponibles">
             <div class="admin-card">
                 <h6 class="fw-bold mb-3">Solicitudes disponibles para ti</h6>
                 <div id="disponiblesContainer"></div>
             </div>
         </section>
 
-        <!-- Mi agenda (en curso + historial de completados) -->
-        <section class="admin-section d-none" id="section-agenda">
+        <!-- ================= Mi agenda (en curso + historial de completados) ================= -->
+        <section class="panel-section d-none" id="section-agenda">
             <div class="admin-card mb-4">
                 <h6 class="fw-bold mb-3">Servicios en curso</h6>
                 <div id="agendaContainer"></div>
@@ -47,8 +82,8 @@
             </div>
         </section>
 
-        <!-- Mi perfil: datos personales del adiestrador + especialidades que ya tiene aprobadas -->
-        <section class="admin-section d-none" id="section-miperfil">
+        <!-- ================= Mi perfil ================= -->
+        <section class="panel-section d-none" id="section-miperfil">
             <div class="admin-card mb-4">
                 <h6 class="fw-bold mb-3">Foto de perfil</h6>
                 <div class="d-flex align-items-center gap-3">
@@ -96,83 +131,154 @@
                 <div id="misEspecialidades" class="d-flex flex-wrap gap-2"></div>
             </div>
         </section>
-    </main>
-</div>
-
-<!-- Detalle flotante (estilo vidrio) de una solicitud, al hacer clic en una tarjeta de "Mi agenda" -->
-<div class="modal fade" id="agendaDetailModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content glass-card">
-            <div class="modal-body p-4">
-                <button type="button" class="btn-close float-end" data-bs-dismiss="modal"></button>
-                <div id="agendaDetailBody"></div>
-            </div>
-        </div>
     </div>
 </div>
 
+<!-- Ventana flotante con la ficha del perro y los datos del servicio, al hacer clic en una tarjeta de la agenda.
+     El contenido lo genera renderPetCard() de ui-cards.js; los estilos son .pet-* en style.css -->
+<div class="modal fade" id="agendaDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable pet-dialog">
+        <div class="modal-content pet-modal">
+            <button type="button" class="pet-close" data-bs-dismiss="modal" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button>
+            <div class="modal-body p-0" id="agendaDetailBody"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
 {% block extra_js %}
+{% load static %}
+<!-- Generador de las fichas flotantes (debe cargarse antes del script de esta página) -->
+<script src="{% static 'js/ui-cards.js' %}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const SESSION_KEYS = ['access_token', 'user_nombre', 'user_rol', 'user_foto'];
     const rol = localStorage.getItem('user_rol');
     const token = localStorage.getItem('access_token');
     const nombre = localStorage.getItem('user_nombre') || 'Adiestrador';
 
-    // Solo un adiestrador puede ver este panel
-    if (rol !== 'adiestrador') {
+    // Solo un adiestrador con sesión puede ver este panel
+    if (rol !== 'adiestrador' || !token) {
         document.getElementById('noAccess').classList.remove('d-none');
         return;
     }
-
-    document.getElementById('trainerContent').classList.remove('d-none');
-    document.getElementById('welcomeText').textContent = 'Bienvenido, ' + nombre;
-    document.getElementById('adminAvatar').textContent = nombre.charAt(0).toUpperCase();
-
-    // Navegación entre las 3 pestañas del sidebar
-    document.querySelectorAll('.admin-nav-link[data-section]').forEach(link => {
-        link.addEventListener('click', function (e) {
-            e.preventDefault();
-            document.querySelectorAll('.admin-nav-link[data-section]').forEach(l => l.classList.remove('active'));
-            this.classList.add('active');
-            document.querySelectorAll('.admin-section').forEach(s => s.classList.add('d-none'));
-            document.getElementById('section-' + this.dataset.section).classList.remove('d-none');
-        });
-    });
+    document.getElementById('panelContent').classList.remove('d-none');
 
     const API = '/api';
     const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+    const authOnly = { 'Authorization': `Bearer ${token}` };
+
+    const duracionTexto = {
+        corto: 'Corto plazo (menos de 1 mes)',
+        mediano: 'Mediano plazo (1 a 6 meses)',
+        largo: 'Largo plazo (6 meses a 1 año)',
+        muy_largo: 'Muy largo plazo (más de 1 año)'
+    };
+
+    // Escapa texto del usuario antes de ponerlo en el HTML
+    function esc(t) {
+        return String(t == null ? '' : t).replace(/[&<>"']/g, c =>
+            ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    // Llama a la API y devuelve el JSON; si el token venció (401) cierra la sesión
+    function api(path, options) {
+        return fetch(API + path, options).then(r => {
+            if (r.status === 401) {
+                SESSION_KEYS.forEach(k => localStorage.removeItem(k));
+                window.location.href = '/';
+                throw new Error('Sesión vencida');
+            }
+            return r.json();
+        });
+    }
 
     // ============================================
-    // Solicitudes: disponibles (pendientes de su especialidad),
-    // en curso (aceptadas) e historial (completadas)
+    // Bienvenida, aviso y cerrar sesión
     // ============================================
+    document.getElementById('welcomeTitle').textContent = `¡Hola, ${nombre}!`;
+
+    function setAvatar(url) {
+        const av = document.getElementById('welcomeAvatar');
+        av.textContent = '';
+        if (url) {
+            const img = document.createElement('img');
+            img.src = url;
+            img.alt = nombre;
+            av.appendChild(img);
+        } else {
+            av.textContent = nombre.charAt(0).toUpperCase();
+        }
+    }
+    setAvatar(localStorage.getItem('user_foto'));
+
+    try {
+        const msg = sessionStorage.getItem('welcome_msg');
+        if (msg) {
+            document.getElementById('welcomeFlashText').textContent = msg;
+            document.getElementById('welcomeFlash').classList.remove('d-none');
+            sessionStorage.removeItem('welcome_msg');
+        }
+    } catch (e) { /* sessionStorage no disponible */ }
+
+    document.getElementById('panelLogoutBtn').onclick = function () {
+        SESSION_KEYS.forEach(k => localStorage.removeItem(k));
+        window.location.href = '/';
+    };
+
+    // ============================================
+    // Tarjetas de acceso -> abren su sección
+    // ============================================
+    function mostrarSeccion(nombreSeccion) {
+        const seccion = document.getElementById('section-' + nombreSeccion);
+        const yaAbierta = !seccion.classList.contains('d-none');
+
+        document.querySelectorAll('.panel-section').forEach(s => s.classList.add('d-none'));
+        document.querySelectorAll('.panel-card').forEach(c => c.classList.remove('active'));
+        if (yaAbierta) return;
+
+        seccion.classList.remove('d-none');
+        document.querySelector(`.panel-card[data-section="${nombreSeccion}"]`).classList.add('active');
+        seccion.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    document.querySelectorAll('.panel-card').forEach(card => {
+        card.addEventListener('click', () => mostrarSeccion(card.dataset.section));
+    });
+
+    // ============================================
+    // Solicitudes: disponibles / en curso / completadas
+    // ============================================
+    let solicitudesCache = {};   // id -> solicitud (para abrir el detalle sin meter JSON en el HTML)
+
     function cargarSolicitudes() {
-        fetch(`${API}/requests/`, { headers })
-            .then(r => r.json())
-            .then(solicitudes => {
-                const disponibles = solicitudes.filter(s => s.estado === 'pendiente');
-                const enCurso = solicitudes.filter(s => s.estado === 'aceptada');
-                const completados = solicitudes.filter(s => s.estado === 'completado');
+        api('/requests/', { headers }).then(solicitudes => {
+            if (!Array.isArray(solicitudes)) return;
+            solicitudesCache = {};
+            solicitudes.forEach(s => { solicitudesCache[s.id] = s; });
 
-                const contDisp = document.getElementById('disponiblesContainer');
-                contDisp.innerHTML = disponibles.length
-                    ? disponibles.map(renderSolicitudDisponible).join('')
-                    : '<p class="text-muted mb-0">No hay solicitudes disponibles en tus especialidades por ahora.</p>';
+            const disponibles = solicitudes.filter(s => s.estado === 'pendiente');
+            const enCurso = solicitudes.filter(s => s.estado === 'aceptada');
+            const completados = solicitudes.filter(s => s.estado === 'completado');
 
-                // Le pasamos "true" para que muestre el botón de completar y NO el badge verde
-                const contAgenda = document.getElementById('agendaContainer');
-                contAgenda.innerHTML = enCurso.length
-                    ? enCurso.sort((a, b) => a.fecha_inicio.localeCompare(b.fecha_inicio))
-                        .map(s => renderSolicitudAgenda(s, true)).join('')
-                    : '<p class="text-muted mb-0">Aún no tienes servicios en curso.</p>';
+            // Textos reales de las tarjetas de acceso
+            document.getElementById('cardDisponiblesText').textContent = disponibles.length
+                ? `Hay ${disponibles.length} solicitud${disponibles.length !== 1 ? 'es' : ''} esperando adiestrador en tus especialidades.`
+                : 'No hay solicitudes nuevas en tus especialidades por ahora.';
+            document.getElementById('cardAgendaText').textContent =
+                `${enCurso.length} servicio(s) en curso · ${completados.length} completado(s).`;
 
-                // Le pasamos "false" para que muestre el badge verde y NO el botón de completar
-                const contCompletados = document.getElementById('completadosContainer');
-                contCompletados.innerHTML = completados.length
-                    ? completados.sort((a, b) => b.fecha_inicio.localeCompare(a.fecha_inicio))
-                        .map(s => renderSolicitudAgenda(s, false)).join('')
-                    : '<p class="text-muted mb-0">Aún no has completado ningún servicio.</p>';
-            });
+            document.getElementById('disponiblesContainer').innerHTML = disponibles.length
+                ? disponibles.map(renderSolicitudDisponible).join('')
+                : '<p class="text-muted mb-0">No hay solicitudes disponibles en tus especialidades por ahora.</p>';
+
+            document.getElementById('agendaContainer').innerHTML = enCurso.length
+                ? enCurso.sort((a, b) => a.fecha_inicio.localeCompare(b.fecha_inicio)).map(s => renderSolicitudAgenda(s, true)).join('')
+                : '<p class="text-muted mb-0">Aún no tienes servicios en curso.</p>';
+
+            document.getElementById('completadosContainer').innerHTML = completados.length
+                ? completados.sort((a, b) => b.fecha_inicio.localeCompare(a.fecha_inicio)).map(s => renderSolicitudAgenda(s, false)).join('')
+                : '<p class="text-muted mb-0">Aún no has completado ningún servicio.</p>';
+        });
     }
     cargarSolicitudes();
 
@@ -181,88 +287,74 @@ document.addEventListener('DOMContentLoaded', function () {
             <div class="border rounded-3 p-3 mb-3">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <strong>${s.servicio}</strong>
-                        <div class="text-muted small">Duración: ${s.duracion} · Inicio deseado: ${s.fecha_inicio}</div>
+                        <strong>${esc(s.servicio)}</strong>
+                        <div class="text-muted small">Duración: ${esc(duracionTexto[s.duracion] || s.duracion)} · Inicio deseado: ${esc(s.fecha_inicio)}</div>
                     </div>
                     <button class="btn btn-sm btn-olive" onclick="aceptarSolicitud('${s.id}')">Aceptar</button>
                 </div>
                 <hr>
-                <p class="small mb-1"><strong>Perro:</strong> ${s.perro_nombre} (${s.perro_raza}, ${s.perro_edad} años, ${s.perro_peso}kg, ${s.perro_sexo})</p>
-                ${s.perro_conducta ? `<p class="small mb-1"><strong>Conducta:</strong> ${s.perro_conducta}</p>` : ''}
-                ${s.perro_salud ? `<p class="small mb-0"><strong>Salud:</strong> ${s.perro_salud}</p>` : ''}
+                <p class="small mb-1"><strong>Perro:</strong> ${esc(s.perro_nombre)} (${esc(s.perro_raza)}, ${esc(s.perro_edad)} años, ${esc(s.perro_peso)}kg, ${esc(s.perro_sexo)})</p>
+                ${s.perro_conducta ? `<p class="small mb-1"><strong>Conducta:</strong> ${esc(s.perro_conducta)}</p>` : ''}
+                ${s.perro_salud ? `<p class="small mb-0"><strong>Salud:</strong> ${esc(s.perro_salud)}</p>` : ''}
             </div>`;
     }
 
-    // enCurso = true  -> tarjeta "en curso": muestra el botón "Marcar como completado"
-    // enCurso = false -> tarjeta del historial: muestra el badge verde "Completado"
+    // Cada tarjeta de la agenda es clicable: abre la ficha flotante con el detalle completo
     function renderSolicitudAgenda(s, enCurso) {
         return `
             <div class="border rounded-3 p-3 mb-3">
-                <div style="cursor:pointer" onclick='mostrarDetalleAgenda(${JSON.stringify(s)})'>
-                    <strong>${s.servicio}</strong> — ${s.perro_nombre}
-                    <div class="text-muted small">Inicio: ${s.fecha_inicio} · Duración: ${s.duracion}</div>
+                <div style="cursor:pointer" onclick="mostrarDetalleAgenda('${s.id}')">
+                    <strong>${esc(s.servicio)}</strong> — ${esc(s.perro_nombre)}
+                    <div class="text-muted small">Inicio: ${esc(s.fecha_inicio)} · Duración: ${esc(duracionTexto[s.duracion] || s.duracion)}</div>
                     ${!enCurso ? '<span class="badge bg-success mt-1">Completado</span>' : ''}
                 </div>
                 ${enCurso ? `<button class="btn btn-sm btn-olive mt-2" onclick="completarSolicitud('${s.id}')">Marcar como completado</button>` : ''}
             </div>`;
     }
 
-    window.completarSolicitud = function (id) {
-        if (!confirm('¿Confirmas que este servicio ya fue completado?')) return;
-        fetch(`${API}/requests/${id}/completar/`, { method: 'POST', headers })
-            .then(r => r.json())
-            .then(result => {
-                if (result.error) {
-                    alert(result.error);
-                }
-                cargarSolicitudes();
-            });
+    window.aceptarSolicitud = function (id) {
+        api(`/requests/${id}/aceptar/`, { method: 'POST', headers }).then(result => {
+            if (result.error) alert(result.error);
+            cargarSolicitudes();
+        });
     };
 
-    window.mostrarDetalleAgenda = function (s) {
-        const duracionTexto = {
-            corto: 'Corto plazo (menos de 1 mes)',
-            mediano: 'Mediano plazo (1 a 6 meses)',
-            largo: 'Largo plazo (6 meses a 1 año)',
-            muy_largo: 'Muy largo plazo (más de 1 año)'
-        };
-        document.getElementById('agendaDetailBody').innerHTML = `
-            <div class="text-center mb-3">
-                <img src="${s.perro_foto || 'https://via.placeholder.com/100'}" class="rounded-circle mb-2" width="100" height="100" style="object-fit:cover;">
-                <h5 class="fw-bold mb-0">${s.perro_nombre}</h5>
-                <span class="text-muted">${s.perro_raza}</span>
-            </div>
-            <p class="mb-1"><strong>Servicio:</strong> ${s.servicio}</p>
-            <p class="mb-1"><strong>Duración estimada:</strong> ${duracionTexto[s.duracion] || s.duracion}</p>
-            <p class="mb-1"><strong>Fecha de inicio:</strong> ${s.fecha_inicio}</p>
-            <hr>
-            <p class="mb-1"><strong>Edad:</strong> ${s.perro_edad} años</p>
-            <p class="mb-1"><strong>Peso:</strong> ${s.perro_peso} kg</p>
-            <p class="mb-1"><strong>Sexo:</strong> ${s.perro_sexo}</p>
-            <p class="mb-1"><strong>Esterilizado:</strong> ${s.perro_esterilizado ? 'Sí' : 'No'}</p>
-            <p class="mb-1"><strong>Vacunas al día:</strong> ${s.perro_vacunas_al_dia ? 'Sí' : 'No'}</p>
-            ${s.perro_conducta ? `<p class="mb-1"><strong>Conducta:</strong> ${s.perro_conducta}</p>` : ''}
-            ${s.perro_salud ? `<p class="mb-0"><strong>Salud:</strong> ${s.perro_salud}</p>` : ''}
-        `;
+    window.completarSolicitud = function (id) {
+        if (!confirm('¿Confirmas que este servicio ya fue completado?')) return;
+        api(`/requests/${id}/completar/`, { method: 'POST', headers }).then(result => {
+            if (result.error) alert(result.error);
+            cargarSolicitudes();
+        });
+    };
+
+    // Ventana flotante: ficha del perro + 3 tarjetas con los datos del servicio arriba
+    window.mostrarDetalleAgenda = function (id) {
+        const s = solicitudesCache[id];
+        if (!s) return;
+        document.getElementById('agendaDetailBody').innerHTML = renderPetCard({
+            foto: s.perro_foto,
+            nombre: s.perro_nombre,
+            raza: s.perro_raza,
+            edad: s.perro_edad,
+            peso: s.perro_peso,
+            sexo: s.perro_sexo,
+            esterilizado: s.perro_esterilizado,
+            vacunas_al_dia: s.perro_vacunas_al_dia,
+            conducta: s.perro_conducta,
+            salud: s.perro_salud
+        }, [
+            { icon: 'bi-clipboard2-check', label: 'Servicio', value: s.servicio },
+            { icon: 'bi-hourglass-split', label: 'Duración estimada', value: duracionTexto[s.duracion] || s.duracion },
+            { icon: 'bi-calendar-event', label: 'Fecha de inicio', value: s.fecha_inicio }
+        ]);
         new bootstrap.Modal(document.getElementById('agendaDetailModal')).show();
     };
 
-    window.aceptarSolicitud = function (id) {
-        fetch(`${API}/requests/${id}/aceptar/`, { method: 'POST', headers })
-            .then(r => r.json())
-            .then(result => {
-                if (result.error) {
-                    alert(result.error);
-                }
-                cargarSolicitudes();
-            });
-    };
-
     // ============================================
-    // Mi perfil (adiestrador): datos personales + foto + especialidades aprobadas
+    // Mi perfil: datos personales + foto + especialidades aprobadas
     // ============================================
     function cargarDatosTrainer() {
-        fetch(`${API}/users/me/`, { headers }).then(r => r.json()).then(u => {
+        api('/users/me/', { headers }).then(u => {
             document.getElementById('tNombre').value = u.nombre;
             document.getElementById('tApellido').value = u.apellido;
             document.getElementById('tEmail').value = u.email;
@@ -270,15 +362,18 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('tCiudad').value = u.ciudad || '';
             if (u.foto) {
                 document.getElementById('fotoPreviewTrainer').src = u.foto;
-                document.getElementById('adminAvatar').innerHTML =
-                    `<img src="${u.foto}" class="rounded-circle" width="42" height="42" style="object-fit:cover;">`;
+                setAvatar(u.foto);
             }
 
-            const cont = document.getElementById('misEspecialidades');
+            // Servicios que el admin ya le aprobó, como badges
             const especialidades = u.especialidades || [];
-            cont.innerHTML = especialidades.length
-                ? especialidades.map(esp => `<span class="badge bg-olive text-white">${esp}</span>`).join('')
+            document.getElementById('misEspecialidades').innerHTML = especialidades.length
+                ? especialidades.map(esp => `<span class="badge bg-olive text-white">${esc(esp)}</span>`).join('')
                 : '<p class="text-muted small mb-0">Aún no tienes ninguna especialidad aprobada.</p>';
+
+            document.getElementById('cardPerfilText').textContent = especialidades.length
+                ? `Ofreces ${especialidades.length} servicio${especialidades.length !== 1 ? 's' : ''}. Actualiza tus datos y tu foto.`
+                : 'Actualiza tus datos y tu foto de perfil.';
         });
     }
     cargarDatosTrainer();
@@ -290,7 +385,7 @@ document.addEventListener('DOMContentLoaded', function () {
         errorBox.classList.add('d-none');
         successBox.classList.add('d-none');
 
-        fetch(`${API}/users/me/`, {
+        api('/users/me/', {
             method: 'PATCH', headers,
             body: JSON.stringify({
                 nombre: document.getElementById('tNombre').value,
@@ -298,7 +393,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 telefono: document.getElementById('tTelefono').value,
                 ciudad: document.getElementById('tCiudad').value
             })
-        }).then(r => r.json()).then(() => {
+        }).then(() => {
             successBox.textContent = 'Datos actualizados correctamente.';
             successBox.classList.remove('d-none');
             localStorage.setItem('user_nombre', document.getElementById('tNombre').value);
@@ -313,18 +408,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!archivo) return;
         const formData = new FormData();
         formData.append('foto', archivo);
-        fetch(`${API}/users/upload-photo/`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` },
-            body: formData
-        }).then(r => r.json()).then(result => {
+        api('/users/upload-photo/', { method: 'POST', headers: authOnly, body: formData }).then(result => {
+            if (!result.foto) { alert(result.error || 'No se pudo subir la foto.'); return; }
             document.getElementById('fotoPreviewTrainer').src = result.foto;
-            document.getElementById('adminAvatar').innerHTML =
-                `<img src="${result.foto}" class="rounded-circle" width="42" height="42" style="object-fit:cover;">`;
-            localStorage.setItem('user_foto', result.foto);
+            localStorage.setItem('user_foto', result.foto);   // para que el navbar también la muestre
+            setAvatar(result.foto);
         });
     };
 });
 </script>
-{% endblock %}
 {% endblock %}

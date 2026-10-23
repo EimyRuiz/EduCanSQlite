@@ -1,0 +1,24 @@
+{% extends 'layouts/base.html' %}
+{% block title %}{{ section }} | EDUCAN{% endblock %}
+
+{% block content %}
+<section class="maintenance-section">
+    <div class="container">
+        <div class="maintenance-card text-center">
+            <span class="maintenance-tag">EDUCAN • {{ section }}</span>
+            <h1 class="maintenance-title">{{ section }}</h1>
+            <p class="maintenance-lead">{{ lead }}</p>
+
+            <div class="maintenance-box">
+                <i class="bi bi-tools"></i>
+                <p class="mb-0">Esta sección está en mantenimiento. Estamos trabajando para tenerla lista muy pronto.</p>
+            </div>
+
+            <!-- Sin d-inline-block ni px-4: el tamaño y el centrado vienen de la regla de botones en style.css -->
+            <a href="/" class="btn-auth mt-4">
+                <i class="bi bi-arrow-left"></i>Volver al Inicio
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
