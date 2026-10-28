@@ -33,6 +33,7 @@ urlpatterns = [
     path('api/requests/', include('apps.requests.urls')),
     path('api/pets/', include('apps.pets.urls')),
     path('api/reviews/', include('apps.reviews.urls')),
+    path('api/community/', include('apps.community.urls')),
     path('api/contact/', ContactoView.as_view()),
     path('api/contact/<int:pk>/leido/', ContactoLeidoView.as_view()),
 ]

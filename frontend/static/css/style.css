@@ -2231,3 +2231,98 @@ html { scroll-behavior: smooth; }
 .sv-faq summary::after { content: '+'; color: var(--ed-olive); font-weight: 400; font-size: 1.2rem; line-height: 1; }
 .sv-faq[open] summary::after { content: '\2212'; }
 .sv-faq p { margin: .6rem 0 0; color: var(--ed-muted); font-size: .88rem; }
+
+
+/* ==========================================================================
+   17. Blog de la comunidad (clases .cm-*)
+   ========================================================================== */
+.cm-container { max-width: 1180px; }
+
+/* Encabezado */
+.cm-title { font-family: 'Rubik', 'Poppins', sans-serif; font-weight: 800; color: var(--ed-ink); line-height: 1.2; font-size: clamp(2rem, 4.6vw, 3.4rem); }
+.cm-head { padding-bottom: 1.6rem; border-bottom: 1px solid var(--ed-line); }
+.cm-search { position: relative; display: block; margin: 0; }
+.cm-search i { position: absolute; left: 1.1rem; top: 50%; transform: translateY(-50%); color: var(--ed-olive-dark); }
+.cm-search input { width: 100%; border: 1px solid var(--ed-line); background: #fff; border-radius: 999px; padding: .75rem 1rem .75rem 2.8rem; font-size: .9rem; }
+.cm-search input:focus { outline: none; border-color: var(--ed-olive); box-shadow: 0 0 0 3px rgba(122, 141, 40, .15); }
+
+/* Pestañas Todas / Siguiendo */
+.cm-tabs { display: flex; gap: .5rem; }
+.cm-tab { border: 1px solid var(--ed-line); background: transparent; color: var(--ed-ink); border-radius: 999px; padding: .4rem 1.1rem; font-size: .85rem; font-weight: 600; }
+.cm-tab:hover { background: #fff; }
+.cm-tab.active { background: var(--ed-olive); border-color: var(--ed-olive); color: #fff; }
+
+/* Tarjeta de publicación */
+.cm-post { background: #fff; border: 1px solid var(--ed-line); border-radius: 24px; padding: 1.5rem 1.6rem 1.3rem; }
+.cm-nombre { color: var(--ed-ink); }
+.cm-texto { white-space: pre-wrap; word-break: break-word; color: var(--ed-ink); margin-bottom: .9rem; line-height: 1.55; }
+.cm-hash { color: var(--ed-olive-dark); font-weight: 600; }
+.cm-foto { display: block; width: 100%; max-height: 420px; object-fit: cover; border-radius: 6px; margin-bottom: 1rem; }
+
+/* Avatares */
+.cm-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.cm-avatar-lg { width: 44px; height: 44px; }
+.cm-avatar-md { width: 40px; height: 40px; }
+.cm-avatar-sm { width: 32px; height: 32px; font-size: .8rem !important; }
+.cm-avatar-ph { display: inline-flex; align-items: center; justify-content: center; background: rgba(122, 141, 40, .15); color: var(--ed-olive-dark); font-weight: 700; font-size: 1rem; }
+.cm-badge { display: inline-block; background: var(--ed-olive); color: #fff; font-size: .62rem; font-weight: 700; padding: .1rem .5rem; border-radius: 999px; vertical-align: middle; }
+
+/* Seguir y menú de tres puntos */
+.cm-follow { border: 1px solid var(--ed-olive); color: var(--ed-olive-dark); background: transparent; border-radius: 999px; padding: .25rem .9rem; font-size: .78rem; font-weight: 600; }
+.cm-follow:hover { background: rgba(122, 141, 40, .12); }
+.cm-follow.on { background: var(--ed-olive); color: #fff; }
+.cm-follow-wide { display: block; width: 100%; background: #fff; padding: .55rem 1rem; font-size: .85rem; border-color: var(--ed-line); }
+.cm-follow-wide.on { border-color: var(--ed-olive); }
+.cm-more { border: 0; background: transparent; color: var(--ed-muted); font-size: 1.1rem; padding: .2rem .5rem; }
+.cm-icon { border: 0; background: transparent; color: #b42318; font-size: .9rem; padding: .2rem .4rem; align-self: flex-start; }
+
+/* Fila de acciones: patita, ¡Guau! comentar, compartir */
+.cm-acciones { display: flex; align-items: center; gap: 1.1rem; flex-wrap: wrap; margin-top: .2rem; padding: .3rem .2rem 0; }
+.cm-like { display: inline-flex; align-items: center; gap: .45rem; border: 0; background: transparent; color: var(--ed-muted); font-weight: 700; font-size: .9rem; border-radius: 999px; padding: .4rem .9rem; }
+.cm-like svg { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; }
+.cm-like:hover { color: var(--ed-olive-dark); }
+.cm-like.on { background: #E9ECDD; color: var(--ed-olive-dark); }
+.cm-like.on svg { fill: currentColor; }
+.cm-comentar, .cm-compartir { display: inline-flex; align-items: center; gap: .5rem; border: 0; background: transparent; color: var(--ed-ink); font-size: .88rem; padding: .4rem 0; }
+.cm-compartir { color: var(--ed-muted); }
+.cm-compartir:hover, .cm-comentar:hover { color: var(--ed-olive-dark); }
+.cm-guau { display: inline-block; border: 1.5px solid var(--ed-olive); border-radius: 50%; color: var(--ed-olive-dark); font-size: .58rem; font-weight: 800; padding: .35rem .6rem; line-height: 1; }
+.cm-patitas { padding: .2rem .3rem 0 1rem; }
+.cm-ver { border: 0; background: transparent; padding: 0 0 0 1rem; display: block; }
+
+/* Conversación */
+.cm-comentarios { border-top: 1px solid var(--ed-line); margin-top: .8rem; padding-top: .9rem; }
+.cm-conv { font-weight: 700; font-size: .85rem; color: var(--ed-ink); margin-bottom: .8rem; }
+.cm-com { display: flex; gap: .6rem; margin-bottom: .7rem; }
+.cm-com-body { background: #F7F2EA; border-radius: 16px; padding: .5rem .9rem; }
+.cm-form-com { display: flex; align-items: center; gap: .6rem; margin-top: .6rem; }
+.cm-form-com input { flex: 1; border: 0; background: #F7F2EA; border-radius: 999px; padding: .65rem 1rem; font-size: .88rem; }
+.cm-form-com input:focus { outline: none; box-shadow: 0 0 0 2px rgba(122, 141, 40, .3); }
+.cm-form-com button { border: 0; background: transparent; color: var(--ed-olive-dark); font-size: 1.1rem; }
+
+/* Columna lateral */
+.cm-box { background: #fff; border: 1px solid var(--ed-line); border-radius: 24px; padding: 1.3rem; }
+.cm-box-title { font-family: 'Rubik', 'Poppins', sans-serif; font-weight: 700; font-size: 1rem; color: var(--ed-ink); }
+
+.cm-area { width: 100%; border: 0; border-top: 1px solid var(--ed-line); border-radius: 0; padding: .8rem 0 .4rem; font-size: .9rem; resize: vertical; background: transparent; }
+.cm-area:focus { outline: none; }
+.cm-composer-pie { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem; }
+.cm-add { display: inline-flex; align-items: center; gap: .5rem; font-size: .85rem; font-weight: 600; color: var(--ed-ink); cursor: pointer; }
+.cm-add i { color: var(--ed-olive-dark); font-size: 1.1rem; }
+.cm-previa { max-height: 140px; border-radius: 12px; }
+
+.cm-feature { background: #E8EADB; border-radius: 24px; overflow: hidden; }
+.cm-feature img { display: block; width: 100%; height: 160px; object-fit: cover; }
+.cm-feature-body { padding: 1.2rem 1.3rem 1.4rem; }
+.cm-feature-title { font-family: 'Rubik', 'Poppins', sans-serif; font-weight: 800; font-size: 1.4rem; line-height: 1.25; color: var(--ed-ink); }
+.cm-feature-btn { width: 100%; border: 0; background: #fff; color: var(--ed-olive-dark); font-weight: 600; font-size: .88rem; border-radius: 999px; padding: .65rem 1rem; }
+.cm-feature-btn:hover { background: var(--ed-olive); color: #fff; }
+
+.cm-fam { margin-bottom: 1rem; }
+.cm-fam:last-child { margin-bottom: 0; }
+
+.cm-circle { display: flex; gap: .8rem; width: 100%; text-align: left; border: 0; background: transparent; padding: .5rem 0; }
+.cm-circle-ico { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 12px; background: var(--ed-soft); color: var(--ed-olive-dark); font-size: 1.15rem; }
+.cm-circle b { display: block; font-size: .88rem; color: var(--ed-ink); }
+.cm-circle small { display: block; color: var(--ed-muted); font-size: .78rem; }
+.cm-circle em { font-style: normal; font-size: .78rem; font-weight: 600; color: var(--ed-olive-dark); }

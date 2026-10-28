@@ -20,6 +20,7 @@
             <a href="#" class="admin-nav-link" data-section="pedidos"><i class="bi bi-box-seam-fill"></i> Pedidos</a>
             <a href="#" class="admin-nav-link" data-section="resenas"><i class="bi bi-star-fill"></i> Reseñas</a>
             <a href="#" class="admin-nav-link" data-section="mensajes"><i class="bi bi-envelope-fill"></i> Mensajes</a>
+            <a href="#" class="admin-nav-link" data-section="comunidad"><i class="bi bi-people"></i> Comunidad <span id="badgeComunidad" class="badge bg-danger ms-auto d-none">0</span></a>
             <a href="#" class="admin-nav-link" data-section="imagenes"><i class="bi bi-images"></i> Imágenes del sitio</a>
         </nav>
         <a href="/" class="admin-nav-link mt-auto"><i class="bi bi-box-arrow-left"></i> Volver al sitio</a>
@@ -207,6 +208,29 @@
             </div>
         </section>
 
+        <!-- Comunidad: moderación del blog (contenido bloqueado por el filtro, cuentas suspendidas y lo más reciente) -->
+        <section class="admin-section d-none" id="section-comunidad">
+            <div id="comMensaje" class="small"></div>
+
+            <div class="admin-card mb-4">
+                <h6 class="fw-bold mb-1"><i class="bi bi-shield-exclamation me-1"></i>Por revisar</h6>
+                <p class="text-muted small mb-3">Comentarios y publicaciones que el filtro de vocabulario detuvo. Nadie más los ve.
+                    <strong>Eliminar</strong> confirma la falta (la suspensión sigue). <strong>Restaurar</strong> lo publica y levanta la suspensión.</p>
+                <div id="comPorRevisar"></div>
+            </div>
+
+            <div class="admin-card mb-4">
+                <h6 class="fw-bold mb-3"><i class="bi bi-person-lock me-1"></i>Cuentas suspendidas o desactivadas</h6>
+                <div id="comRestricciones"></div>
+            </div>
+
+            <div class="admin-card">
+                <h6 class="fw-bold mb-1"><i class="bi bi-clock-history me-1"></i>Lo más reciente de la comunidad</h6>
+                <p class="text-muted small mb-3">Si algo es inapropiado y no lo atrapó el filtro, puedes eliminarlo o desactivar la cuenta de quien lo publicó.</p>
+                <div id="comRecientes"></div>
+            </div>
+        </section>
+
         <!-- Imágenes fijas del sitio: banner de la tienda, fotos de Nosotros y galería del inicio -->
         <section class="admin-section d-none" id="section-imagenes">
             <div class="admin-card">
@@ -311,6 +335,7 @@ document.addEventListener('DOMContentLoaded', function () {
             // Estas secciones se recargan cada vez que se abren
             if (this.dataset.section === 'resenas') cargarResenas();
             if (this.dataset.section === 'mensajes') cargarMensajes();
+            if (this.dataset.section === 'comunidad') cargarComunidad();
             if (this.dataset.section === 'pedidos') cargarPedidos();
             if (this.dataset.section === 'imagenes') cargarImagenesSitio();
         });
@@ -334,6 +359,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
     cargarUsuarios();
+    actualizarBadgeComunidad();
 
     // ============================================
     // Adiestradores pendientes de aprobación
@@ -813,6 +839,125 @@ document.addEventListener('DOMContentLoaded', function () {
             await enviar(`${API}/contact/${id}/leido/`, 'POST');
             cargarMensajes();
         } catch (err) { /* si falla, la lista queda como estaba */ }
+    };
+
+    // ============================================
+    // Comunidad: moderación del blog
+    // ============================================
+    // Número rojo en el menú con lo que está esperando revisión
+    async function actualizarBadgeComunidad() {
+        try {
+            const r = await enviar(`${API}/community/moderation/resumen/`, 'GET');
+            const badge = document.getElementById('badgeComunidad');
+            badge.textContent = r.pendientes;
+            badge.classList.toggle('d-none', !r.pendientes);
+        } catch (err) { /* sin aviso si falla */ }
+    }
+
+    function hastaTexto(iso) {
+        return iso ? 'Hasta el ' + new Date(iso).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })
+                   : 'Sin fecha de fin (hasta que la reactives)';
+    }
+
+    async function cargarComunidad() {
+        let d;
+        try {
+            d = await enviar(`${API}/community/moderation/`, 'GET');
+        } catch (err) {
+            aviso('comMensaje', err.message, false);
+            return;
+        }
+        const badge = document.getElementById('badgeComunidad');
+        badge.textContent = d.pendientes;
+        badge.classList.toggle('d-none', !d.pendientes);
+
+        // ---- Por revisar ----
+        const bloque = (tipo, etiqueta, x, contexto) => `
+            <div class="border border-danger-subtle rounded-3 p-3 mb-2 bg-danger-subtle bg-opacity-25">
+                <div class="d-flex justify-content-between flex-wrap gap-2 mb-1">
+                    <div>
+                        <span class="badge bg-secondary me-1">${etiqueta}</span>
+                        <strong>${esc(x.autor.nombre)}</strong>
+                        <span class="text-muted small ms-1">${esc(x.autor.email)} · ${esc(new Date(x.creado_en).toLocaleString('es-CO'))}</span>
+                    </div>
+                    <span class="badge bg-danger">Palabra detectada: ${esc(x.palabra)}</span>
+                </div>
+                <p class="mb-1">${esc(x.texto)}</p>
+                ${contexto ? `<p class="text-muted small mb-2">En la publicación: "${esc(contexto)}..."</p>` : ''}
+                <button class="btn btn-sm btn-olive me-1" onclick="moderarContenido('${tipo}', ${x.id}, 'restaurar')">Restaurar (no es ofensivo)</button>
+                <button class="btn btn-sm btn-outline-danger me-1" onclick="moderarContenido('${tipo}', ${x.id}, 'eliminar')">Eliminar</button>
+                <button class="btn btn-sm btn-outline-dark" onclick="moderarUsuario(${x.autor.id}, 'desactivar')">Desactivar cuenta</button>
+            </div>`;
+        const pendientes = d.comentarios_bloqueados.map(c => bloque('comments', 'Comentario', c, c.publicacion))
+            .concat(d.publicaciones_bloqueadas.map(p => bloque('posts', 'Publicación', p, '')));
+        document.getElementById('comPorRevisar').innerHTML = pendientes.join('')
+            || '<p class="text-muted mb-0"><i class="bi bi-check-circle text-success me-1"></i>No hay nada por revisar.</p>';
+
+        // ---- Cuentas suspendidas ----
+        document.getElementById('comRestricciones').innerHTML = d.restricciones.map(r => `
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 border rounded-3 p-3 mb-2">
+                <div>
+                    <strong>${esc(r.usuario.nombre)}</strong> <span class="text-muted small">${esc(r.usuario.email)}</span>
+                    <div class="small ${r.activa ? 'text-danger' : 'text-muted'}">${esc(r.motivo)} · ${esc(hastaTexto(r.hasta))}${r.activa ? '' : ' (ya venció)'}</div>
+                </div>
+                <button class="btn btn-sm btn-outline-success" onclick="moderarUsuario(${r.usuario.id}, 'reactivar')">Reactivar cuenta</button>
+            </div>`).join('') || '<p class="text-muted mb-0">No hay cuentas suspendidas.</p>';
+
+        // ---- Recientes ----
+        const filaPub = p => `
+            <div class="d-flex justify-content-between align-items-start gap-2 border rounded-3 p-2 mb-2">
+                <div class="d-flex gap-2">
+                    ${miniatura(p.imagen)}
+                    <div><span class="badge bg-secondary me-1">Publicación</span><strong class="small">${esc(p.autor.nombre)}</strong>
+                        <div class="small">${esc(p.texto)}</div></div>
+                </div>
+                <div class="text-nowrap">
+                    <button class="btn btn-sm btn-outline-danger" onclick="borrarContenidoComunidad('posts', ${p.id})">Eliminar</button>
+                    <button class="btn btn-sm btn-outline-dark" onclick="moderarUsuario(${p.autor.id}, 'desactivar')">Desactivar cuenta</button>
+                </div>
+            </div>`;
+        const filaCom = c => `
+            <div class="d-flex justify-content-between align-items-start gap-2 border rounded-3 p-2 mb-2">
+                <div><span class="badge bg-light text-dark border me-1">Comentario</span><strong class="small">${esc(c.autor.nombre)}</strong>
+                    <div class="small">${esc(c.texto)}</div></div>
+                <div class="text-nowrap">
+                    <button class="btn btn-sm btn-outline-danger" onclick="borrarContenidoComunidad('comments', ${c.id})">Eliminar</button>
+                    <button class="btn btn-sm btn-outline-dark" onclick="moderarUsuario(${c.autor.id}, 'desactivar')">Desactivar cuenta</button>
+                </div>
+            </div>`;
+        document.getElementById('comRecientes').innerHTML =
+            d.recientes_publicaciones.map(filaPub).join('') + d.recientes_comentarios.map(filaCom).join('')
+            || '<p class="text-muted mb-0">Aún no hay publicaciones.</p>';
+    }
+
+    // Restaurar o eliminar un comentario / publicación bloqueado
+    window.moderarContenido = async function (tipo, id, accion) {
+        if (accion === 'eliminar' && !confirm('¿Confirmas que es inapropiado? Quedará eliminado y la suspensión de la cuenta sigue.')) return;
+        try {
+            const r = await enviar(`${API}/community/moderation/${tipo}/${id}/`, 'POST', { accion });
+            aviso('comMensaje', r.mensaje, true);
+        } catch (err) { aviso('comMensaje', err.message, false); }
+        cargarComunidad();
+    };
+
+    // Desactivar o reactivar una cuenta
+    window.moderarUsuario = async function (id, accion) {
+        if (accion === 'desactivar' && !confirm('¿Desactivar esta cuenta? No podrá iniciar sesión hasta que la reactives.')) return;
+        try {
+            const r = await enviar(`${API}/community/moderation/users/${id}/`, 'POST', { accion });
+            aviso('comMensaje', r.mensaje, true);
+        } catch (err) { aviso('comMensaje', err.message, false); }
+        cargarComunidad();
+    };
+
+    // Borrar una publicación o un comentario ya publicado
+    window.borrarContenidoComunidad = async function (tipo, id) {
+        if (!confirm('¿Eliminar esto de la comunidad?')) return;
+        try {
+            const r = await enviar(`${API}/community/${tipo}/${id}/`, 'DELETE');
+            aviso('comMensaje', r.mensaje, true);
+        } catch (err) { aviso('comMensaje', err.message, false); }
+        cargarComunidad();
     };
 
     // ============================================

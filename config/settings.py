@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'apps.requests',
     'apps.pets',
+    'apps.community', 
 
 ]
 
@@ -76,6 +77,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'apps.community.restrictions.RestriccionMiddleware',  
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]

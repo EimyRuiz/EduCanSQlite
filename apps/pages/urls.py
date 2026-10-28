@@ -11,7 +11,7 @@ urlpatterns = [
     path('mi-perfil/', views.my_profile, name='my_profile'),
     path('nosotros/', views.about, name='about'),
     path('contacto/', views.contact, name='contact'),
-    path('blog/', views.maintenance, {'section': 'Blog'}, name='blog'),
+    path('blog/', views.blog, name='blog'),
     path('terminos/', views.maintenance, {'section': 'Términos de Servicio'}, name='terms'),
     path('privacidad/', views.maintenance, {'section': 'Política de Privacidad'}, name='privacy'),
 ]

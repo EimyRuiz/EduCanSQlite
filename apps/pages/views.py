@@ -185,3 +185,7 @@ def maintenance(request, section):
         'section': section,
         'lead': MAINTENANCE_PAGES.get(section, ''),
     })
+
+def blog(request):
+    """Blog de la comunidad. Todo el contenido se carga por JavaScript desde /api/community/."""
+    return render(request, 'pages/blog.html')

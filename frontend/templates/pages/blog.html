@@ -1,0 +1,575 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Comunidad | EDUCAN{% endblock %}
+
+{% block content %}
+<section class="ed-top ed-section cm-page">
+    <div class="container cm-container">
+
+        <!-- Ruta de navegación -->
+        <nav class="ed-crumbs mb-3">
+            <a href="/">Inicio</a><span><i class="bi bi-chevron-right"></i></span><strong>Blog / Comunidad</strong>
+        </nav>
+
+        <!-- Encabezado: título grande + texto y buscador -->
+        <div class="row align-items-end g-4 cm-head">
+            <div class="col-lg-7">
+                <p class="ed-eyebrow">Comunidad EDUCAN</p>
+                <h1 class="cm-title mb-0">Cada perro, una historia.<br>Aquí la compartimos.</h1>
+            </div>
+            <div class="col-lg-5">
+                <p class="ed-lead mb-3">Pequeños logros, grandes paseos y dudas cotidianas. Un lugar para aprender y acompañarnos.</p>
+                <label class="cm-search">
+                    <i class="bi bi-search"></i>
+                    <input type="search" id="cmBuscar" placeholder="Busca familias, perros o temas..." autocomplete="off">
+                </label>
+            </div>
+        </div>
+
+        <!-- Avisos (sesión vencida, cuenta suspendida, etc.) -->
+        <div id="cmAviso" class="alert alert-warning d-none mt-4 mb-0"></div>
+
+        <div class="row g-4 mt-1">
+
+            <!-- Columna principal: publicaciones -->
+            <div class="col-lg-8 order-2 order-lg-1">
+                <div class="cm-tabs mb-3" id="cmTabs">
+                    <button type="button" class="cm-tab active" data-modo="todo">Todas</button>
+                    <button type="button" class="cm-tab d-none" data-modo="siguiendo" id="cmTabSiguiendo">Siguiendo</button>
+                </div>
+
+                <div id="cmFeed"></div>
+                <p id="cmSinResultados" class="text-center text-muted py-4 d-none">Ninguna publicación coincide con tu búsqueda.</p>
+                <div class="text-center mt-3">
+                    <button type="button" class="btn btn-outline-secondary d-none" id="cmMas">Ver más publicaciones</button>
+                </div>
+            </div>
+
+            <!-- Columna lateral -->
+            <aside class="col-lg-4 order-1 order-lg-2">
+                <!-- Cuadro para publicar: cambia según quién esté mirando -->
+                <div id="cmComposer" class="cm-box mb-3"></div>
+
+                <!-- Estas tarjetas solo se ven en pantallas grandes -->
+                <div class="d-none d-lg-block">
+                    <div id="cmDestacado" class="cm-feature mb-3 d-none"></div>
+                    <div id="cmFamilias" class="cm-box mb-3 d-none"></div>
+
+                    <div class="cm-box mb-3">
+                        <h6 class="cm-box-title mb-3">Encuentra tu círculo</h6>
+                        <button type="button" class="cm-circle" data-tema="cachorro">
+                            <span class="cm-circle-ico"><i class="bi bi-emoji-smile"></i></span>
+                            <span><b>Primeros pasos con cachorros</b><small>Preguntas, paciencia y nuevos hábitos.</small><em>Ver círculo →</em></span>
+                        </button>
+                        <button type="button" class="cm-circle" data-tema="paseo">
+                            <span class="cm-circle-ico"><i class="bi bi-tree"></i></span>
+                            <span><b>Amantes de los paseos</b><small>Rutas e ideas para disfrutar juntos.</small><em>Ver círculo →</em></span>
+                        </button>
+                    </div>
+
+                    <p class="ed-note px-1">Compartimos experiencias, no diagnósticos. Ante dudas de salud o conducta, consulta con un profesional.</p>
+                </div>
+            </aside>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const API = '/api/community';
+    const CLAVES_SESION = ['access_token', 'user_nombre', 'user_rol', 'user_foto'];
+    const token = localStorage.getItem('access_token');
+    let me = { autenticado: false };
+    let modo = 'todo';
+    let pagina = 1;
+    let cargados = [];          // publicaciones ya dibujadas (para la columna lateral)
+
+    const feed = document.getElementById('cmFeed');
+    const composer = document.getElementById('cmComposer');
+    const aviso = document.getElementById('cmAviso');
+    const btnMas = document.getElementById('cmMas');
+    const buscar = document.getElementById('cmBuscar');
+
+    // Huella de perro (contorno; se rellena cuando ya diste tu patita)
+    const PATA = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">' +
+        '<ellipse cx="5.5" cy="11" rx="2" ry="2.6"/><ellipse cx="9.5" cy="6.5" rx="2" ry="2.8"/>' +
+        '<ellipse cx="14.5" cy="6.5" rx="2" ry="2.8"/><ellipse cx="18.5" cy="11" rx="2" ry="2.6"/>' +
+        '<path d="M12 11c-3 0-5.5 3-5.5 5.7 0 2 1.6 2.8 3 2.8 1 0 1.7-.5 2.5-.5s1.5.5 2.5.5c1.4 0 3-.8 3-2.8C17.5 14 15 11 12 11z"/></svg>';
+
+    // Escapa el texto de los usuarios antes de ponerlo en la página
+    function esc(t) {
+        return String(t == null ? '' : t).replace(/[&<>"']/g, c =>
+            ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+    // Texto de una publicación: escapado, y los #hashtags en verde
+    function conHashtags(t) {
+        return esc(t).replace(/(^|\s)#([\p{L}\p{N}_]+)/gu, '$1<span class="cm-hash">#$2</span>');
+    }
+    function hace(iso) {
+        return (typeof tiempoTranscurrido === 'function') ? tiempoTranscurrido(iso)
+            : new Date(iso).toLocaleDateString('es-CO');
+    }
+    function avatarHTML(a, extra) {
+        return a.foto
+            ? `<img src="${esc(a.foto)}" class="cm-avatar ${extra || ''}" alt="">`
+            : `<span class="cm-avatar cm-avatar-ph ${extra || ''}">${esc(a.inicial)}</span>`;
+    }
+    // Mi propio avatar (sale del navegador: foto y nombre guardados al iniciar sesión)
+    function miAvatar(extra) {
+        const nombre = localStorage.getItem('user_nombre') || '?';
+        return avatarHTML({ foto: localStorage.getItem('user_foto'), inicial: nombre.charAt(0).toUpperCase() }, extra);
+    }
+    function textoPatitas(likes, meGusta) {
+        if (likes === 0) return 'Sé la primera persona en dejar su patita.';
+        if (meGusta) {
+            const otros = likes - 1;
+            return otros === 0 ? 'Tú dejaste tu patita.'
+                : `Tú y ${otros} ${otros === 1 ? 'persona más dejaron' : 'personas más dejaron'} su patita.`;
+        }
+        return `${likes} ${likes === 1 ? 'persona dejó' : 'personas dejaron'} su patita.`;
+    }
+
+    function mostrarAviso(texto, tipo) {
+        aviso.className = 'alert alert-' + (tipo || 'warning') + ' mt-4 mb-0';
+        aviso.textContent = texto;
+        aviso.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    function abrirModal(id) {
+        const el = document.getElementById(id);
+        if (el && window.bootstrap) bootstrap.Modal.getOrCreateInstance(el).show();
+    }
+    function pedirLogin(texto) {
+        mostrarAviso(texto, 'info');
+        abrirModal('loginModal');
+    }
+
+    // Llamada a la API. Si la sesión venció o la cuenta fue suspendida, cierra la sesión y recarga con el aviso.
+    async function api(path, opciones) {
+        const o = Object.assign({}, opciones || {});
+        o.headers = Object.assign({}, o.headers || {});
+        if (token) o.headers['Authorization'] = 'Bearer ' + token;
+        const r = await fetch(API + path, o);
+        let data = {};
+        try { data = await r.json(); } catch (e) { /* sin cuerpo */ }
+
+        if (token && (data.cuenta_suspendida || r.status === 401)) {
+            CLAVES_SESION.forEach(k => localStorage.removeItem(k));
+            try {
+                sessionStorage.setItem('cm_aviso', data.cuenta_suspendida
+                    ? (data.error || 'Tu cuenta está suspendida.')
+                    : 'Tu sesión venció. Inicia sesión de nuevo para participar.');
+                sessionStorage.setItem('cm_aviso_tipo', data.cuenta_suspendida ? 'danger' : 'warning');
+            } catch (e) { /* sin almacenamiento */ }
+            location.reload();
+            throw new Error('sesion');
+        }
+        return { ok: r.ok, status: r.status, data };
+    }
+
+    // ---------------- Cuadro para publicar ----------------
+    function pintarComposer() {
+        if (!me.autenticado) {
+            composer.innerHTML = `
+                <div class="text-center py-1">
+                    <i class="bi bi-people fs-2 text-olive"></i>
+                    <h6 class="cm-box-title mt-2">Únete a la comunidad</h6>
+                    <p class="ed-card-text mb-3">Crea una cuenta para dar tu patita, comentar y seguir a otras familias.</p>
+                    <button type="button" class="btn btn-olive btn-sm rounded-pill px-3 me-1" data-abrir="loginModal">Iniciar sesión</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" data-abrir="registerModal">Crear cuenta</button>
+                </div>`;
+        } else if (!me.puede_publicar) {
+            composer.innerHTML = `
+                <div class="d-flex gap-3 align-items-start">
+                    <i class="bi bi-camera fs-3 text-olive"></i>
+                    <div>
+                        <h6 class="cm-box-title mb-1">Publica tus avances</h6>
+                        <p class="ed-card-text mb-1">${esc(me.razon)}</p>
+                        ${me.rol === 'cliente' ? '<a href="/solicitar-servicio/" class="ed-link">Solicitar un servicio →</a>' : ''}
+                    </div>
+                </div>`;
+        } else {
+            composer.innerHTML = `
+                <form id="cmForm">
+                    <div class="d-flex gap-3 mb-2">
+                        ${miAvatar('cm-avatar-lg')}
+                        <div class="flex-grow-1">
+                            <h6 class="cm-box-title mb-1">¿Qué hicieron hoy tú y tu perro?</h6>
+                            <p class="ed-card-text mb-0">Comparte un momento, una pregunta o un pequeño logro...</p>
+                        </div>
+                    </div>
+                    <div id="cmError" class="alert alert-danger d-none py-2 small"></div>
+                    <textarea class="cm-area" id="cmTexto" rows="3" maxlength="1000" placeholder="Escribe aquí. Puedes usar #hashtags"></textarea>
+                    <div id="cmPrevia" class="mb-2"></div>
+                    <div class="cm-composer-pie">
+                        <label class="cm-add mb-0">
+                            <i class="bi bi-image"></i> Añadir foto
+                            <input type="file" id="cmFoto" accept="image/png,image/jpeg,image/webp" hidden>
+                        </label>
+                        <span class="ed-note"><span id="cmContador">0</span>/1000 · Visible para la comunidad</span>
+                        <button type="submit" class="btn btn-olive rounded-pill px-4" id="cmPublicar">Publicar</button>
+                    </div>
+                </form>`;
+            activarFormulario();
+        }
+    }
+
+    function activarFormulario() {
+        const texto = document.getElementById('cmTexto');
+        const foto = document.getElementById('cmFoto');
+        const error = document.getElementById('cmError');
+
+        texto.addEventListener('input', () => {
+            document.getElementById('cmContador').textContent = texto.value.length;
+        });
+        foto.addEventListener('change', () => {
+            const f = foto.files[0];
+            document.getElementById('cmPrevia').innerHTML = f
+                ? `<img src="${URL.createObjectURL(f)}" class="cm-previa" alt="Vista previa">` : '';
+        });
+
+        document.getElementById('cmForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            error.classList.add('d-none');
+            const contenido = texto.value.trim();
+            if (contenido.length < 5) {
+                error.textContent = 'Escribe al menos 5 caracteres.';
+                error.classList.remove('d-none');
+                return;
+            }
+            const datos = new FormData();
+            datos.append('texto', contenido);
+            if (foto.files[0]) datos.append('imagen', foto.files[0]);
+
+            const boton = document.getElementById('cmPublicar');
+            boton.disabled = true;
+            try {
+                const { ok, data } = await api('/posts/', { method: 'POST', body: datos });
+                if (!ok) {
+                    error.textContent = data.error || 'No se pudo publicar.';
+                    error.classList.remove('d-none');
+                    return;
+                }
+                pintarComposer();     // formulario limpio
+                cargarFeed(true);
+            } catch (err) { /* la sesión se reinicia sola */ }
+            finally { boton.disabled = false; }
+        });
+    }
+
+    // ---------------- Publicaciones ----------------
+    function tarjeta(p) {
+        const a = p.autor;
+        const insignia = a.rol === 'administrador' ? '<span class="cm-badge">EDUCAN</span>'
+            : a.rol === 'adiestrador' ? '<span class="cm-badge">Adiestrador</span>' : '';
+        const puedeBorrar = p.es_mio || me.rol === 'administrador';
+
+        return `
+        <article class="cm-post mb-3" data-id="${p.id}" data-autor="${a.id}">
+            <header class="d-flex align-items-center gap-3 mb-3">
+                ${avatarHTML(a, 'cm-avatar-lg')}
+                <div class="flex-grow-1">
+                    <strong class="cm-nombre">${esc(a.nombre)}</strong> ${insignia}
+                    <div class="ed-note">${esc(hace(p.creado_en))} · Comunidad EDUCAN</div>
+                </div>
+                ${p.es_mio ? '' : `<button type="button" class="cm-follow ${p.siguiendo ? 'on' : ''}" data-accion="seguir" data-autor="${a.id}">${p.siguiendo ? 'Siguiendo' : 'Seguir'}</button>`}
+                ${puedeBorrar ? `
+                <div class="dropdown">
+                    <button type="button" class="cm-more" data-bs-toggle="dropdown" aria-expanded="false" title="Más opciones"><i class="bi bi-three-dots"></i></button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><button type="button" class="dropdown-item text-danger" data-accion="borrar-post"><i class="bi bi-trash me-2"></i>Eliminar publicación</button></li>
+                    </ul>
+                </div>` : ''}
+            </header>
+
+            <p class="cm-texto">${conHashtags(p.texto)}</p>
+            ${p.imagen ? `<img src="${esc(p.imagen)}" class="cm-foto" alt="Foto de la publicación" loading="lazy">` : ''}
+
+            <div class="cm-acciones">
+                <button type="button" class="cm-like ${p.me_gusta ? 'on' : ''}" data-accion="like" title="Dejar mi patita">
+                    ${PATA}<span class="cm-nlikes">${p.likes}</span>
+                </button>
+                <button type="button" class="cm-comentar" data-accion="comentarios">
+                    <span class="cm-guau">¡Guau!</span> Comentar · <span class="cm-ncom">${p.comentarios}</span>
+                </button>
+                <button type="button" class="cm-compartir ms-auto" data-accion="compartir"><i class="bi bi-share"></i> <span>Compartir</span></button>
+            </div>
+            <p class="cm-patitas ed-note mb-0" data-likes="${p.likes}">${textoPatitas(p.likes, p.me_gusta)}</p>
+
+            ${p.comentarios > 0 ? `<button type="button" class="cm-ver ed-link mt-2" data-accion="comentarios">Ver los <span class="cm-ncom">${p.comentarios}</span> comentarios →</button>` : ''}
+
+            <div class="cm-comentarios d-none">
+                <div class="cm-conv">Conversación · <span class="cm-ncom">${p.comentarios}</span> comentarios</div>
+                <div class="cm-lista"></div>
+                ${me.autenticado ? `
+                <form class="cm-form-com">
+                    ${miAvatar('cm-avatar-sm')}
+                    <input type="text" maxlength="500" placeholder="Escribe tu respuesta...">
+                    <button type="submit" title="Enviar"><i class="bi bi-send"></i></button>
+                </form>
+                <div class="cm-error-com text-danger small mt-1"></div>`
+                : '<p class="small text-muted mt-2 mb-0">Inicia sesión para comentar.</p>'}
+            </div>
+        </article>`;
+    }
+
+    function comentario(c) {
+        const puedeBorrar = c.es_mio || me.rol === 'administrador';
+        return `
+        <div class="cm-com" data-id="${c.id}">
+            ${avatarHTML(c.autor, 'cm-avatar-sm')}
+            <div class="flex-grow-1">
+                <div class="cm-com-body">
+                    <strong class="small">${esc(c.autor.nombre)}</strong>
+                    <div class="small">${esc(c.texto)}</div>
+                </div>
+                <span class="ed-note ms-2">${esc(hace(c.creado_en))}</span>
+            </div>
+            ${puedeBorrar ? '<button type="button" class="cm-icon" data-accion="borrar-com" title="Eliminar"><i class="bi bi-trash"></i></button>' : ''}
+        </div>`;
+    }
+
+    function actualizarConteo(articulo, delta) {
+        articulo.querySelectorAll('.cm-ncom').forEach(n => {
+            n.textContent = Math.max(parseInt(n.textContent, 10) + delta, 0);
+        });
+    }
+
+    async function cargarFeed(reiniciar) {
+        if (reiniciar) { pagina = 1; feed.innerHTML = ''; cargados = []; }
+        const query = `?pagina=${pagina}` + (modo === 'siguiendo' ? '&siguiendo=1' : '');
+        let respuesta;
+        try {
+            respuesta = await api('/posts/' + query);
+        } catch (err) { return; }
+        if (!respuesta.ok) {
+            feed.innerHTML = `<p class="text-center text-muted">${esc(respuesta.data.error || 'No se pudieron cargar las publicaciones.')}</p>`;
+            btnMas.classList.add('d-none');
+            return;
+        }
+        const { resultados, hay_mas } = respuesta.data;
+        if (pagina === 1 && !resultados.length) {
+            feed.innerHTML = modo === 'siguiendo'
+                ? '<p class="text-center text-muted py-4">Aún no sigues a nadie. Pulsa "Seguir" en una publicación para ver aquí sus novedades.</p>'
+                : '<p class="text-center text-muted py-4">Todavía no hay publicaciones. ¡La primera puede ser la tuya!</p>';
+        } else {
+            cargados = cargados.concat(resultados);
+            feed.insertAdjacentHTML('beforeend', resultados.map(tarjeta).join(''));
+        }
+        btnMas.classList.toggle('d-none', !hay_mas);
+        pintarLateral();
+        filtrar();
+    }
+
+    // ---------------- Columna lateral (sale de las publicaciones cargadas) ----------------
+    function pintarLateral() {
+        // Destacado: la publicación más reciente que tenga foto
+        const conFoto = cargados.find(p => p.imagen);
+        const dest = document.getElementById('cmDestacado');
+        if (conFoto) {
+            dest.innerHTML = `
+                <img src="${esc(conFoto.imagen)}" alt="Foto destacada" loading="lazy">
+                <div class="cm-feature-body">
+                    <p class="ed-eyebrow">Esta semana en comunidad</p>
+                    <h5 class="cm-feature-title">Menos prisa, más olfato.</h5>
+                    <p class="ed-card-text">Deja que su nariz elija una pausa del paseo y cuéntanos qué descubrieron juntos.</p>
+                    <span class="cm-hash d-block mb-3">#PaseosConCalma</span>
+                    <button type="button" class="cm-feature-btn" data-tema="paseo">Explorar el tema →</button>
+                </div>`;
+            dest.classList.remove('d-none');
+        } else {
+            dest.classList.add('d-none');
+        }
+
+        // Conoce otras familias: autores distintos que aún no soy yo
+        const vistos = {};
+        const familias = [];
+        cargados.forEach(p => {
+            if (p.es_mio || vistos[p.autor.id]) return;
+            vistos[p.autor.id] = true;
+            familias.push(p);
+        });
+        const caja = document.getElementById('cmFamilias');
+        if (!familias.length) { caja.classList.add('d-none'); return; }
+        caja.innerHTML = '<h6 class="cm-box-title mb-3"><i class="bi bi-person-plus me-2 text-olive"></i>Conoce otras familias</h6>' +
+            familias.slice(0, 3).map(p => {
+                const n = cargados.filter(x => x.autor.id === p.autor.id).length;
+                return `
+                <div class="cm-fam">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        ${avatarHTML(p.autor, 'cm-avatar-md')}
+                        <div><strong class="small d-block">${esc(p.autor.nombre)}</strong>
+                        <span class="ed-note">${n} ${n === 1 ? 'publicación' : 'publicaciones'}</span></div>
+                    </div>
+                    <button type="button" class="cm-follow cm-follow-wide ${p.siguiendo ? 'on' : ''}" data-accion="seguir" data-autor="${p.autor.id}">${p.siguiendo ? 'Siguiendo' : 'Seguir'}</button>
+                </div>`;
+            }).join('');
+        caja.classList.remove('d-none');
+    }
+
+    // ---------------- Búsqueda (entre las publicaciones ya cargadas) ----------------
+    function filtrar() {
+        const q = buscar.value.trim().toLowerCase();
+        let visibles = 0;
+        feed.querySelectorAll('.cm-post').forEach(art => {
+            const coincide = !q || art.textContent.toLowerCase().includes(q);
+            art.classList.toggle('d-none', !coincide);
+            if (coincide) visibles++;
+        });
+        document.getElementById('cmSinResultados').classList.toggle('d-none', !(q && !visibles && feed.querySelector('.cm-post')));
+    }
+    buscar.addEventListener('input', filtrar);
+
+    btnMas.addEventListener('click', () => { pagina += 1; cargarFeed(false); });
+
+    document.getElementById('cmTabs').addEventListener('click', e => {
+        const tab = e.target.closest('.cm-tab');
+        if (!tab) return;
+        modo = tab.dataset.modo;
+        document.querySelectorAll('.cm-tab').forEach(t => t.classList.toggle('active', t === tab));
+        cargarFeed(true);
+    });
+
+    // ---------------- Clics de toda la página ----------------
+    document.addEventListener('click', async function (e) {
+        // Abrir los modales de inicio de sesión / registro
+        const abrir = e.target.closest('[data-abrir]');
+        if (abrir) { abrirModal(abrir.dataset.abrir); return; }
+
+        // Temas ("Encuentra tu círculo", "Explorar el tema"): rellenan el buscador
+        const tema = e.target.closest('[data-tema]');
+        if (tema) {
+            buscar.value = tema.dataset.tema;
+            filtrar();
+            feed.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            return;
+        }
+
+        const boton = e.target.closest('[data-accion]');
+        if (!boton) return;
+        const accion = boton.dataset.accion;
+        const articulo = boton.closest('.cm-post');
+        const id = articulo ? articulo.dataset.id : null;
+
+        try {
+            if (accion === 'like') {
+                if (!me.autenticado) return pedirLogin('Inicia sesión para dejar tu patita.');
+                const { ok, data } = await api(`/posts/${id}/like/`, { method: 'POST' });
+                if (ok) {
+                    boton.classList.toggle('on', data.me_gusta);
+                    boton.querySelector('.cm-nlikes').textContent = data.likes;
+                    articulo.querySelector('.cm-patitas').textContent = textoPatitas(data.likes, data.me_gusta);
+                }
+            }
+
+            else if (accion === 'seguir') {
+                if (!me.autenticado) return pedirLogin('Inicia sesión para seguir a otras familias.');
+                const { ok, data } = await api(`/users/${boton.dataset.autor}/follow/`, { method: 'POST' });
+                if (ok) {
+                    // Los botones del mismo autor (en publicaciones y en la columna lateral) cambian juntos
+                    document.querySelectorAll(`.cm-follow[data-autor="${boton.dataset.autor}"]`).forEach(b => {
+                        b.classList.toggle('on', data.siguiendo);
+                        b.textContent = data.siguiendo ? 'Siguiendo' : 'Seguir';
+                    });
+                    cargados.forEach(p => { if (String(p.autor.id) === boton.dataset.autor) p.siguiendo = data.siguiendo; });
+                }
+            }
+
+            else if (accion === 'comentarios') {
+                const caja = articulo.querySelector('.cm-comentarios');
+                caja.classList.toggle('d-none');
+                const ver = articulo.querySelector('.cm-ver');
+                if (ver) ver.classList.toggle('d-none', !caja.classList.contains('d-none'));
+                if (!caja.classList.contains('d-none') && !caja.dataset.cargado) {
+                    const { ok, data } = await api(`/posts/${id}/comments/`);
+                    if (ok) {
+                        caja.querySelector('.cm-lista').innerHTML = data.map(comentario).join('')
+                            || '<p class="small text-muted mb-2">Sé la primera persona en comentar.</p>';
+                        caja.dataset.cargado = '1';
+                    }
+                }
+            }
+
+            else if (accion === 'compartir') {
+                const etiqueta = boton.querySelector('span');
+                try {
+                    await navigator.clipboard.writeText(location.origin + '/blog/');
+                    etiqueta.textContent = '¡Enlace copiado!';
+                } catch (err) {
+                    etiqueta.textContent = 'Copia la dirección del navegador';
+                }
+                setTimeout(() => { etiqueta.textContent = 'Compartir'; }, 2000);
+            }
+
+            else if (accion === 'borrar-post') {
+                if (!confirm('¿Eliminar esta publicación?')) return;
+                const { ok, data } = await api(`/posts/${id}/`, { method: 'DELETE' });
+                if (ok) {
+                    cargados = cargados.filter(p => String(p.id) !== String(id));
+                    articulo.remove();
+                    pintarLateral();
+                } else alert(data.error || 'No se pudo eliminar.');
+            }
+
+            else if (accion === 'borrar-com') {
+                if (!confirm('¿Eliminar este comentario?')) return;
+                const fila = boton.closest('.cm-com');
+                const { ok, data } = await api(`/comments/${fila.dataset.id}/`, { method: 'DELETE' });
+                if (ok) {
+                    fila.remove();
+                    actualizarConteo(articulo, -1);
+                } else alert(data.error || 'No se pudo eliminar.');
+            }
+        } catch (err) { /* la sesión se reinicia sola */ }
+    });
+
+    // Enviar un comentario
+    feed.addEventListener('submit', async function (e) {
+        const form = e.target.closest('.cm-form-com');
+        if (!form) return;
+        e.preventDefault();
+        const articulo = form.closest('.cm-post');
+        const campo = form.querySelector('input');
+        const error = articulo.querySelector('.cm-error-com');
+        error.textContent = '';
+        const texto = campo.value.trim();
+        if (texto.length < 2) { error.textContent = 'Escribe un comentario.'; return; }
+
+        try {
+            const { ok, data } = await api(`/posts/${articulo.dataset.id}/comments/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ texto })
+            });
+            if (!ok) { error.textContent = data.error || 'No se pudo enviar el comentario.'; return; }
+            campo.value = '';
+            const lista = articulo.querySelector('.cm-lista');
+            if (!lista.querySelector('.cm-com')) lista.innerHTML = '';
+            lista.insertAdjacentHTML('beforeend', comentario(data));
+            actualizarConteo(articulo, 1);
+        } catch (err) { /* la sesión se reinicia sola */ }
+    });
+
+    // ---------------- Inicio ----------------
+    (async function iniciar() {
+        try {
+            const av = sessionStorage.getItem('cm_aviso');
+            if (av) {
+                mostrarAviso(av, sessionStorage.getItem('cm_aviso_tipo') || 'warning');
+                sessionStorage.removeItem('cm_aviso');
+                sessionStorage.removeItem('cm_aviso_tipo');
+            }
+        } catch (e) { /* sin almacenamiento */ }
+
+        try {
+            const r = await api('/me/');
+            if (r.ok) me = r.data;
+        } catch (err) { return; }
+
+        document.getElementById('cmTabSiguiendo').classList.toggle('d-none', !me.autenticado || !!me.suspendida);
+        pintarComposer();
+        cargarFeed(true);
+    })();
+});
+</script>
+{% endblock %}
