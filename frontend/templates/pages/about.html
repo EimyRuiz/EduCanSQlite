@@ -1,0 +1,149 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Nosotros | EDUCAN{% endblock %}
+
+{% block content %}
+<section class="ed-top ed-section">
+    <div class="container">
+
+        <!-- ===== Presentación ===== -->
+        <div class="row align-items-center g-5 mb-5">
+            <div class="col-lg-6">
+                <p class="ed-eyebrow">Nosotros</p>
+                <h1 class="ed-title mb-3">Educamos con amor, respeto y constancia</h1>
+                <p class="ed-lead mb-3">
+                    EDUCAN nació de una idea sencilla: un perro bien educado es un perro más feliz,
+                    y una familia que lo entiende vive mejor con él.
+                </p>
+                <p class="text-muted mb-4">
+                    Conectamos a las familias con adiestradores certificados y acompañamos todo el proceso,
+                    desde que registras a tu mascota hasta que termina su entrenamiento.
+                </p>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{% url 'request_service' %}" class="btn btn-olive"><i class="bi bi-calendar-check me-2"></i>Agendar entrenamiento</a>
+                    <a href="{% url 'contact' %}" class="btn btn-outline-secondary">Escríbenos</a>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <!-- Foto desde "Imágenes del sitio" (nosotros_principal) -->
+                <div class="ed-about-photo">
+                    {% if img.nosotros_principal %}
+                    <img src="{{ img.nosotros_principal }}" alt="Equipo y perros de EDUCAN">
+                    {% else %}
+                    <div class="ed-ph ed-ph-fill"><i class="bi bi-image"></i></div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Números reales ===== -->
+        <div class="row g-3 mb-5">
+            <div class="col-6 col-lg-3">
+                <div class="ed-stat"><strong class="counter" data-target="{{ clientes }}">0</strong><span>Familias registradas</span></div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="ed-stat"><strong class="counter" data-target="{{ servicios_completados }}">0</strong><span>Entrenamientos completados</span></div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="ed-stat"><strong class="counter" data-target="{{ adiestradores }}">0</strong><span>Adiestradores certificados</span></div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="ed-stat">
+                    {% if promedio %}
+                    <strong>{{ promedio }} <i class="bi bi-star-fill"></i></strong>
+                    <span>Calificación promedio ({{ total_resenas }} reseña{{ total_resenas|pluralize }})</span>
+                    {% else %}
+                    <strong>—</strong>
+                    <span>Aún sin reseñas</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Nuestra historia ===== -->
+        <div class="row align-items-center g-5 mb-5">
+            <div class="col-lg-6 order-lg-2">
+                <p class="ed-eyebrow">Nuestra historia</p>
+                <h2 class="ed-h2 mb-3">Más que órdenes: una convivencia feliz</h2>
+                <p class="text-muted">
+                    Creemos que educar a un perro no es dominarlo, sino enseñarle a entender a su familia.
+                    Por eso trabajamos con refuerzo positivo, con paciencia y con planes que se adaptan
+                    a la edad, el carácter y la historia de cada perro.
+                </p>
+                <p class="text-muted mb-0">
+                    Además del entrenamiento, en EDUCAN encuentras una tienda con productos
+                    seleccionados y una comunidad para compartir los avances de tu mascota.
+                </p>
+            </div>
+            <div class="col-lg-6 order-lg-1">
+                <!-- Foto desde "Imágenes del sitio" (nosotros_historia) -->
+                <div class="ed-about-photo">
+                    {% if img.nosotros_historia %}
+                    <img src="{{ img.nosotros_historia }}" alt="Nuestra historia">
+                    {% else %}
+                    <div class="ed-ph ed-ph-fill"><i class="bi bi-image"></i></div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Valores ===== -->
+        <div class="text-center mb-4">
+            <p class="ed-eyebrow">Lo que nos mueve</p>
+            <h2 class="ed-h2">Nuestros valores</h2>
+        </div>
+        <div class="row g-4 mb-5">
+            <div class="col-md-4">
+                <div class="ed-value">
+                    <i class="bi bi-heart-fill"></i>
+                    <h5>Respeto</h5>
+                    <p>Cada perro aprende a su ritmo. Nunca usamos castigos ni métodos que lo asusten.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="ed-value">
+                    <i class="bi bi-patch-check-fill"></i>
+                    <h5>Profesionalismo</h5>
+                    <p>Nuestros adiestradores son revisados y aprobados antes de atender a tu mascota.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="ed-value">
+                    <i class="bi bi-chat-heart-fill"></i>
+                    <h5>Transparencia</h5>
+                    <p>Ves el estado de tus solicitudes y pedidos, y las calificaciones son de clientes reales.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Equipo (adiestradores aprobados, desde la base de datos) ===== -->
+        {% if equipo %}
+        <div class="text-center mb-4">
+            <p class="ed-eyebrow">Nuestro equipo</p>
+            <h2 class="ed-h2">Adiestradores certificados</h2>
+        </div>
+        <div class="row g-4 justify-content-center mb-5">
+            {% for a in equipo %}
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="ed-team">
+                    {% if a.foto %}
+                    <img src="{{ a.foto }}" alt="{{ a.nombre }} {{ a.apellido }}">
+                    {% else %}
+                    <div class="ed-avatar-ph ed-avatar-lg">{{ a.nombre|slice:":1"|upper }}</div>
+                    {% endif %}
+                    <h6>{{ a.nombre }} {{ a.apellido }}</h6>
+                    <span>Adiestrador certificado</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- ===== Llamado final ===== -->
+        <div class="ed-cta text-center">
+            <h2 class="ed-h2 mb-2">¿Listo para empezar?</h2>
+            <p class="text-muted mb-3">Cuéntanos sobre tu perro y te ayudamos a elegir el programa ideal.</p>
+            <a href="{% url 'services' %}" class="btn btn-olive">Ver servicios</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

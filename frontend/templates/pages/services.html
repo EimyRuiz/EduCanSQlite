@@ -3,41 +3,239 @@
 
 {% block title %}Servicios | EDUCAN{% endblock %}
 
-{% block content %}
+{% block extra_css %}
+<!-- Tipografía de los títulos de esta página -->
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@600;700;800&display=swap" rel="stylesheet">
+{% endblock %}
 
-<!--encabezado de la página-->
-<section class="page-header">
-    <div class="page-header-overlay"></div>
-    <div class="container position-relative text-center text-white py-3">
-        <p class="text-uppercase fw-bold small mb-2" style="letter-spacing: 2px;">Lo que ofrecemos</p>
-        <h1 class="fw-bold display-5">Nuestros servicios</h1>
-        <p class="lead" style="opacity: 0.85;">Programas diseñados para cada etapa y necesidad de tu perro.</p>
+{% block content %}
+<div class="sv">
+
+<!-- ============ 1. PORTADA ============ -->
+<section class="sv-hero ed-top">
+    <div class="container">
+        <nav class="ed-crumbs mb-4"><a href="{% url 'home' %}">Inicio</a><span>/</span><strong>Servicios</strong></nav>
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <p class="sv-eyebrow">Educación para la vida juntos</p>
+                <h1 class="sv-title">Cada perro es único.<br>Su aprendizaje también.</h1>
+                <p class="sv-lead">Explora nuestros programas y encuentra el acompañamiento que mejor se adapta a su etapa y a lo que necesitan como familia.</p>
+                <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+                    <a href="#programas" class="sv-btn sv-btn-primary">Explorar programas <i class="bi bi-arrow-down"></i></a>
+                    <a href="#elegir" class="sv-link">Ayúdame a elegir <i class="bi bi-arrow-right"></i></a>
+                </div>
+                <p class="sv-note"><i class="bi bi-heart"></i> Con respeto, a su ritmo y contigo en el proceso.</p>
+            </div>
+            <div class="col-lg-6">
+                <!-- 6 fotos: las sube el administrador en "Imágenes del sitio" (servicios_hero_1 a 6) -->
+                <div class="sv-mosaic">
+                    {% if img.servicios_hero_1 %}<img src="{{ img.servicios_hero_1 }}" alt="Perro 1">{% else %}<div class="ed-ph"><i class="bi bi-image"></i></div>{% endif %}
+                    {% if img.servicios_hero_2 %}<img src="{{ img.servicios_hero_2 }}" alt="Perro 2">{% else %}<div class="ed-ph"><i class="bi bi-image"></i></div>{% endif %}
+                    {% if img.servicios_hero_3 %}<img src="{{ img.servicios_hero_3 }}" alt="Perro 3">{% else %}<div class="ed-ph"><i class="bi bi-image"></i></div>{% endif %}
+                    {% if img.servicios_hero_4 %}<img src="{{ img.servicios_hero_4 }}" alt="Perro 4">{% else %}<div class="ed-ph"><i class="bi bi-image"></i></div>{% endif %}
+                    {% if img.servicios_hero_5 %}<img src="{{ img.servicios_hero_5 }}" alt="Perro 5">{% else %}<div class="ed-ph"><i class="bi bi-image"></i></div>{% endif %}
+                    {% if img.servicios_hero_6 %}<img src="{{ img.servicios_hero_6 }}" alt="Perro 6">{% else %}<div class="ed-ph"><i class="bi bi-image"></i></div>{% endif %}
+                    <span class="sv-chip"><i class="bi bi-suit-heart"></i> Pequeños pasos. Un vínculo más fuerte.</span>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 
-<!--listado completo de servicios-->
-<section class="py-5 my-4">
+<!-- ============ 2. PROGRAMAS (vienen de la base de datos) ============ -->
+<section class="sv-band sv-anchor" id="programas">
     <div class="container">
-        <div class="row g-4">
-            {% for s in servicios %}
-            <div class="col-md-6 col-lg-3">
-                <div class="service-card">
-                    <img src="{{ s.imagen|default:'https://images.unsplash.com/photo-1568572933382-74d440642117?w=500' }}" alt="{{ s.nombre }}">
-                    <div class="service-overlay">
-                        <h5>{{ s.nombre }}</h5>
-                        <p>{{ s.descripcion }}</p>
-                        <p class="fw-bold">${{ s.precio|precio_cop }}</p>
+        <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+            <div>
+                <p class="sv-eyebrow">Nuestros servicios</p>
+                <h2 class="sv-h2 mb-0">Un programa para cada necesidad</h2>
+            </div>
+            <p class="sv-note mb-1">{{ total }} programa{{ total|pluralize }} · Un mismo cuidado</p>
+        </div>
+
+        <div class="sv-filters" id="svFiltros">
+            <button type="button" class="sv-pill active" data-filtro="todos">Todos los programas</button>
+            {% for clave, texto in categorias %}
+            <button type="button" class="sv-pill" data-filtro="{{ clave }}">{{ texto }}</button>
+            {% endfor %}
+        </div>
+
+        <div class="row g-4" id="svProgramas">
+            {% for p in programas %}
+            <div class="col-md-6 col-lg-4 sv-item" data-cat="{{ p.categoria }}">
+                <article class="sv-card">
+                    <div class="sv-card-img">
+                        {% if p.imagen %}<img src="{{ p.imagen }}" alt="{{ p.nombre }}" loading="lazy">{% else %}<div class="ed-ph"><i class="bi bi-image"></i></div>{% endif %}
                     </div>
-                </div>
+                    <div class="sv-card-body">
+                        <span class="sv-tag">{{ p.categoria_texto }}</span>
+                        <h3 class="sv-card-title">{{ p.nombre }}</h3>
+                        <p class="sv-card-text">{{ p.descripcion }}</p>
+                        <div class="sv-ideal"><b>Ideal para</b><span>{{ p.ideal }}</span></div>
+                        <ul class="sv-list">
+                            {% for punto in p.puntos %}<li><i class="bi bi-check2"></i>{{ punto }}</li>{% endfor %}
+                        </ul>
+                        <div class="sv-price"><small>Desde</small> <strong>${{ p.precio|precio_cop }}</strong></div>
+                        <a href="{% url 'request_service' %}" class="sv-btn sv-btn-primary sv-btn-block">Me interesa este programa <i class="bi bi-arrow-right"></i></a>
+                    </div>
+                </article>
             </div>
             {% empty %}
             <p class="text-center text-muted">Aún no hay servicios registrados.</p>
             {% endfor %}
         </div>
-        <div class="text-center mt-5">
-            <a href="{% url 'request_service' %}" class="btn btn-olive btn-lg rounded-pill px-5">Agendar una sesión</a>
+        <p class="text-center text-muted d-none mt-4" id="svVacio">No hay programas en esta categoría por ahora.</p>
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-5">
+            <div>
+                <p class="sv-eyebrow mb-1">Sigue explorando</p>
+                <strong class="sv-strong">Encuentra el programa ideal para tu perro.</strong>
+            </div>
+            <a href="#elegir" class="sv-btn sv-btn-soft">Compararlos <i class="bi bi-arrow-down"></i></a>
+        </div>
+        <p class="sv-foot mt-4 mb-0">Precios «desde» publicados en nuestro catálogo. Consulta el alcance, la modalidad y el valor del programa según las necesidades de tu perro.</p>
+    </div>
+</section>
+
+<!-- ============ 3. COMPARATIVA ============ -->
+{% if programas %}
+<section class="sv-plain sv-anchor" id="elegir">
+    <div class="container">
+        <p class="sv-eyebrow">Elige con más claridad</p>
+        <h2 class="sv-h2">¿Cuál es el mejor punto de partida?</h2>
+        <p class="sv-muted mb-4">Compara el enfoque de cada programa. No necesitas tener todas las respuestas para empezar.</p>
+
+        <div class="sv-table-wrap">
+            <table class="sv-table">
+                <thead>
+                    <tr>
+                        <th>Encuentra tu programa</th>
+                        {% for p in programas %}<th>{{ p.nombre }}</th>{% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><th>Tu punto de partida</th>{% for p in programas %}<td>{{ p.partida }}</td>{% endfor %}</tr>
+                    <tr><th>El foco del trabajo</th>{% for p in programas %}<td>{{ p.foco }}</td>{% endfor %}</tr>
+                    <tr><th>En la vida cotidiana</th>{% for p in programas %}<td>{{ p.cotidiano }}</td>{% endfor %}</tr>
+                    <tr><th>Precio desde</th>{% for p in programas %}<td>${{ p.precio|precio_cop }}</td>{% endfor %}</tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+            <p class="sv-foot mb-0">Si reconoces necesidades de más de un programa, te ayudamos a priorizar por dónde empezar.</p>
+            <a href="{% url 'contact' %}" class="sv-link">Quiero orientación <i class="bi bi-arrow-right"></i></a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- ============ 4. CÓMO EMPEZAMOS ============ -->
+<section class="sv-band">
+    <div class="container">
+        <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+            <div>
+                <p class="sv-eyebrow">Así empezamos</p>
+                <h2 class="sv-h2 mb-0">Del primer contacto al día a día</h2>
+            </div>
+            <p class="sv-muted mb-0 sv-side">Un camino compartido, sin perder de vista su bienestar.</p>
+        </div>
+        <!-- 3 fotos: servicios_paso_1 a 3 en "Imágenes del sitio" -->
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="sv-step-img">{% if img.servicios_paso_1 %}<img src="{{ img.servicios_paso_1 }}" alt="Paso 1" loading="lazy">{% else %}<div class="ed-ph"><i class="bi bi-image"></i></div>{% endif %}</div>
+                <div class="sv-step-num">01</div>
+                <h3 class="sv-step-title">Cuéntanos sobre tu perro</h3>
+                <p class="sv-muted">Su etapa, sus rutinas y aquello que les gustaría mejorar. Empezamos escuchándote.</p>
+            </div>
+            <div class="col-md-4">
+                <div class="sv-step-img">{% if img.servicios_paso_2 %}<img src="{{ img.servicios_paso_2 }}" alt="Paso 2" loading="lazy">{% else %}<div class="ed-ph"><i class="bi bi-image"></i></div>{% endif %}</div>
+                <div class="sv-step-num">02</div>
+                <h3 class="sv-step-title">Definimos por dónde empezar</h3>
+                <p class="sv-muted">Orientamos la elección del programa a partir de sus necesidades y las de tu familia.</p>
+            </div>
+            <div class="col-md-4">
+                <div class="sv-step-img">{% if img.servicios_paso_3 %}<img src="{{ img.servicios_paso_3 }}" alt="Paso 3" loading="lazy">{% else %}<div class="ed-ph"><i class="bi bi-image"></i></div>{% endif %}</div>
+                <div class="sv-step-num">03</div>
+                <h3 class="sv-step-title">Aprenden juntos, paso a paso</h3>
+                <p class="sv-muted">Trabajamos con pautas para practicar en el día a día, respetando su ritmo.</p>
+            </div>
         </div>
     </div>
 </section>
 
+<!-- ============ 5. PREGUNTAS FRECUENTES ============ -->
+<section class="sv-plain">
+    <div class="container">
+        <div class="row g-5">
+            <div class="col-lg-4">
+                <p class="sv-eyebrow">Antes de elegir</p>
+                <h2 class="sv-h2">Resolvemos tus dudas</h2>
+                <p class="sv-muted">Elegir también es entender cómo vamos a acompañarte.</p>
+                <a href="{% url 'contact' %}" class="sv-link"><i class="bi bi-chat"></i> Tengo otra pregunta <i class="bi bi-arrow-right"></i></a>
+            </div>
+            <div class="col-lg-8">
+                <details class="sv-faq" open>
+                    <summary>¿Y si no sé qué programa necesita mi perro?</summary>
+                    <p>Cuéntanos su edad, cómo es su día a día y qué situaciones te preocupan. Te orientamos para encontrar el punto de partida más adecuado.</p>
+                </details>
+                <details class="sv-faq" open>
+                    <summary>¿Un perro adulto también puede aprender?</summary>
+                    <p>Sí. El aprendizaje no se limita a la etapa de cachorro. El enfoque se adapta a su historia, sus necesidades y su ritmo.</p>
+                </details>
+                <details class="sv-faq" open>
+                    <summary>¿Cuántas sesiones necesita y dónde se realizan?</summary>
+                    <p>La duración y la modalidad se definen según el caso. Consulta estos detalles con el equipo antes de elegir tu programa.</p>
+                </details>
+                <details class="sv-faq" open>
+                    <summary>¿Qué papel tiene la familia en el proceso?</summary>
+                    <p>Tu participación es importante: practicar las pautas en casa ayuda a integrar lo aprendido en la convivencia cotidiana.</p>
+                </details>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============ 6. LLAMADO FINAL ============ -->
+<section class="sv-cta">
+    <div class="container">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-8">
+                <p class="sv-eyebrow">No tienes que elegir a solas</p>
+                <h2 class="sv-h2">El primer paso es entender<br>lo que tu perro necesita.</h2>
+                <p class="sv-muted mb-0">Cuéntanos qué les gustaría mejorar. Encontraremos juntos el programa por el que empezar.</p>
+            </div>
+            <div class="col-lg-4 text-lg-center">
+                <a href="{% url 'contact' %}" class="sv-btn sv-btn-primary">Hablemos de tu perro <i class="bi bi-arrow-right"></i></a>
+                <p class="sv-foot mt-2 mb-0">Estamos para acompañarte.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Filtro por categoría: muestra u oculta las tarjetas sin recargar la página
+    const botones = document.querySelectorAll('#svFiltros .sv-pill');
+    const items = document.querySelectorAll('#svProgramas .sv-item');
+    const vacio = document.getElementById('svVacio');
+
+    botones.forEach(boton => {
+        boton.addEventListener('click', () => {
+            const filtro = boton.dataset.filtro;
+            botones.forEach(b => b.classList.toggle('active', b === boton));
+            let visibles = 0;
+            items.forEach(item => {
+                const mostrar = filtro === 'todos' || item.dataset.cat === filtro;
+                item.classList.toggle('d-none', !mostrar);
+                if (mostrar) visibles++;
+            });
+            vacio.classList.toggle('d-none', visibles > 0 || items.length === 0);
+        });
+    });
+});
+</script>
 {% endblock %}

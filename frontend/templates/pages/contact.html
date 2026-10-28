@@ -1,0 +1,163 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Contacto | EDUCAN{% endblock %}
+
+{% block content %}
+<section class="ed-top ed-section">
+    <div class="container">
+        <div class="row g-5 align-items-start">
+
+            <!-- ===== Texto e información ===== -->
+            <div class="col-lg-5">
+                <p class="ed-eyebrow">Contacto</p>
+                <h1 class="ed-title mb-3">Hablemos de tu perro</h1>
+                <p class="ed-lead mb-4">
+                    Escríbenos y resolvemos tus dudas sobre nuestros servicios, la tienda o tu cuenta.
+                </p>
+
+                <div class="ed-info mb-3">
+                    <i class="bi bi-envelope-heart"></i>
+                    <div><strong>Tu mensaje llega directo al equipo</strong><span>Lo leemos y te respondemos al correo que nos dejes.</span></div>
+                </div>
+                <div class="ed-info mb-3">
+                    <i class="bi bi-mortarboard"></i>
+                    <div><strong>¿Quieres un entrenamiento?</strong><span>Puedes <a href="{% url 'request_service' %}">solicitarlo aquí</a> directamente.</span></div>
+                </div>
+                <div class="ed-info">
+                    <i class="bi bi-bag-heart"></i>
+                    <div><strong>¿Dudas sobre un pedido?</strong><span>Revísalo en tu panel, sección "Mis pedidos".</span></div>
+                </div>
+            </div>
+
+            <!-- ===== Formulario ===== -->
+            <div class="col-lg-7">
+                <div class="ed-form-card">
+
+                    <div id="contactoOk" class="text-center d-none py-4">
+                        <i class="bi bi-check-circle-fill ed-ok-icon"></i>
+                        <h4 class="fw-bold mt-3">¡Mensaje enviado!</h4>
+                        <p class="text-muted mb-4">Gracias por escribirnos. Te responderemos lo antes posible.</p>
+                        <button type="button" class="btn btn-outline-secondary" id="contactoOtro">Enviar otro mensaje</button>
+                    </div>
+
+                    <form id="contactoForm" novalidate>
+                        <div id="contactoError" class="alert alert-danger d-none"></div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold" for="cNombre">Nombre</label>
+                                <input type="text" class="form-control" id="cNombre" maxlength="100" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold" for="cEmail">Correo electrónico</label>
+                                <input type="email" class="form-control" id="cEmail" maxlength="254" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold" for="cTelefono">Teléfono (opcional)</label>
+                                <input type="text" class="form-control" id="cTelefono" maxlength="20">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold" for="cMotivo">¿Sobre qué nos escribes?</label>
+                                <select class="form-select" id="cMotivo">
+                                    {% for valor, texto in motivos %}
+                                    <option value="{{ valor }}"{% if valor == 'otro' %} selected{% endif %}>{{ texto }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-bold" for="cMensaje">Mensaje</label>
+                                <textarea class="form-control" id="cMensaje" rows="5" maxlength="1500" required></textarea>
+                                <div class="ed-note text-end mt-1"><span id="cContador">0</span>/1500</div>
+                            </div>
+
+                            <!-- Campo trampa para robots: las personas no lo ven -->
+                            <div class="ed-trampa" aria-hidden="true">
+                                <label>No llenes este campo <input type="text" id="cWebsite" tabindex="-1" autocomplete="off"></label>
+                            </div>
+
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-olive px-4" id="contactoBtn">
+                                    <i class="bi bi-send me-2"></i>Enviar mensaje
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('contactoForm');
+    const errorBox = document.getElementById('contactoError');
+    const okBox = document.getElementById('contactoOk');
+    const btn = document.getElementById('contactoBtn');
+    const mensaje = document.getElementById('cMensaje');
+
+    // Si ya iniciaste sesión, el nombre se llena solo
+    try {
+        const n = localStorage.getItem('user_nombre');
+        if (n) document.getElementById('cNombre').value = n;
+    } catch (e) { /* sin almacenamiento */ }
+
+    mensaje.addEventListener('input', () => {
+        document.getElementById('cContador').textContent = mensaje.value.length;
+    });
+
+    function mostrarError(texto) {
+        errorBox.textContent = texto;
+        errorBox.classList.remove('d-none');
+    }
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        errorBox.classList.add('d-none');
+
+        const datos = {
+            nombre: document.getElementById('cNombre').value.trim(),
+            email: document.getElementById('cEmail').value.trim(),
+            telefono: document.getElementById('cTelefono').value.trim(),
+            motivo: document.getElementById('cMotivo').value,
+            mensaje: mensaje.value.trim(),
+            website: document.getElementById('cWebsite').value   // trampa: debe ir vacío
+        };
+
+        // Revisión rápida en el navegador (el servidor vuelve a revisar todo)
+        if (datos.nombre.length < 2) return mostrarError('Escribe tu nombre.');
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(datos.email)) return mostrarError('Escribe un correo electrónico válido.');
+        if (datos.mensaje.length < 10) return mostrarError('Cuéntanos un poco más en tu mensaje (mínimo 10 caracteres).');
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Enviando...';
+
+        fetch('/api/contact/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datos)
+        }).then(r => r.json().catch(() => ({})).then(data => ({ ok: r.ok, data })))
+          .then(({ ok, data }) => {
+              if (!ok) {
+                  mostrarError(data.error || data.detail || 'No se pudo enviar el mensaje. Inténtalo de nuevo.');
+                  return;
+              }
+              form.classList.add('d-none');
+              okBox.classList.remove('d-none');
+          })
+          .catch(() => mostrarError('No se pudo conectar. Revisa tu conexión e inténtalo de nuevo.'))
+          .finally(() => {
+              btn.disabled = false;
+              btn.innerHTML = '<i class="bi bi-send me-2"></i>Enviar mensaje';
+          });
+    });
+
+    document.getElementById('contactoOtro').onclick = function () {
+        mensaje.value = '';
+        document.getElementById('cContador').textContent = '0';
+        okBox.classList.add('d-none');
+        form.classList.remove('d-none');
+    };
+});
+</script>
+{% endblock %}

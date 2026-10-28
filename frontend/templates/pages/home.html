@@ -6,7 +6,8 @@
 
 {% block content %}
 
-<section class="hero-section">
+<section class="hero-section"
+    {% if img.hero_inicio %}style="background-image: url('{{ img.hero_inicio }}'); background-size: cover; background-position: center;"{% endif %}>
     <div class="hero-overlay"></div>
     <div class="container position-relative">
         <div class="row py-5 min-vh-75 align-items-center">
@@ -77,8 +78,15 @@
         <div class="row align-items-center g-5">
             <div class="col-lg-6 reveal-up">
                 <div class="about-media">
-                    <img src="https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=900" class="about-img about-img-1" alt="Perro jugando">
-                    <img src="https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=900" class="about-img about-img-2" alt="Perro feliz">
+                    <!-- Las fotos vienen de "Imágenes del sitio" en el panel del administrador -->
+                    {% if img.nosotros_principal %}
+                    <img src="{{ img.nosotros_principal }}" class="about-img about-img-1" alt="Perro entrenando con EDUCAN">
+                    {% else %}
+                    <div class="ed-ph ed-ph-fill"><i class="bi bi-image"></i></div>
+                    {% endif %}
+                    {% if img.nosotros_historia %}
+                    <img src="{{ img.nosotros_historia }}" class="about-img about-img-2" alt="Nuestra historia">
+                    {% endif %}
                     <span class="about-chip"><i class="bi bi-shield-check me-1"></i>Garantía de bienestar</span>
                 </div>
             </div>
@@ -113,7 +121,7 @@
                     </div>
                 </div>
 
-                <a href="/nosotros/" class="btn-brown">Saber más de nuestra metodología <i class="bi bi-arrow-right ms-2"></i></a>
+                <a href="{% url 'about' %}" class="btn-brown">Saber más de nuestra metodología <i class="bi bi-arrow-right ms-2"></i></a>
             </div>
         </div>
     </div>
@@ -132,7 +140,7 @@
             {% for s in servicios %}
             <div class="col-md-6 col-lg-4">
                 <div class="service-card" data-title="{{ s.nombre }}" data-text="{{ s.descripcion }}">
-                    <img src="{{ s.imagen|default:'https://images.unsplash.com/photo-1568572933382-74d440642117?w=700' }}" alt="{{ s.nombre }}">
+                    {% if s.imagen %}<img src="{{ s.imagen }}" alt="{{ s.nombre }}">{% else %}<div class="ed-ph ed-ph-fill"><i class="bi bi-image"></i></div>{% endif %}
                     <div class="service-overlay">
                         <span class="service-badge">Desde ${{ s.precio|precio_cop }}</span>
                         <h5>{{ s.nombre }}</h5>
@@ -164,7 +172,7 @@
             <div class="col-md-4">
                 <div class="shop-card">
                     <div class="shop-card-img">
-                        <img src="{{ p.imagen|default:'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=500' }}" alt="{{ p.nombre }}">
+                        {% if p.imagen %}<img src="{{ p.imagen }}" alt="{{ p.nombre }}">{% else %}<div class="ed-ph"><i class="bi bi-image"></i></div>{% endif %}
                     </div>
                     <div class="text-center p-4">
                         <h5 class="fw-bold mb-2">{{ p.nombre }}</h5>
@@ -192,15 +200,18 @@
             {% for t in testimonios %}
             <div class="col-md-4">
                 <div class="testimonial-card text-center">
-                    <img src="{{ t.foto|default:'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150' }}"
-                         class="testimonial-avatar mb-3" alt="{{ t.nombre }}">
+                    {% if t.foto %}
+                    <img src="{{ t.foto }}" class="testimonial-avatar mb-3" alt="{{ t.nombre }}">
+                    {% else %}
+                    <div class="ed-avatar-ph mb-3">{{ t.inicial }}</div>
+                    {% endif %}
                     <div class="testimonial-stars mb-2">
                         {% for i in t.llenas %}<i class="bi bi-star-fill"></i>{% endfor %}{% for i in t.vacias %}<i class="bi bi-star"></i>{% endfor %}
                     </div>
                     <p class="testimonial-text">"{{ t.comentario }}"</p>
                     <h6 class="fw-bold mb-0 mt-3">{{ t.nombre }}</h6>
                     <span class="text-muted small">{{ t.servicio }}</span>
-                                        {% if t.respuesta %}
+                    {% if t.respuesta %}
                     <div class="small mt-3 pt-3 border-top">
                         <div class="text-olive">
                             <i class="bi bi-reply-fill me-1"></i><strong>{{ t.respuesta_por }}</strong>
@@ -226,13 +237,23 @@
             <p class="text-olive fw-bold text-uppercase small mb-2">Galería</p>
             <h2 class="fw-bold">Momentos EDUCAN</h2>
         </div>
-        <div class="gallery-grid">
-            <img src="https://images.unsplash.com/photo-1552053831-71594a27632d?w=400" alt="Galería 1">
-            <img src="https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=400" alt="Galería 2">
-            <img src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=400" alt="Galería 3">
-            <img src="https://images.unsplash.com/photo-1601979031925-424e53b6caaa?w=400" alt="Galería 4">
-            <img src="https://images.unsplash.com/photo-1517849845537-4d257902861a?w=400" alt="Galería 5">
-            <img src="https://images.unsplash.com/photo-1583512603805-3cc6b41f3edb?w=400" alt="Galería 6">
+        <!-- Galería tipo bento: las 5 fotos las sube el administrador en "Imágenes del sitio" -->
+        <div class="ed-bento">
+            <div class="ed-bento-item ed-bento-big">
+                {% if img.galeria_1 %}<img src="{{ img.galeria_1 }}" alt="Momentos EDUCAN 1" loading="lazy">{% else %}<div class="ed-ph"><i class="bi bi-image"></i></div>{% endif %}
+            </div>
+            <div class="ed-bento-item">
+                {% if img.galeria_2 %}<img src="{{ img.galeria_2 }}" alt="Momentos EDUCAN 2" loading="lazy">{% else %}<div class="ed-ph"><i class="bi bi-image"></i></div>{% endif %}
+            </div>
+            <div class="ed-bento-item">
+                {% if img.galeria_3 %}<img src="{{ img.galeria_3 }}" alt="Momentos EDUCAN 3" loading="lazy">{% else %}<div class="ed-ph"><i class="bi bi-image"></i></div>{% endif %}
+            </div>
+            <div class="ed-bento-item">
+                {% if img.galeria_4 %}<img src="{{ img.galeria_4 }}" alt="Momentos EDUCAN 4" loading="lazy">{% else %}<div class="ed-ph"><i class="bi bi-image"></i></div>{% endif %}
+            </div>
+            <div class="ed-bento-item">
+                {% if img.galeria_5 %}<img src="{{ img.galeria_5 }}" alt="Momentos EDUCAN 5" loading="lazy">{% else %}<div class="ed-ph"><i class="bi bi-image"></i></div>{% endif %}
+            </div>
         </div>
     </div>
 </section>
