@@ -1,15 +1,15 @@
-import os
-from django.conf import settings
-from django.core.files.storage import FileSystemStorage
+from django.db.models import Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
 from apps.core.authentication import IsMongoAuthenticated
+from apps.core.uploads import guardar_archivo
 from apps.users.models import Usuario
 from .models import Solicitud
 from .serializers import ServiceRequestSerializer
 
+ESTADOS_VALIDOS = [e[0] for e in Solicitud.ESTADOS]
 
 
 def serialize_solicitud(s):
@@ -35,17 +35,24 @@ def serialize_solicitud(s):
         'creado_en': s.creado_en.isoformat(),
     }
 
-    if s.adiestrador_id:
-        adiestrador = Usuario.objects.get(id=s.adiestrador_id)
+    # select_related ya trajo al adiestrador: no hace falta otra consulta
+    if s.adiestrador:
         data['adiestrador_info'] = {
-            'nombre': adiestrador.nombre,
-            'apellido': adiestrador.apellido,
-            'foto': adiestrador.foto,
-            'certificado': adiestrador.certificado,
-            'especialidades': adiestrador.especialidades,
+            'nombre': s.adiestrador.nombre,
+            'apellido': s.adiestrador.apellido,
+            'foto': s.adiestrador.foto,
+            'certificado': s.adiestrador.certificado,
+            'especialidades': s.adiestrador.especialidades,
         }
 
     return data
+
+
+def adiestrador_aprobado(user_id):
+    """Devuelve el adiestrador si existe y está aprobado; si no, None."""
+    return Usuario.objects.filter(
+        id=user_id, rol='adiestrador', estado_aprobacion='aprobado'
+    ).first()
 
 
 class ServiceRequestListCreateView(APIView):
@@ -54,24 +61,32 @@ class ServiceRequestListCreateView(APIView):
     def get(self, request):
         rol = request.user.get('rol')
         user_id = request.user.get('user_id')
+        base = Solicitud.objects.select_related('cliente', 'adiestrador')
 
         if rol == 'cliente':
-            solicitudes = Solicitud.objects.filter(cliente_id=user_id)
+            solicitudes = base.filter(cliente_id=user_id)
 
         elif rol == 'adiestrador':
-            usuario = Usuario.objects.get(id=user_id)
+            usuario = adiestrador_aprobado(user_id)
+            # Pendiente o rechazado: no ve ninguna solicitud hasta que el admin lo apruebe
+            if not usuario:
+                return Response([])
             especialidades = usuario.especialidades or []
-            from django.db.models import Q
-            solicitudes = Solicitud.objects.filter(
+            solicitudes = base.filter(
                 Q(estado='pendiente', servicio__in=especialidades) | Q(adiestrador_id=user_id)
             )
 
         else:  # administrador
-            solicitudes = Solicitud.objects.all()
+            solicitudes = base.all()
 
         return Response([serialize_solicitud(s) for s in solicitudes])
 
     def post(self, request):
+        # Solo los clientes piden servicios para sus mascotas
+        if request.user.get('rol') != 'cliente':
+            return Response({'error': 'Solo los clientes pueden solicitar servicios.'},
+                            status=status.HTTP_403_FORBIDDEN)
+
         serializer = ServiceRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
@@ -80,7 +95,7 @@ class ServiceRequestListCreateView(APIView):
 
         from apps.pets.models import Mascota
         try:
-            mascota=Mascota.objects.get(id=data['mascota_id'], dueno_id=cliente.id)
+            mascota = Mascota.objects.get(id=data['mascota_id'], dueno_id=cliente.id)
         except Mascota.DoesNotExist:
             return Response({'error': 'Esa mascota no existe o no te pertenece.'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -108,24 +123,40 @@ class ServiceRequestListCreateView(APIView):
 
 
 class ServiceRequestDetailView(APIView):
+    """Edición manual de una solicitud: SOLO el administrador."""
     permission_classes = [IsMongoAuthenticated]
 
     def patch(self, request, pk):
+        if request.user.get('rol') != 'administrador':
+            return Response({'error': 'No autorizado.'}, status=status.HTTP_403_FORBIDDEN)
+
         try:
             solicitud = Solicitud.objects.get(id=pk)
         except Solicitud.DoesNotExist:
             return Response({'error': 'No encontrada.'}, status=status.HTTP_404_NOT_FOUND)
 
-        if 'adiestrador_id' in request.data:
-            solicitud.adiestrador_id = request.data['adiestrador_id']
         if 'estado' in request.data:
+            if request.data['estado'] not in ESTADOS_VALIDOS:
+                return Response({'error': 'Estado no válido.'}, status=status.HTTP_400_BAD_REQUEST)
             solicitud.estado = request.data['estado']
-        solicitud.save()
 
+        if 'adiestrador_id' in request.data:
+            nuevo = request.data['adiestrador_id']
+            if nuevo in (None, ''):
+                solicitud.adiestrador = None
+            else:
+                adiestrador = adiestrador_aprobado(nuevo)
+                if not adiestrador:
+                    return Response({'error': 'Ese adiestrador no existe o no está aprobado.'},
+                                    status=status.HTTP_400_BAD_REQUEST)
+                solicitud.adiestrador = adiestrador
+
+        solicitud.save()
         return Response({'mensaje': 'Solicitud actualizada.'})
 
 
 class UploadPerroFotoView(APIView):
+    """Foto del perro de una solicitud. Solo el cliente que la creó puede cambiarla."""
     permission_classes = [IsMongoAuthenticated]
 
     def post(self, request, pk):
@@ -133,13 +164,16 @@ class UploadPerroFotoView(APIView):
         if not archivo:
             return Response({'error': 'No se envió ninguna imagen.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        carpeta = os.path.join(settings.MEDIA_ROOT, 'perros')
-        os.makedirs(carpeta, exist_ok=True)
-        nombre_archivo = f"{pk}_{archivo.name}"
-        FileSystemStorage(location=carpeta).save(nombre_archivo, archivo)
-        url_foto = f"{settings.MEDIA_URL}perros/{nombre_archivo}"
+        try:
+            solicitud = Solicitud.objects.get(id=pk, cliente_id=request.user.get('user_id'))
+        except Solicitud.DoesNotExist:
+            return Response({'error': 'No encontrada.'}, status=status.HTTP_404_NOT_FOUND)
 
-        solicitud = Solicitud.objects.get(id=pk)
+        try:
+            url_foto = guardar_archivo(archivo, 'perros', pk)
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
         solicitud.perro_foto = url_foto
         solicitud.save()
 
@@ -153,6 +187,12 @@ class AceptarSolicitudView(APIView):
         if request.user.get('rol') != 'adiestrador':
             return Response({'error': 'Solo un adiestrador puede aceptar solicitudes.'}, status=status.HTTP_403_FORBIDDEN)
 
+        # Debe estar aprobado por el administrador
+        adiestrador = adiestrador_aprobado(request.user.get('user_id'))
+        if not adiestrador:
+            return Response({'error': 'Tu cuenta aún no ha sido aprobada por el administrador.'},
+                            status=status.HTTP_403_FORBIDDEN)
+
         try:
             solicitud = Solicitud.objects.get(id=pk)
         except Solicitud.DoesNotExist:
@@ -161,7 +201,12 @@ class AceptarSolicitudView(APIView):
         if solicitud.estado != 'pendiente':
             return Response({'error': 'Esta solicitud ya fue tomada por otro adiestrador.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        solicitud.adiestrador_id = request.user.get('user_id')
+        # Solo puede aceptar servicios de sus especialidades aprobadas
+        if solicitud.servicio not in (adiestrador.especialidades or []):
+            return Response({'error': 'Ese servicio no está entre tus especialidades.'},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        solicitud.adiestrador = adiestrador
         solicitud.estado = 'aceptada'
         solicitud.save()
 

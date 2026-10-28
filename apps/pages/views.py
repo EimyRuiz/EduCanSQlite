@@ -1,14 +1,50 @@
 from django.shortcuts import render
 from apps.training.models import Servicio
 from apps.shop.models import Producto
+from apps.users.models import Usuario
+from apps.requests.models import Solicitud
+from apps.reviews.models import Resena
 
 
 def home(request):
     servicios = Servicio.objects.all()[:4]
     productos = Producto.objects.all()[:3]
+
+    # ---- Estadísticas reales ----
+    perros_entrenados = Solicitud.objects.filter(estado='completado').count()
+    adiestradores = Usuario.objects.filter(rol='adiestrador', estado_aprobacion='aprobado').count()
+
+    resenas = Resena.objects.select_related('cliente', 'solicitud', 'respondido_por')
+    total_resenas = resenas.count()
+    buenas = resenas.filter(estrellas__gte=4).count()
+    satisfaccion = round((buenas / total_resenas) * 100) if total_resenas else 0
+
+    # ---- Testimonios: las 3 reseñas más recientes de 4 o 5 estrellas con comentario ----
+    testimonios = []
+    destacadas = resenas.filter(estrellas__gte=4).exclude(comentario='').order_by('-creado_en')[:3]
+    for r in destacadas:
+        autor = r.respondido_por
+        respondio_adiestrador = bool(autor and autor.rol == 'adiestrador')
+        testimonios.append({
+            'nombre': f"{r.cliente.nombre} {r.cliente.apellido[:1]}.",   # "María T." (privacidad)
+            'foto': r.cliente.foto,
+            'servicio': r.solicitud.servicio,
+            'comentario': r.comentario,
+            'respuesta': r.respuesta_admin,
+            # Quién respondió: el adiestrador (nombre + insignia) o EDUCAN (administrador)
+            'respuesta_por': f"{autor.nombre} {autor.apellido[:1]}." if respondio_adiestrador else 'EDUCAN',
+            'respuesta_rol': 'Adiestrador' if respondio_adiestrador else 'Administrador',
+            'llenas': list(range(r.estrellas)),
+            'vacias': list(range(5 - r.estrellas)),
+        })
+
     return render(request, 'pages/home.html', {
         'servicios': servicios,
         'productos': productos,
+        'perros_entrenados': perros_entrenados,
+        'adiestradores': adiestradores,
+        'satisfaccion': satisfaccion,
+        'testimonios': testimonios,
     })
 
 

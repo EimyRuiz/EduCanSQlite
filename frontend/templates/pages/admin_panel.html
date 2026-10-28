@@ -56,7 +56,7 @@
             </div>
             <div class="admin-card">
                 <h6 class="fw-bold mb-3">Bienvenido al panel</h6>
-                <p class="text-muted mb-0">Desde aquí puedes gestionar usuarios, servicios y productos de EDUCAN. Usa el menú lateral para navegar entre secciones.</p>
+                <p class="text-muted mb-0">Desde aquí puedes gestionar usuarios, servicios, productos y reseñas de EDUCAN. Usa el menú lateral para navegar entre secciones.</p>
             </div>
         </section>
 
@@ -115,6 +115,8 @@
                     <div class="col-md-2"><input class="form-control" type="number" placeholder="Precio" id="servPrecio" required></div>
                     <div class="col-md-3"><button class="btn btn-olive w-100" id="servSubmitBtn">Agregar</button></div>
                 </form>
+                <!-- Aquí se muestran los errores o confirmaciones (duplicado, sin permiso, etc.) -->
+                <div id="servMsg" class="small mt-2"></div>
             </div>
             <div class="admin-card">
                 <h6 class="fw-bold mb-3">Servicios existentes</h6>
@@ -150,6 +152,7 @@
                     <div class="col-md-2"><input class="form-control" type="number" placeholder="Precio" id="prodPrecio" required></div>
                     <div class="col-md-2"><button class="btn btn-olive w-100" id="prodSubmitBtn">Agregar</button></div>
                 </form>
+                <div id="prodMsg" class="small mt-2"></div>
             </div>
             <div class="admin-card">
                 <h6 class="fw-bold mb-3">Productos existentes</h6>
@@ -157,6 +160,14 @@
                     <thead><tr><th>Nombre</th><th>Precio</th><th></th></tr></thead>
                     <tbody id="productosBody"></tbody>
                 </table>
+            </div>
+        </section>
+
+        <!-- Reseñas: el admin ve las calificaciones de los clientes y puede responderlas -->
+        <section class="admin-section d-none" id="section-resenas">
+            <div class="admin-card">
+                <h6 class="fw-bold mb-3">Reseñas de clientes</h6>
+                <div id="resenasContainer"></div>
             </div>
         </section>
     </main>
@@ -181,6 +192,41 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('welcomeText').textContent = 'Bienvenido, ' + nombre;
     document.getElementById('adminAvatar').textContent = nombre.charAt(0).toUpperCase();
 
+    const API = '/api';
+    const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+    // Escapa texto antes de meterlo en HTML (evita que un comentario con <script> se ejecute)
+    function esc(t) {
+        return String(t ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    // Envía una petición y, si el servidor responde con error, lanza un Error con el mensaje en español
+    async function enviar(url, metodo, datos) {
+        const opciones = { method: metodo, headers };
+        if (datos !== undefined) opciones.body = JSON.stringify(datos);
+        const r = await fetch(url, opciones);
+        let cuerpo = {};
+        try { cuerpo = await r.json(); } catch (e) { /* 204 sin cuerpo */ }
+        if (!r.ok) {
+            // Formatos posibles: {error: "..."}, {detail: "..."} o {campo: ["..."]}
+            let msg = cuerpo.error || cuerpo.detail;
+            if (!msg) {
+                const primero = Object.values(cuerpo)[0];
+                msg = Array.isArray(primero) ? primero[0] : null;
+            }
+            if (r.status === 403) msg = msg || 'No tienes permiso para hacer esto.';
+            throw new Error(msg || 'No se pudo completar la acción.');
+        }
+        return cuerpo;
+    }
+
+    // Muestra un mensaje (verde si salió bien, rojo si falló) bajo un formulario
+    function aviso(idElemento, texto, ok) {
+        const el = document.getElementById(idElemento);
+        el.className = 'small mt-2 ' + (ok ? 'text-success' : 'text-danger');
+        el.textContent = texto;
+    }
+
     // ============================================
     // Navegación entre secciones del sidebar
     // ============================================
@@ -198,11 +244,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 cargarCalendario();
                 calendarioIniciado = true;
             }
+            // Las reseñas se recargan cada vez que se abre la sección
+            if (this.dataset.section === 'resenas') cargarResenas();
         });
     });
-
-    const API = '/api';
-    const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 
     // ============================================
     // Usuarios
@@ -213,12 +258,12 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(usuarios => {
                 document.getElementById('statUsuarios').textContent = usuarios.length;
                 document.getElementById('usuariosBody').innerHTML = usuarios.map(u =>
-                    `<tr><td><img src="${u.foto || 'https://via.placeholder.com/40'}" class="rounded-circle me-2" width="35"> ${u.nombre} ${u.apellido || ''}</td><td>${u.email}</td><td>${u.rol}</td></tr>`
+                    `<tr><td><img src="${esc(u.foto) || 'https://via.placeholder.com/40'}" class="rounded-circle me-2" width="35"> ${esc(u.nombre)} ${esc(u.apellido)}</td><td>${esc(u.email)}</td><td>${esc(u.rol)}</td></tr>`
                 ).join('');
             })
             .catch(err => {
                 document.getElementById('usuariosBody').innerHTML =
-                    '<tr><td colspan="3" class="text-danger">Error: ' + err.message + '</td></tr>';
+                    '<tr><td colspan="3" class="text-danger">Error: ' + esc(err.message) + '</td></tr>';
             });
     }
     cargarUsuarios();
@@ -240,15 +285,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 <div class="border rounded-3 p-3 mb-3">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div>
-                            <strong>${u.nombre} ${u.apellido || ''}</strong><br>
-                            <span class="text-muted small">${u.email}</span>
+                            <strong>${esc(u.nombre)} ${esc(u.apellido)}</strong><br>
+                            <span class="text-muted small">${esc(u.email)}</span>
                         </div>
-                        ${u.certificado ? `<a href="${u.certificado}" target="_blank" class="btn btn-sm btn-outline-secondary">Ver certificado</a>` : '<span class="text-danger small">Sin certificado</span>'}
+                        ${u.certificado ? `<a href="${esc(u.certificado)}" target="_blank" class="btn btn-sm btn-outline-secondary">Ver certificado</a>` : '<span class="text-danger small">Sin certificado</span>'}
                     </div>
 
                     <p class="small fw-bold mb-1">Especialidades solicitadas:</p>
                     <div class="mb-3">
-                        ${(u.especialidades_solicitadas || []).map(esp => `<span class="badge bg-secondary me-1">${esp}</span>`).join('') || '<span class="text-muted small">Ninguna seleccionada</span>'}
+                        ${(u.especialidades_solicitadas || []).map(esp => `<span class="badge bg-secondary me-1">${esc(esp)}</span>`).join('') || '<span class="text-muted small">Ninguna seleccionada</span>'}
                     </div>
 
                     <button class="btn btn-sm btn-olive me-1" onclick="aprobarAdiestrador('${u.id}')">Aprobar</button>
@@ -283,7 +328,7 @@ document.addEventListener('DOMContentLoaded', function () {
         muy_largo: '#e74c3c'
     };
 
-        // Alto del calendario: se ajusta a la pantalla para que se vea completo sin scroll
+    // Alto del calendario: se ajusta a la pantalla para que se vea completo sin scroll
     function altoCalendario() {
         return Math.max(420, window.innerHeight - 340);
     }
@@ -332,7 +377,7 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('statServicios').textContent = servicios.length;
             document.getElementById('serviciosBody').innerHTML = servicios.map(s =>
                 `<tr>
-                    <td>${s.nombre}</td>
+                    <td>${esc(s.nombre)}</td>
                     <td>$${formatearPrecioCOP(s.precio)}</td>
                     <td>
                         <button class="btn btn-sm btn-outline-secondary me-1" onclick='editarServicio(${JSON.stringify(s)})'>Editar</button>
@@ -352,7 +397,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('servSubmitBtn').textContent = 'Guardar cambios';
     };
 
-    document.getElementById('servicioForm').onsubmit = function (e) {
+    document.getElementById('servicioForm').onsubmit = async function (e) {
         e.preventDefault();
         const id = document.getElementById('servId').value;
         const datos = {
@@ -360,20 +405,26 @@ document.addEventListener('DOMContentLoaded', function () {
             descripcion: document.getElementById('servDescripcion').value,
             precio: parseFloat(document.getElementById('servPrecio').value)
         };
-        const url = id ? `${API}/services/${id}/` : `${API}/services/`;
-        const metodo = id ? 'PUT' : 'POST';
-
-        fetch(url, { method: metodo, headers, body: JSON.stringify(datos) })
-            .then(() => {
-                this.reset();
-                document.getElementById('servId').value = '';
-                document.getElementById('servSubmitBtn').textContent = 'Agregar';
-                cargarServicios();
-            });
+        try {
+            await enviar(id ? `${API}/services/${id}/` : `${API}/services/`, id ? 'PUT' : 'POST', datos);
+            aviso('servMsg', id ? 'Servicio actualizado.' : 'Servicio creado.', true);
+            this.reset();
+            document.getElementById('servId').value = '';
+            document.getElementById('servSubmitBtn').textContent = 'Agregar';
+            cargarServicios();
+        } catch (err) {
+            aviso('servMsg', err.message, false);
+        }
     };
 
-    window.eliminarServicio = function (id) {
-        fetch(`${API}/services/${id}/`, { method: 'DELETE', headers }).then(() => cargarServicios());
+    window.eliminarServicio = async function (id) {
+        try {
+            await enviar(`${API}/services/${id}/`, 'DELETE');
+            aviso('servMsg', 'Servicio eliminado.', true);
+            cargarServicios();
+        } catch (err) {
+            aviso('servMsg', err.message, false);
+        }
     };
 
     // ============================================
@@ -384,7 +435,7 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('statProductos').textContent = productos.length;
             document.getElementById('productosBody').innerHTML = productos.map(p =>
                 `<tr>
-                    <td>${p.nombre}</td>
+                    <td>${esc(p.nombre)}</td>
                     <td>$${formatearPrecioCOP(p.precio)}</td>
                     <td>
                         <button class="btn btn-sm btn-outline-secondary me-1" onclick='editarProducto(${JSON.stringify(p)})'>Editar</button>
@@ -405,7 +456,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('prodSubmitBtn').textContent = 'Guardar cambios';
     };
 
-    document.getElementById('productoForm').onsubmit = function (e) {
+    document.getElementById('productoForm').onsubmit = async function (e) {
         e.preventDefault();
         const id = document.getElementById('prodId').value;
         const datos = {
@@ -414,20 +465,98 @@ document.addEventListener('DOMContentLoaded', function () {
             descripcion: document.getElementById('prodDescripcion').value,
             precio: parseFloat(document.getElementById('prodPrecio').value)
         };
-        const url = id ? `${API}/products/${id}/` : `${API}/products/`;
-        const metodo = id ? 'PUT' : 'POST';
-
-        fetch(url, { method: metodo, headers, body: JSON.stringify(datos) })
-            .then(() => {
-                this.reset();
-                document.getElementById('prodId').value = '';
-                document.getElementById('prodSubmitBtn').textContent = 'Agregar';
-                cargarProductos();
-            });
+        try {
+            await enviar(id ? `${API}/products/${id}/` : `${API}/products/`, id ? 'PUT' : 'POST', datos);
+            aviso('prodMsg', id ? 'Producto actualizado.' : 'Producto creado.', true);
+            this.reset();
+            document.getElementById('prodId').value = '';
+            document.getElementById('prodSubmitBtn').textContent = 'Agregar';
+            cargarProductos();
+        } catch (err) {
+            aviso('prodMsg', err.message, false);
+        }
     };
 
-    window.eliminarProducto = function (id) {
-        fetch(`${API}/products/${id}/`, { method: 'DELETE', headers }).then(() => cargarProductos());
+    window.eliminarProducto = async function (id) {
+        try {
+            await enviar(`${API}/products/${id}/`, 'DELETE');
+            aviso('prodMsg', 'Producto eliminado.', true);
+            cargarProductos();
+        } catch (err) {
+            aviso('prodMsg', err.message, false);
+        }
+    };
+
+    // ============================================
+    // Reseñas: ver las calificaciones y responderlas
+    // ============================================
+    function estrellasHTML(n) {
+        let html = '';
+        for (let i = 1; i <= 5; i++) {
+            html += `<i class="bi ${i <= n ? 'bi-star-fill' : 'bi-star'}" style="color:#e0a526"></i>`;
+        }
+        return html;
+    }
+
+    // "Nombre + insignia" de quien escribió la respuesta
+    function quienRespondio(r) {
+        const esAdiestrador = r.respondido_por_rol === 'adiestrador';
+        return `<strong>${esc(r.respondido_por_nombre)}</strong>
+                <span class="badge ms-1 ${esAdiestrador ? 'bg-olive text-white' : 'bg-dark'}">${esAdiestrador ? 'Adiestrador' : 'Administrador'}</span>`;
+    }
+
+    function tarjetaResena(r) {
+        const respondida = !!r.respuesta_admin;
+        return `
+            <div class="border rounded-3 p-3 mb-3 ${respondida ? 'bg-light' : ''}">
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                    <div>
+                        <strong>${esc(r.cliente_nombre)}</strong>
+                        <span class="text-muted small ms-2">${esc(r.servicio)}</span>
+                    </div>
+                    <div>${estrellasHTML(r.estrellas)}</div>
+                </div>
+                <p class="mb-2">${esc(r.comentario) || '<span class="text-muted">Sin comentario.</span>'}</p>
+                ${respondida ? `<div class="small text-success mb-1"><i class="bi bi-check-circle-fill me-1"></i>Respondida por ${quienRespondio(r)}</div>` : ''}
+                <div class="d-flex gap-2">
+                    <input class="form-control form-control-sm" id="resp-${r.id}" maxlength="500"
+                           placeholder="Escribe una respuesta pública" value="${esc(r.respuesta_admin)}"
+                           ${respondida ? 'disabled' : ''}>
+                    <button class="btn btn-sm ${respondida ? 'btn-outline-secondary' : 'btn-olive'}" id="btn-${r.id}"
+                            onclick="accionResena(${r.id})">${respondida ? 'Editar' : 'Responder'}</button>
+                </div>
+                <div id="respMsg-${r.id}" class="small mt-1"></div>
+            </div>`;
+    }
+
+    function cargarResenas() {
+        fetch(`${API}/reviews/`, { headers }).then(r => r.json()).then(resenas => {
+            document.getElementById('resenasContainer').innerHTML = resenas.length
+                ? resenas.map(tarjetaResena).join('')
+                : '<p class="text-muted mb-0">Aún no hay reseñas.</p>';
+        });
+    }
+
+    // Un solo botón: si la casilla está bloqueada (ya respondida) la habilita para editar; si no, guarda.
+    window.accionResena = async function (id) {
+        const input = document.getElementById('resp-' + id);
+        const boton = document.getElementById('btn-' + id);
+        const msg = document.getElementById('respMsg-' + id);
+
+        if (input.disabled) {
+            input.disabled = false;
+            input.focus();
+            boton.textContent = 'Guardar';
+            boton.className = 'btn btn-sm btn-olive';
+            return;
+        }
+        try {
+            await enviar(`${API}/reviews/${id}/responder/`, 'POST', { respuesta: input.value.trim() });
+            cargarResenas();   // se vuelve a dibujar: casilla gris + "Respondida por ..."
+        } catch (err) {
+            msg.className = 'small mt-1 text-danger';
+            msg.textContent = err.message;
+        }
     };
 });
 </script>

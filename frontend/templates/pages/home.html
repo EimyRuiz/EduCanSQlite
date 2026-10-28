@@ -90,24 +90,24 @@
                     educar con amor, respeto y técnicas efectivas para lograr una convivencia feliz.
                 </p>
 
-                <!-- Los números arrancan en 0 y "corren" hasta data-target cuando entran en pantalla (main.js).
-                     OJO: por ahora son valores fijos; en el Bloque B se conectan a /api/reviews/estadisticas/ -->
+                <!-- Los números arrancan en 0 y "corren" hasta data-target al entrar en pantalla (main.js).
+                     Los valores vienen de la base de datos (apps/pages/views.py -> home). -->
                 <div class="row g-3 mb-4">
                     <div class="col-4">
                         <div class="stat-card">
-                            <strong><span class="counter-suffix">+</span><span class="counter" data-target="500">0</span></strong>
+                            <strong><span class="counter-suffix">+</span><span class="counter" data-target="{{ perros_entrenados }}">0</span></strong>
                             <span>Perros graduados con éxito</span>
                         </div>
                     </div>
                     <div class="col-4">
                         <div class="stat-card">
-                            <strong><span class="counter-suffix">+</span><span class="counter" data-target="8">0</span></strong>
-                            <span>Años liderando adiestramiento</span>
+                            <strong><span class="counter-suffix">+</span><span class="counter" data-target="{{ adiestradores }}">0</span></strong>
+                            <span>Adiestradores certificados</span>
                         </div>
                     </div>
                     <div class="col-4">
                         <div class="stat-card">
-                            <strong><span class="counter" data-target="98">0</span><span class="counter-suffix">%</span></strong>
+                            <strong><span class="counter" data-target="{{ satisfaccion }}">0</span><span class="counter-suffix">%</span></strong>
                             <span>Familias satisfechas y felices</span>
                         </div>
                     </div>
@@ -181,7 +181,7 @@
 </section>
 
 
-<!--testimonios-->
+<!--testimonios: reseñas reales de los clientes (vienen de la base de datos)-->
 <section class="py-5 my-5">
     <div class="container">
         <div class="text-center mb-5">
@@ -189,42 +189,31 @@
             <h2 class="fw-bold">Lo que dicen nuestros clientes</h2>
         </div>
         <div class="row g-4 justify-content-center">
+            {% for t in testimonios %}
             <div class="col-md-4">
                 <div class="testimonial-card text-center">
-                    <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150"
-                         class="testimonial-avatar mb-3" alt="Cliente">
+                    <img src="{{ t.foto|default:'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150' }}"
+                         class="testimonial-avatar mb-3" alt="{{ t.nombre }}">
                     <div class="testimonial-stars mb-2">
-                        <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                        {% for i in t.llenas %}<i class="bi bi-star-fill"></i>{% endfor %}{% for i in t.vacias %}<i class="bi bi-star"></i>{% endfor %}
                     </div>
-                    <p class="testimonial-text">"Mi perro pasó de destruir la casa a obedecer en dos semanas. El equipo de EDUCAN es increíble."</p>
-                    <h6 class="fw-bold mb-0 mt-3">María Torres</h6>
-                    <span class="text-muted small">Dueña de Max</span>
+                    <p class="testimonial-text">"{{ t.comentario }}"</p>
+                    <h6 class="fw-bold mb-0 mt-3">{{ t.nombre }}</h6>
+                    <span class="text-muted small">{{ t.servicio }}</span>
+                                        {% if t.respuesta %}
+                    <div class="small mt-3 pt-3 border-top">
+                        <div class="text-olive">
+                            <i class="bi bi-reply-fill me-1"></i><strong>{{ t.respuesta_por }}</strong>
+                            <span class="badge ms-1 {% if t.respuesta_rol == 'Adiestrador' %}bg-olive text-white{% else %}bg-dark{% endif %}">{{ t.respuesta_rol }}</span>
+                        </div>
+                        <p class="text-muted mb-0 mt-1">{{ t.respuesta }}</p>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="testimonial-card text-center">
-                    <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150"
-                         class="testimonial-avatar mb-3" alt="Cliente">
-                    <div class="testimonial-stars mb-2">
-                        <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
-                    </div>
-                    <p class="testimonial-text">"Profesionales, puntuales y con mucha paciencia. Totalmente recomendados."</p>
-                    <h6 class="fw-bold mb-0 mt-3">Carlos Ramírez</h6>
-                    <span class="text-muted small">Dueño de Luna</span>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="testimonial-card text-center">
-                    <img src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=150"
-                         class="testimonial-avatar mb-3" alt="Cliente">
-                    <div class="testimonial-stars mb-2">
-                        <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
-                    </div>
-                    <p class="testimonial-text">"La tienda tiene productos de excelente calidad y el blog me ha ayudado mucho."</p>
-                    <h6 class="fw-bold mb-0 mt-3">Ana Gómez</h6>
-                    <span class="text-muted small">Dueña de Rocky</span>
-                </div>
-            </div>
+            {% empty %}
+            <p class="text-center text-muted">Aún no hay reseñas. ¡Sé el primero en calificar nuestro servicio!</p>
+            {% endfor %}
         </div>
     </div>
 </section>

@@ -5,6 +5,7 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.core.authentication import IsMongoAuthenticated
+from apps.core.uploads import guardar_archivo
 from .models import Usuario
 from .serializers import UserRegisterSerializer, UserLoginSerializer
 
@@ -112,23 +113,19 @@ class UserListView(APIView):
 
 
 class UploadPhotoView(APIView):
+    """Foto de perfil del usuario con sesión. Solo JPG, PNG o WEBP de hasta 5 MB."""
     permission_classes = [IsMongoAuthenticated]
 
     def post(self, request):
-        import os
-        from django.conf import settings
-        from django.core.files.storage import FileSystemStorage
-
         archivo = request.FILES.get('foto')
         if not archivo:
             return Response({'error': 'No se envió ninguna imagen.'}, status=status.HTTP_400_BAD_REQUEST)
 
         user_id = request.user.get('user_id')
-        carpeta = os.path.join(settings.MEDIA_ROOT, 'perfiles')
-        os.makedirs(carpeta, exist_ok=True)
-        nombre_archivo = f"{user_id}_{archivo.name}"
-        FileSystemStorage(location=carpeta).save(nombre_archivo, archivo)
-        url_foto = f"{settings.MEDIA_URL}perfiles/{nombre_archivo}"
+        try:
+            url_foto = guardar_archivo(archivo, 'perfiles', user_id)
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         usuario = Usuario.objects.get(id=user_id)
         usuario.foto = url_foto
@@ -138,23 +135,23 @@ class UploadPhotoView(APIView):
 
 
 class UploadCertificadoView(APIView):
+    """Certificado del adiestrador. JPG, PNG, WEBP o PDF de hasta 5 MB."""
     permission_classes = [IsMongoAuthenticated]
 
     def post(self, request):
-        import os
-        from django.conf import settings
-        from django.core.files.storage import FileSystemStorage
+        # Solo un adiestrador necesita subir certificado
+        if request.user.get('rol') != 'adiestrador':
+            return Response({'error': 'Solo un adiestrador puede subir un certificado.'}, status=status.HTTP_403_FORBIDDEN)
 
         archivo = request.FILES.get('certificado')
         if not archivo:
             return Response({'error': 'No se envió ningún archivo.'}, status=status.HTTP_400_BAD_REQUEST)
 
         user_id = request.user.get('user_id')
-        carpeta = os.path.join(settings.MEDIA_ROOT, 'certificados')
-        os.makedirs(carpeta, exist_ok=True)
-        nombre_archivo = f"{user_id}_{archivo.name}"
-        FileSystemStorage(location=carpeta).save(nombre_archivo, archivo)
-        url_certificado = f"{settings.MEDIA_URL}certificados/{nombre_archivo}"
+        try:
+            url_certificado = guardar_archivo(archivo, 'certificados', user_id, permitir_pdf=True)
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
         usuario = Usuario.objects.get(id=user_id)
         usuario.certificado = url_certificado

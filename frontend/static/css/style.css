@@ -1955,3 +1955,19 @@ section.py-5 .text-center.mb-5 {
 .fc .fc-button-primary:focus {
     box-shadow: 0 0 0 0.2rem rgba(122, 141, 40, 0.3);
 }
+
+/* ===== 13. Corrección: el panel admin no debe salirse de la pantalla ===== */
+/* El menú lateral ocupa 230px, así que el contenido mide "todo el ancho menos 230px" */
+.admin-main {
+    box-sizing: border-box;
+    width: calc(100% - 230px);
+    max-width: calc(100% - 230px);
+    min-width: 0;            /* permite que los hijos se encojan en vez de empujar */
+}
+.admin-main .admin-card { overflow-x: auto; }   /* si una tabla es muy ancha, hace scroll dentro de la tarjeta */
+html, body { overflow-x: hidden; }               /* nunca scroll horizontal de toda la página */
+
+/* En pantallas pequeñas el menú se esconde o se apila: el contenido vuelve a ocupar todo el ancho */
+@media (max-width: 991px) {
+    .admin-main { width: 100%; max-width: 100%; }
+}

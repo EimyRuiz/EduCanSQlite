@@ -1,11 +1,9 @@
-import os
-from django.conf import settings
-from django.core.files.storage import FileSystemStorage
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
 from apps.core.authentication import IsMongoAuthenticated
+from apps.core.uploads import guardar_archivo
 from apps.users.models import Usuario
 from .models import Mascota
 from .serializers import PetSerializer
@@ -79,6 +77,7 @@ class PetDetailView(APIView):
 
 
 class UploadPetFotoView(APIView):
+    """Foto de una mascota. Solo su dueño puede cambiarla. JPG, PNG o WEBP de hasta 5 MB."""
     permission_classes = [IsMongoAuthenticated]
 
     def post(self, request, pk):
@@ -86,13 +85,17 @@ class UploadPetFotoView(APIView):
         if not archivo:
             return Response({'error': 'No se envió ninguna imagen.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        carpeta = os.path.join(settings.MEDIA_ROOT, 'mascotas')
-        os.makedirs(carpeta, exist_ok=True)
-        nombre_archivo = f"{pk}_{archivo.name}"
-        FileSystemStorage(location=carpeta).save(nombre_archivo, archivo)
-        url_foto = f"{settings.MEDIA_URL}mascotas/{nombre_archivo}"
+        # La mascota debe existir Y pertenecer al usuario que hace la petición
+        try:
+            mascota = Mascota.objects.get(id=pk, dueno_id=request.user.get('user_id'))
+        except Mascota.DoesNotExist:
+            return Response({'error': 'No encontrada.'}, status=status.HTTP_404_NOT_FOUND)
 
-        mascota = Mascota.objects.get(id=pk)
+        try:
+            url_foto = guardar_archivo(archivo, 'mascotas', pk)
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
         mascota.foto = url_foto
         mascota.save()
 

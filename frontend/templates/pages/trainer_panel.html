@@ -28,9 +28,9 @@
             </div>
         </div>
 
-        <!-- Tarjetas de acceso -->
+        <!-- Tarjetas de acceso (4) -->
         <div class="row g-4 mb-4">
-            <div class="col-md-4">
+            <div class="col-md-6 col-lg-3">
                 <div class="panel-card" data-section="disponibles">
                     <div class="panel-card-head">
                         <span class="panel-card-icon"><i class="bi bi-list-check"></i></span>
@@ -40,7 +40,7 @@
                     <button type="button" class="btn-panel">Ver solicitudes</button>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6 col-lg-3">
                 <div class="panel-card" data-section="agenda">
                     <div class="panel-card-head">
                         <span class="panel-card-icon"><i class="bi bi-calendar-week"></i></span>
@@ -50,7 +50,17 @@
                     <button type="button" class="btn-panel">Ver agenda</button>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="panel-card" data-section="resenas">
+                    <div class="panel-card-head">
+                        <span class="panel-card-icon"><i class="bi bi-star-fill"></i></span>
+                        <h5>Mis reseñas</h5>
+                    </div>
+                    <p id="cardResenasText">Cargando...</p>
+                    <button type="button" class="btn-panel">Ver reseñas</button>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
                 <div class="panel-card" data-section="miperfil">
                     <div class="panel-card-head">
                         <span class="panel-card-icon"><i class="bi bi-person-fill"></i></span>
@@ -79,6 +89,14 @@
             <div class="admin-card">
                 <h6 class="fw-bold mb-3">Historial de servicios completados</h6>
                 <div id="completadosContainer"></div>
+            </div>
+        </section>
+
+        <!-- ================= Mis reseñas: calificaciones de mis servicios + respuesta ================= -->
+        <section class="panel-section d-none" id="section-resenas">
+            <div class="admin-card">
+                <h6 class="fw-bold mb-3">Reseñas de mis servicios</h6>
+                <div id="resenasContainer"></div>
             </div>
         </section>
 
@@ -348,6 +366,98 @@ document.addEventListener('DOMContentLoaded', function () {
             { icon: 'bi-calendar-event', label: 'Fecha de inicio', value: s.fecha_inicio }
         ]);
         new bootstrap.Modal(document.getElementById('agendaDetailModal')).show();
+    };
+
+    // ============================================
+    // Mis reseñas: lo que calificaron los clientes de MIS servicios, y mi respuesta
+    // ============================================
+    function estrellasHTML(n) {
+        let html = '';
+        for (let i = 1; i <= 5; i++) {
+            html += `<i class="bi ${i <= n ? 'bi-star-fill' : 'bi-star'}" style="color:#e0a526"></i>`;
+        }
+        return html;
+    }
+
+    // "Nombre + insignia" de quien escribió la respuesta
+    function quienRespondio(r) {
+        const esAdiestrador = r.respondido_por_rol === 'adiestrador';
+        return `<strong>${esc(r.respondido_por_nombre)}</strong>
+                <span class="badge ms-1 ${esAdiestrador ? 'bg-olive text-white' : 'bg-dark'}">${esAdiestrador ? 'Adiestrador' : 'Administrador'}</span>`;
+    }
+
+    function tarjetaResena(r) {
+        const respondida = !!r.respuesta_admin;
+        // Si la respuesta la dejó el administrador, el adiestrador solo puede verla (puede_editar = false)
+        const boton = r.puede_editar
+            ? `<button class="btn btn-sm ${respondida ? 'btn-outline-secondary' : 'btn-olive'}" id="btn-${r.id}"
+                       onclick="accionResena(${r.id})">${respondida ? 'Editar' : 'Responder'}</button>`
+            : '';
+        return `
+            <div class="border rounded-3 p-3 mb-3 ${respondida ? 'bg-light' : ''}">
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                    <div>
+                        <strong>${esc(r.cliente_nombre)}</strong>
+                        <span class="text-muted small ms-2">${esc(r.servicio)} · ${esc(r.perro_nombre)}</span>
+                    </div>
+                    <div>${estrellasHTML(r.estrellas)}</div>
+                </div>
+                <p class="mb-2">${esc(r.comentario) || '<span class="text-muted">Sin comentario.</span>'}</p>
+                ${respondida ? `<div class="small text-success mb-1"><i class="bi bi-check-circle-fill me-1"></i>Respondida por ${quienRespondio(r)}</div>` : ''}
+                <div class="d-flex gap-2">
+                    <input class="form-control form-control-sm" id="resp-${r.id}" maxlength="500"
+                           placeholder="Escribe una respuesta pública" value="${esc(r.respuesta_admin)}"
+                           ${respondida || !r.puede_editar ? 'disabled' : ''}>
+                    ${boton}
+                </div>
+                <div id="respMsg-${r.id}" class="small mt-1"></div>
+            </div>`;
+    }
+
+    function cargarResenas() {
+        api('/reviews/mias/', { headers }).then(resenas => {
+            if (!Array.isArray(resenas)) return;
+
+            // Texto de la tarjeta de acceso, con el promedio real
+            const textoTarjeta = document.getElementById('cardResenasText');
+            if (resenas.length) {
+                const promedio = (resenas.reduce((suma, r) => suma + r.estrellas, 0) / resenas.length).toFixed(1);
+                textoTarjeta.textContent = `${resenas.length} reseña${resenas.length !== 1 ? 's' : ''} · promedio ${promedio} de 5.`;
+            } else {
+                textoTarjeta.textContent = 'Aún no tienes reseñas de tus servicios.';
+            }
+
+            document.getElementById('resenasContainer').innerHTML = resenas.length
+                ? resenas.map(tarjetaResena).join('')
+                : '<p class="text-muted mb-0">Cuando un cliente califique uno de tus servicios completados, su reseña aparecerá aquí.</p>';
+        });
+    }
+    cargarResenas();
+
+    // Un solo botón: si la casilla está bloqueada (ya respondida) la habilita para editar; si no, guarda.
+    window.accionResena = function (id) {
+        const input = document.getElementById('resp-' + id);
+        const boton = document.getElementById('btn-' + id);
+        const msg = document.getElementById('respMsg-' + id);
+
+        if (input.disabled) {
+            input.disabled = false;
+            input.focus();
+            boton.textContent = 'Guardar';
+            boton.className = 'btn btn-sm btn-olive';
+            return;
+        }
+        api(`/reviews/${id}/responder/`, {
+            method: 'POST', headers,
+            body: JSON.stringify({ respuesta: input.value.trim() })
+        }).then(result => {
+            if (result.error) {
+                msg.className = 'small mt-1 text-danger';
+                msg.textContent = result.error;
+            } else {
+                cargarResenas();   // se vuelve a dibujar: casilla gris + "Respondida por ..."
+            }
+        });
     };
 
     // ============================================
