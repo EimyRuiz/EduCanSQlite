@@ -1,67 +1,586 @@
 {% extends 'layouts/base.html' %}
-{% load formato %}
 
 {% block title %}Tienda | EDUCAN{% endblock %}
 
 {% block content %}
 
-<section class="page-header">
-    <div class="page-header-overlay"></div>
-    <div class="container position-relative text-center text-white py-3">
-        <p class="text-uppercase fw-bold small mb-2" style="letter-spacing: 2px;">Tienda</p>
-        <h1 class="fw-bold display-5">Nuestros productos</h1>
+<section class="ed-top ed-hero pb-2">
+    <div class="container">
+        <nav class="ed-crumbs"><a href="/">Inicio</a> <span>/</span> <strong>Tienda</strong></nav>
+
+        <!-- Banner: la foto la sube el administrador (Panel > Imágenes del sitio) -->
+        <div class="ed-shop-hero mt-3">
+            {% if img.tienda_banner %}
+                <img src="{{ img.tienda_banner }}" alt="Productos para tu mascota">
+            {% endif %}
+            <div class="ed-shop-hero-text">
+                <p class="ed-eyebrow">Tienda de mascotas</p>
+                <h1 class="ed-title">Todo lo que ellos necesitan, en un solo lugar</h1>
+                <p class="ed-lead my-3">Accesorios, juguetes, higiene y más para que tu mascota viva feliz y saludable.</p>
+                <a href="#catalogo" class="btn btn-brown rounded-pill">Ver productos <i class="bi bi-arrow-right ms-1"></i></a>
+            </div>
+        </div>
+
+        <div class="ed-strip">
+            <span><i class="bi bi-heart-pulse"></i>Elegidos para su bienestar</span>
+            <span><i class="bi bi-chat-dots"></i>Te ayudamos a elegir</span>
+            <span><i class="bi bi-cash-coin"></i>Pago contra entrega</span>
+        </div>
     </div>
 </section>
 
-<section class="py-5 my-4">
+<section class="ed-section pt-3" id="catalogo">
     <div class="container">
 
-        <!-- Filtros -->
-        <div class="row g-3 mb-4">
-            <div class="col-md-6">
-                <div class="input-icon-group">
+        <!-- Buscador + carrito -->
+        <div class="row g-2 align-items-center mb-4">
+            <div class="col">
+                <div class="ed-search">
                     <i class="bi bi-search"></i>
-                    <input type="text" class="form-control" id="buscarProducto" placeholder="Buscar producto...">
+                    <input type="text" id="buscarProducto" placeholder="¿Qué necesita tu perro? Busca premios, juguetes y más…">
                 </div>
             </div>
-            <div class="col-md-6">
-                <select class="form-select" id="filtroCategoria">
-                    <option value="">Todas las categorías</option>
-                    <option value="Collar">Collar</option>
-                    <option value="Pechera">Pechera</option>
-                    <option value="Correa">Correa</option>
-                    <option value="Impermeable">Impermeable</option>
-                    <option value="Juguete">Juguete</option>
-                    <option value="Comida">Comida</option>
-                    <option value="Producto de aseo">Producto de aseo</option>
-                    <option value="Accesorio">Accesorio</option>
-                </select>
+            <div class="col-auto">
+                <button type="button" class="btn btn-outline-olive rounded-pill" data-bs-toggle="offcanvas" data-bs-target="#cartCanvas">
+                    <i class="bi bi-cart3 me-1"></i>Mi carrito (<span id="cartCount">0</span>)
+                </button>
             </div>
         </div>
 
-        <div class="row g-4" id="productosGrid">
-            {% for p in productos %}
-            <div class="col-md-4 producto-item" data-categoria="{{ p.categoria }}">
-                <div class="shop-card">
-                    <div class="shop-card-img">
-                        <img src="{{ p.imagen|default:'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=500' }}" alt="{{ p.nombre }}">
+        <div class="row g-4">
+            <!-- Filtros -->
+            <aside class="col-lg-3">
+                <div class="ed-side">
+                    <h2 class="ed-side-title"><i class="bi bi-funnel me-1"></i>Filtrar productos</h2>
+
+                    <p class="ed-side-label">Categoría</p>
+                    <div id="listaCategorias"></div>
+
+                    <hr>
+                    <p class="ed-side-label">Precio <small class="text-muted">COP</small></p>
+                    <div class="row g-2">
+                        <div class="col-6"><label class="small text-muted" for="precioMin">Mínimo</label><input type="number" min="0" class="form-control form-control-sm" id="precioMin" placeholder="$0"></div>
+                        <div class="col-6"><label class="small text-muted" for="precioMax">Máximo</label><input type="number" min="0" class="form-control form-control-sm" id="precioMax" placeholder="Sin límite"></div>
                     </div>
-                    <div class="text-center p-4">
-                        <h5 class="fw-bold mb-2">{{ p.nombre }}</h5>
-                        <p class="text-muted small mb-3">{{ p.descripcion }}</p>
-                        <p class="fw-bold text-olive mb-3">${{ p.precio|precio_cop }}</p>
-                        <a href="{% url 'shop' %}" class="btn btn-olive rounded-pill px-4">Ver producto</a>
+                    <button type="button" class="btn btn-olive rounded-pill w-100 mt-3" id="aplicarPrecio">Aplicar precio</button>
+                    <hr>
+                    <label class="d-flex align-items-center gap-2 small mb-3">
+                        <input type="checkbox" id="soloStock" class="form-check-input mt-0"> Solo en stock
+                    </label>
+                    <button type="button" class="ed-link border-0 bg-transparent p-0" id="resetFiltros"><u>Restablecer filtros</u></button>
+                </div>
+
+                <div class="ed-side-card mt-3">
+                    <i class="bi bi-chat-dots"></i>
+                    <h3 class="ed-card-title">¿Cuál le encantará?</h3>
+                    <p class="ed-card-text">Te orientamos según su edad, tamaño y forma de jugar.</p>
+                    <a href="/contacto/?motivo=tienda" class="ed-link">Hablemos de tu perro <i class="bi bi-arrow-right"></i></a>
+                </div>
+            </aside>
+
+            <!-- Productos -->
+            <div class="col-lg-9">
+                <div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+                    <div>
+                        <h2 class="ed-h2 mb-0">Todos los productos</h2>
+                        <p class="ed-note mb-0" id="contadorProductos">Cargando productos…</p>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="small text-muted mb-0" for="ordenarPor">Ordenar por</label>
+                        <select class="form-select form-select-sm" id="ordenarPor" style="width:auto">
+                            <option value="original">Destacados</option>
+                            <option value="precio-asc">Precio: menor a mayor</option>
+                            <option value="precio-desc">Precio: mayor a menor</option>
+                            <option value="nombre">Nombre (A–Z)</option>
+                        </select>
                     </div>
                 </div>
+
+                <div class="row g-3" id="productosGrid"></div>
+
+                <p class="text-center text-muted mt-4 d-none" id="sinResultados">No se encontraron productos con esos criterios.</p>
+                <p class="ed-note mt-3">Precios en pesos colombianos. Pago contra entrega. Para comprar necesitas una cuenta de cliente.</p>
             </div>
-            {% empty %}
-            <p class="text-center text-muted">Aún no hay productos registrados.</p>
-            {% endfor %}
         </div>
-
-        <p class="text-center text-muted mt-4 d-none" id="sinResultados">No se encontraron productos con esos criterios.</p>
-
     </div>
 </section>
 
+<!-- Detalle del producto -->
+<div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered ed-modal">
+        <div class="modal-content">
+            <div class="modal-body p-0">
+                <button type="button" class="btn-close ed-modal-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                <div class="row g-0">
+                    <div class="col-md-5" id="modalFoto"></div>
+                    <div class="col-md-7 p-4">
+                        <span class="ed-tag" id="modalCategoria"></span>
+                        <h3 class="ed-prog-title mt-1" id="modalNombre"></h3>
+                        <p class="ed-price my-2"><span id="modalPrecio"></span> <small>COP</small></p>
+                        <p class="ed-card-text" id="modalDescripcion"></p>
+                        <div class="d-flex align-items-center gap-3 mt-3">
+                            <div class="ed-qty"><button type="button" id="modalMenos">−</button><span id="modalCant">1</span><button type="button" id="modalMas">+</button></div>
+                            <span class="ed-note" id="modalStock"></span>
+                        </div>
+                        <button type="button" id="modalAgregar" class="btn btn-olive rounded-pill w-100 mt-3"><i class="bi bi-cart-plus me-1"></i>Agregar al carrito</button>
+                        <a href="#" id="modalConsultar" class="ed-link d-inline-block mt-2">Tengo una pregunta sobre este producto</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Carrito -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="cartCanvas" aria-labelledby="cartTitle">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title ed-card-title" id="cartTitle"><i class="bi bi-cart3 me-1"></i>Mi carrito</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+    </div>
+    <div class="offcanvas-body d-flex flex-column">
+        <div id="cartItems" class="flex-grow-1"></div>
+        <div class="border-top pt-3" id="cartPie">
+            <div class="d-flex justify-content-between mb-2"><span>Total</span><strong id="cartTotal">$0</strong></div>
+            <p class="ed-note mb-2" id="cartAviso"></p>
+            <button type="button" class="btn btn-olive rounded-pill w-100" id="btnFinalizar">Finalizar compra</button>
+            <button type="button" class="btn btn-link btn-sm w-100 mt-1 text-muted" id="btnVaciar">Vaciar carrito</button>
+            <a href="/mis-pedidos/" class="ed-link d-block text-center mt-2">Ver mis pedidos</a>
+        </div>
+    </div>
+</div>
+
+<!-- Datos de entrega -->
+<div class="modal fade" id="checkoutModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title ed-card-title">Finalizar compra</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="checkoutForma">
+                    <div id="checkoutResumen" class="small mb-3"></div>
+                    <div id="checkoutError" class="alert alert-danger d-none"></div>
+                    <form id="checkoutForm" class="row g-2" novalidate>
+                        <div class="col-12"><label class="form-label small fw-semibold" for="coDireccion">Dirección de entrega *</label><input type="text" class="form-control" id="coDireccion" maxlength="200" required></div>
+                        <div class="col-md-6"><label class="form-label small fw-semibold" for="coCiudad">Ciudad *</label><input type="text" class="form-control" id="coCiudad" maxlength="100" required></div>
+                        <div class="col-md-6"><label class="form-label small fw-semibold" for="coTelefono">Teléfono *</label><input type="text" class="form-control" id="coTelefono" maxlength="20" required></div>
+                        <div class="col-12"><label class="form-label small fw-semibold" for="coNotas">Notas <span class="text-muted fw-normal">(opcional)</span></label><textarea class="form-control" id="coNotas" rows="2" maxlength="500"></textarea></div>
+                        <div class="col-12"><p class="ed-note mb-1"><i class="bi bi-cash-coin me-1"></i>Pago contra entrega: pagas cuando recibes tu pedido. No se realiza ningún cobro en línea.</p></div>
+                        <div class="col-12"><button type="submit" class="btn btn-olive rounded-pill w-100" id="btnConfirmar">Confirmar pedido</button></div>
+                    </form>
+                </div>
+                <div id="checkoutExito" class="text-center d-none">
+                    <i class="bi bi-check-circle-fill text-success fs-1"></i>
+                    <h5 class="ed-card-title mt-2">¡Pedido realizado!</h5>
+                    <p class="ed-card-text" id="checkoutExitoTexto"></p>
+                    <a href="/mis-pedidos/" class="btn btn-olive rounded-pill">Ver mis pedidos</a>
+                    <button type="button" class="btn btn-outline-olive rounded-pill ms-2" id="btnSeguir">Seguir comprando</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Aviso breve -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="cartToast" class="toast align-items-center text-bg-dark border-0" role="status" aria-live="polite" aria-atomic="true">
+        <div class="d-flex"><div class="toast-body" id="cartToastText"></div></div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+{% load static %}
+<script src="{% static 'js/main.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const API = '/api';
+    const STOCK_BAJO = 10;                       // por debajo de esto se muestra "Últimas N"
+    const token = localStorage.getItem('access_token');
+    const rol = localStorage.getItem('user_rol');
+
+    // ---------- utilidades ----------
+    function esc(t) {
+        return String(t == null ? '' : t).replace(/[&<>"']/g, c =>
+            ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+    const fmt = n => '$' + Math.round(n).toLocaleString('es-CO');
+
+    function aviso(texto) {
+        document.getElementById('cartToastText').textContent = texto;
+        bootstrap.Toast.getOrCreateInstance(document.getElementById('cartToast'), { delay: 2600 }).show();
+    }
+
+    // Foto del producto: la sube el administrador. Si no tiene, se muestra un recuadro neutro.
+    function foto(p) {
+        return p.imagen
+            ? `<img src="${esc(p.imagen)}" alt="${esc(p.nombre)}">`
+            : '<div class="ed-ph"><i class="bi bi-image"></i></div>';
+    }
+
+    function estadoStock(n) {
+        if (n <= 0) return ['out', 'Agotado'];
+        if (n < STOCK_BAJO) return ['low', 'Últimas ' + n];
+        return ['ok', 'En stock'];
+    }
+
+    // El id del usuario viene dentro del token (así cada cuenta tiene SU carrito)
+    function idUsuario() {
+        try {
+            const cuerpo = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+            return String(JSON.parse(atob(cuerpo)).user_id);
+        } catch (e) { return null; }
+    }
+    const uid = token ? idUsuario() : null;
+    const CLAVE_CARRITO = uid ? 'educan_cart_' + uid : null;
+
+    function abrirLogin() {
+        const lm = document.getElementById('loginModal');
+        if (lm) bootstrap.Modal.getOrCreateInstance(lm).show();
+    }
+
+    // ============================================
+    // Catálogo: viene de la base de datos (API)
+    // ============================================
+    let productos = [];
+    let catalogo = {};
+    let categoria = '';
+
+    const grid = document.getElementById('productosGrid');
+    const buscar = document.getElementById('buscarProducto');
+    const pMin = document.getElementById('precioMin');
+    const pMax = document.getElementById('precioMax');
+    const soloStock = document.getElementById('soloStock');
+    const orden = document.getElementById('ordenarPor');
+    const contador = document.getElementById('contadorProductos');
+    const sinRes = document.getElementById('sinResultados');
+
+    function pintarCategorias() {
+        const cuentas = {};
+        productos.forEach(p => { cuentas[p.categoria] = (cuentas[p.categoria] || 0) + 1; });
+        const filas = Object.keys(cuentas).sort((a, b) => a.localeCompare(b, 'es')).map(c =>
+            `<button type="button" class="ed-cat ${categoria === c ? 'active' : ''}" data-cat="${esc(c)}"><span>${esc(c)}</span><b>${cuentas[c]}</b></button>`);
+        document.getElementById('listaCategorias').innerHTML =
+            `<button type="button" class="ed-cat ${categoria === '' ? 'active' : ''}" data-cat=""><span>Todos los productos</span><b>${productos.length}</b></button>` + filas.join('');
+    }
+
+    function tarjeta(p) {
+        const [clase, texto] = estadoStock(p.stock);
+        return `
+        <div class="col-sm-6 col-xl-4" data-id="${esc(p.id)}">
+            <article class="ed-prod ${p.stock <= 0 ? 'agotado' : ''}">
+                <div class="ed-prod-img">${foto(p)}</div>
+                <div class="ed-prod-body">
+                    <div class="ed-prod-top">
+                        <span class="ed-tag">${esc(p.categoria)}</span>
+                        <span class="ed-stock ${clase}">${texto}</span>
+                    </div>
+                    <h3 class="ed-prod-title">${esc(p.nombre)}</h3>
+                    <p class="ed-prod-desc">${esc(p.descripcion)}</p>
+                    <p class="ed-price mb-2">${fmt(p.precio)} <small>COP</small></p>
+                    <div class="ed-prod-actions">
+                        <button type="button" class="btn btn-outline-olive rounded-pill btn-detalle">Ver detalle</button>
+                        <button type="button" class="btn btn-olive rounded-pill btn-agregar" aria-label="Agregar al carrito" ${p.stock <= 0 ? 'disabled' : ''}><i class="bi bi-cart-plus"></i></button>
+                    </div>
+                </div>
+            </article>
+        </div>`;
+    }
+
+    function pintarProductos() {
+        const texto = buscar.value.trim().toLowerCase();
+        const min = parseFloat(pMin.value) || 0;
+        const max = parseFloat(pMax.value) || Infinity;
+
+        let lista = productos.filter(p =>
+            (!texto || (p.nombre + ' ' + p.descripcion + ' ' + p.categoria).toLowerCase().includes(texto))
+            && (!categoria || p.categoria === categoria)
+            && p.precio >= min && p.precio <= max
+            && (!soloStock.checked || p.stock > 0));
+
+        const v = orden.value;
+        if (v === 'precio-asc') lista.sort((a, b) => a.precio - b.precio);
+        else if (v === 'precio-desc') lista.sort((a, b) => b.precio - a.precio);
+        else if (v === 'nombre') lista.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+
+        grid.innerHTML = lista.map(tarjeta).join('');
+        contador.textContent = `Mostrando ${lista.length} de ${productos.length} productos`;
+        sinRes.classList.toggle('d-none', lista.length > 0);
+        sinRes.textContent = productos.length ? 'No se encontraron productos con esos criterios.' : 'Aún no hay productos registrados.';
+        if (!productos.length) sinRes.classList.remove('d-none');
+    }
+
+    buscar.addEventListener('input', pintarProductos);
+    soloStock.addEventListener('change', pintarProductos);
+    orden.addEventListener('change', pintarProductos);
+    document.getElementById('aplicarPrecio').addEventListener('click', pintarProductos);
+    document.getElementById('listaCategorias').addEventListener('click', function (e) {
+        const b = e.target.closest('.ed-cat');
+        if (!b) return;
+        categoria = b.dataset.cat;
+        pintarCategorias();
+        pintarProductos();
+    });
+    document.getElementById('resetFiltros').addEventListener('click', function () {
+        buscar.value = ''; pMin.value = ''; pMax.value = ''; orden.value = 'original';
+        soloStock.checked = false; categoria = '';
+        pintarCategorias(); pintarProductos();
+    });
+
+    // ============================================
+    // Carrito (se guarda en este navegador, separado por cuenta)
+    // ============================================
+    let carrito = {};   // { idProducto: cantidad }
+    function leerCarrito() {
+        if (!CLAVE_CARRITO) return {};
+        try { return JSON.parse(localStorage.getItem(CLAVE_CARRITO)) || {}; } catch (e) { return {}; }
+    }
+    function guardarCarrito() {
+        if (CLAVE_CARRITO) { try { localStorage.setItem(CLAVE_CARRITO, JSON.stringify(carrito)); } catch (e) { /* sin almacenamiento */ } }
+        pintarCarrito();
+    }
+    function cantidadTotal() { return Object.values(carrito).reduce((s, n) => s + n, 0); }
+    function totalCarrito() { return Object.keys(carrito).reduce((s, id) => s + catalogo[id].precio * carrito[id], 0); }
+
+    // Quita lo que ya no existe o se agotó y ajusta las cantidades al stock actual
+    function limpiarCarrito() {
+        Object.keys(carrito).forEach(id => {
+            const p = catalogo[id];
+            if (!p || p.stock <= 0) delete carrito[id];
+            else carrito[id] = Math.min(parseInt(carrito[id], 10) || 1, p.stock);
+        });
+    }
+
+    // Exige sesión de cliente. Devuelve true si puede comprar.
+    function puedeComprar() {
+        if (!token || !uid) {
+            aviso('Inicia sesión para agregar productos al carrito.');
+            abrirLogin();
+            return false;
+        }
+        if (rol !== 'cliente') {
+            aviso('Solo las cuentas de cliente pueden comprar.');
+            return false;
+        }
+        return true;
+    }
+
+    // true si se agregó todo lo pedido, false si hubo que limitarlo por el stock
+    function agregar(id, cantidad) {
+        const p = catalogo[id];
+        if (!p || p.stock <= 0) return false;
+        const actual = carrito[id] || 0;
+        const nueva = Math.min(actual + cantidad, p.stock);
+        carrito[id] = nueva;
+        guardarCarrito();
+        return nueva === actual + cantidad;
+    }
+
+    function pintarCarrito() {
+        const cont = document.getElementById('cartItems');
+        const pie = document.getElementById('cartPie');
+
+        // Sin sesión: el carrito invita a iniciar sesión
+        if (!uid || rol !== 'cliente') {
+            document.getElementById('cartCount').textContent = 0;
+            pie.classList.add('d-none');
+            cont.innerHTML = !uid
+                ? '<p class="text-muted small">Inicia sesión para agregar productos a tu carrito y comprar.</p><button type="button" class="btn btn-olive rounded-pill" id="cartLogin">Iniciar sesión</button>'
+                : '<p class="text-muted small">Solo las cuentas de cliente pueden comprar en la tienda.</p>';
+            return;
+        }
+        pie.classList.remove('d-none');
+
+        document.getElementById('cartCount').textContent = cantidadTotal();
+        document.getElementById('cartTotal').textContent = fmt(totalCarrito());
+
+        const ids = Object.keys(carrito);
+        cont.innerHTML = ids.length ? ids.map(id => {
+            const p = catalogo[id], cant = carrito[id];
+            return `
+                <div class="ed-cart-row" data-id="${esc(id)}">
+                    <div class="ed-cart-img">${foto(p)}</div>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold small">${esc(p.nombre)}</div>
+                        <div class="ed-note">${fmt(p.precio)} c/u</div>
+                        <div class="ed-qty">
+                            <button type="button" data-accion="menos" aria-label="Quitar una">−</button>
+                            <span>${cant}</span>
+                            <button type="button" data-accion="mas" aria-label="Agregar una" ${cant >= p.stock ? 'disabled' : ''}>+</button>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-bold small">${fmt(p.precio * cant)}</div>
+                        <button type="button" class="ed-trash" data-accion="quitar" aria-label="Quitar del carrito"><i class="bi bi-trash"></i></button>
+                    </div>
+                </div>`;
+        }).join('') : '<p class="text-muted small">Tu carrito está vacío. Agrega productos para empezar.</p>';
+
+        document.getElementById('btnFinalizar').disabled = !ids.length;
+        document.getElementById('btnVaciar').classList.toggle('d-none', !ids.length);
+    }
+
+    document.getElementById('cartItems').addEventListener('click', function (e) {
+        if (e.target.id === 'cartLogin') {
+            bootstrap.Offcanvas.getInstance(document.getElementById('cartCanvas'))?.hide();
+            abrirLogin();
+            return;
+        }
+        const boton = e.target.closest('[data-accion]');
+        if (!boton) return;
+        const id = boton.closest('.ed-cart-row').dataset.id;
+        const accion = boton.dataset.accion;
+        if (accion === 'mas') agregar(id, 1);
+        else if (accion === 'menos') { carrito[id] = (carrito[id] || 1) - 1; if (carrito[id] <= 0) delete carrito[id]; guardarCarrito(); }
+        else if (accion === 'quitar') { delete carrito[id]; guardarCarrito(); }
+    });
+    document.getElementById('btnVaciar').addEventListener('click', function () { carrito = {}; guardarCarrito(); });
+
+    // Botones de cada tarjeta (se escucha en la cuadrícula porque las tarjetas se dibujan con JS)
+    grid.addEventListener('click', function (e) {
+        const item = e.target.closest('[data-id]');
+        if (!item) return;
+        const p = catalogo[item.dataset.id];
+        if (!p) return;
+
+        if (e.target.closest('.btn-agregar')) {
+            if (!puedeComprar()) return;
+            aviso(agregar(p.id, 1) ? `"${p.nombre}" agregado al carrito` : `Solo hay ${p.stock} unidades de "${p.nombre}"`);
+        } else if (e.target.closest('.btn-detalle')) {
+            abrirDetalle(p);
+        }
+    });
+
+    // ============================================
+    // Detalle del producto
+    // ============================================
+    const modal = new bootstrap.Modal(document.getElementById('productModal'));
+    let modalId = null, modalCant = 1;
+
+    function pintarCantidadModal() {
+        const p = catalogo[modalId];
+        document.getElementById('modalCant').textContent = modalCant;
+        document.getElementById('modalMas').disabled = modalCant >= p.stock;
+        document.getElementById('modalMenos').disabled = modalCant <= 1;
+    }
+
+    function abrirDetalle(p) {
+        modalId = p.id; modalCant = 1;
+        document.getElementById('modalFoto').innerHTML = `<div class="ed-modal-img">${foto(p)}</div>`;
+        document.getElementById('modalCategoria').textContent = p.categoria;
+        document.getElementById('modalNombre').textContent = p.nombre;
+        document.getElementById('modalPrecio').textContent = fmt(p.precio);
+        document.getElementById('modalDescripcion').textContent = p.descripcion;
+        document.getElementById('modalConsultar').href = '/contacto/?motivo=tienda&producto=' + encodeURIComponent(p.nombre);
+        document.getElementById('modalStock').textContent =
+            p.stock <= 0 ? 'Producto agotado' : (p.stock < STOCK_BAJO ? `Últimas ${p.stock} unidades` : 'Disponible');
+        document.getElementById('modalAgregar').disabled = p.stock <= 0;
+        pintarCantidadModal();
+        modal.show();
+    }
+    document.getElementById('modalMas').addEventListener('click', function () { if (modalCant < catalogo[modalId].stock) { modalCant++; pintarCantidadModal(); } });
+    document.getElementById('modalMenos').addEventListener('click', function () { if (modalCant > 1) { modalCant--; pintarCantidadModal(); } });
+    document.getElementById('modalAgregar').addEventListener('click', function () {
+        const p = catalogo[modalId];
+        modal.hide();
+        if (!puedeComprar()) return;
+        aviso(agregar(modalId, modalCant) ? `"${p.nombre}" agregado al carrito` : `Solo hay ${p.stock} unidades de "${p.nombre}"`);
+    });
+
+    // ============================================
+    // Finalizar compra
+    // ============================================
+    const canvasEl = document.getElementById('cartCanvas');
+    const checkoutEl = document.getElementById('checkoutModal');
+    const errorBox = document.getElementById('checkoutError');
+
+    document.getElementById('btnFinalizar').addEventListener('click', function () {
+        const ids = Object.keys(carrito);
+        if (!ids.length) return;
+
+        document.getElementById('checkoutResumen').innerHTML =
+            ids.map(id => `<div class="d-flex justify-content-between"><span>${carrito[id]} × ${esc(catalogo[id].nombre)}</span><span>${fmt(catalogo[id].precio * carrito[id])}</span></div>`).join('')
+            + `<div class="d-flex justify-content-between fw-bold border-top mt-2 pt-2"><span>Total</span><span>${fmt(totalCarrito())}</span></div>`;
+
+        errorBox.classList.add('d-none');
+        document.getElementById('checkoutForma').classList.remove('d-none');
+        document.getElementById('checkoutExito').classList.add('d-none');
+
+        // Prellena teléfono y ciudad con los datos del perfil
+        fetch(`${API}/users/me/`, { headers: { 'Authorization': `Bearer ${token}` } })
+            .then(r => r.ok ? r.json() : null)
+            .then(u => {
+                if (!u) return;
+                if (!document.getElementById('coTelefono').value) document.getElementById('coTelefono').value = u.telefono || '';
+                if (!document.getElementById('coCiudad').value) document.getElementById('coCiudad').value = u.ciudad || '';
+            }).catch(() => {});
+
+        bootstrap.Offcanvas.getInstance(canvasEl)?.hide();
+        bootstrap.Modal.getOrCreateInstance(checkoutEl).show();
+    });
+
+    document.getElementById('checkoutForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        errorBox.classList.add('d-none');
+        const boton = document.getElementById('btnConfirmar');
+        boton.disabled = true;
+
+        fetch(`${API}/orders/`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                items: Object.keys(carrito).map(id => ({ producto_id: parseInt(id, 10), cantidad: carrito[id] })),
+                direccion: document.getElementById('coDireccion').value,
+                ciudad: document.getElementById('coCiudad').value,
+                telefono: document.getElementById('coTelefono').value,
+                notas: document.getElementById('coNotas').value
+            })
+        })
+        .then(r => r.json().then(data => ({ ok: r.ok, status: r.status, data })))
+        .then(({ ok, status, data }) => {
+            if (!ok) {
+                if (status === 401 || (status === 403 && !data.error)) throw new Error('Tu sesión venció. Inicia sesión de nuevo.');
+                throw new Error(data.error || data.detail || 'No se pudo realizar el pedido.');
+            }
+            carrito = {};
+            guardarCarrito();
+            document.getElementById('checkoutExitoTexto').textContent =
+                `Pedido #${data.id} por ${fmt(data.total)}. Pagas al recibirlo. Puedes seguir su estado en "Mis pedidos".`;
+            document.getElementById('checkoutForma').classList.add('d-none');
+            document.getElementById('checkoutExito').classList.remove('d-none');
+        })
+        .catch(err => {
+            errorBox.textContent = err.message;
+            errorBox.classList.remove('d-none');
+        })
+        .finally(() => { boton.disabled = false; });
+    });
+
+    // Después de comprar se recarga la página para mostrar el stock actualizado
+    document.getElementById('btnSeguir').addEventListener('click', function () { location.reload(); });
+
+    // ============================================
+    // Arranque: se pide el catálogo a la base de datos
+    // ============================================
+    pintarCarrito();                 // al inicio el carrito se muestra vacío hasta conocer el catálogo
+    fetch(`${API}/products/`)
+        .then(r => r.json())
+        .then(lista => {
+            productos = lista.map(p => ({ ...p, id: String(p.id), precio: parseFloat(p.precio), stock: parseInt(p.stock, 10) || 0 }));
+            productos.forEach(p => { catalogo[p.id] = p; });
+            const max = productos.reduce((m, p) => Math.max(m, p.precio), 0);
+            if (max) pMax.placeholder = '$' + Math.round(max).toLocaleString('es-CO');
+            carrito = leerCarrito();     // ahora sí: se carga el carrito de esta cuenta y se ajusta al stock real
+            limpiarCarrito();
+            guardarCarrito();
+            pintarCategorias();
+            pintarProductos();
+        })
+        .catch(() => {
+            contador.textContent = 'No se pudieron cargar los productos. Recarga la página.';
+        });
+});
+</script>
 {% endblock %}

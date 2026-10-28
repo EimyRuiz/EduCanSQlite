@@ -1,8 +1,9 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from django.db.models import F
 
-from apps.core.authentication import AdminWriteOrReadOnly
+from apps.core.authentication import AdminWriteOrReadOnly, IsAdminRole
 from .models import Producto
 from .serializers import ProductSerializer
 
@@ -14,7 +15,8 @@ def serialize_producto(p):
         'categoria': p.categoria,
         'descripcion': p.descripcion,
         'precio': p.precio,
-        'imagen': p.imagen,
+        'imagen': p.imagen or '',
+        'stock': p.stock,
     }
 
 
@@ -70,6 +72,7 @@ class ProductDetailView(APIView):
         if existe_duplicado(datos['nombre'], datos['categoria'], excluir_id=producto.id):
             return Response({'error': 'Ya existe un producto con ese nombre en esa categoría.'},
                             status=status.HTTP_400_BAD_REQUEST)
+        datos.pop('stock', None)       # editar un producto NO cambia su stock (el stock se mueve solo)
         for campo, valor in datos.items():
             setattr(producto, campo, valor)
         producto.save()
@@ -81,3 +84,22 @@ class ProductDetailView(APIView):
             return Response({'error': 'No encontrado.'}, status=status.HTTP_404_NOT_FOUND)
         producto.delete()
         return Response({'mensaje': 'Producto eliminado.'}, status=status.HTTP_204_NO_CONTENT)
+
+
+class ProductoStockView(APIView):
+    """El administrador registra la ENTRADA de mercancía: suma unidades al stock."""
+    permission_classes = [IsAdminRole]
+
+    def post(self, request, pk):
+        try:
+            cantidad = int(request.data.get('cantidad'))
+        except (TypeError, ValueError):
+            return Response({'error': 'Escribe cuántas unidades entraron.'}, status=status.HTTP_400_BAD_REQUEST)
+        if cantidad < 1 or cantidad > 10000:
+            return Response({'error': 'La cantidad debe estar entre 1 y 10000.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        actualizados = Producto.objects.filter(id=pk).update(stock=F('stock') + cantidad)
+        if not actualizados:
+            return Response({'error': 'No encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+        nuevo = Producto.objects.get(id=pk).stock
+        return Response({'mensaje': f'Se agregaron {cantidad} unidades.', 'stock': nuevo})

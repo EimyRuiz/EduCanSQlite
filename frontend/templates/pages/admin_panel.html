@@ -17,7 +17,10 @@
             <a href="#" class="admin-nav-link" data-section="calendario"><i class="bi bi-calendar3"></i> Calendario</a>
             <a href="#" class="admin-nav-link" data-section="servicios"><i class="bi bi-clipboard2-pulse-fill"></i> Servicios</a>
             <a href="#" class="admin-nav-link" data-section="productos"><i class="bi bi-bag-fill"></i> Productos</a>
+            <a href="#" class="admin-nav-link" data-section="pedidos"><i class="bi bi-box-seam-fill"></i> Pedidos</a>
             <a href="#" class="admin-nav-link" data-section="resenas"><i class="bi bi-star-fill"></i> Reseñas</a>
+            <a href="#" class="admin-nav-link" data-section="mensajes"><i class="bi bi-envelope-fill"></i> Mensajes</a>
+            <a href="#" class="admin-nav-link" data-section="imagenes"><i class="bi bi-images"></i> Imágenes del sitio</a>
         </nav>
         <a href="/" class="admin-nav-link mt-auto"><i class="bi bi-box-arrow-left"></i> Volver al sitio</a>
     </aside>
@@ -34,6 +37,8 @@
 
         <!-- Resumen: tarjetas de conteo general -->
         <section class="admin-section" id="section-resumen">
+            <!-- Aviso automático: productos con menos de 10 unidades -->
+            <div id="alertaStock" class="d-none"></div>
             <div class="row g-4 mb-4">
                 <div class="col-md-4">
                     <div class="admin-stat-card admin-stat-dark">
@@ -56,7 +61,7 @@
             </div>
             <div class="admin-card">
                 <h6 class="fw-bold mb-3">Bienvenido al panel</h6>
-                <p class="text-muted mb-0">Desde aquí puedes gestionar usuarios, servicios, productos y reseñas de EDUCAN. Usa el menú lateral para navegar entre secciones.</p>
+                <p class="text-muted mb-0">Desde aquí puedes gestionar usuarios, servicios, productos, pedidos, reseñas y mensajes de EDUCAN. Usa el menú lateral para navegar entre secciones.</p>
             </div>
         </section>
 
@@ -99,7 +104,7 @@
                 <h6 class="fw-bold mb-3">Agregar / editar servicio</h6>
                 <form id="servicioForm" class="row g-2">
                     <input type="hidden" id="servId" value="">
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <select class="form-select" id="servNombre" required>
                             <option value="" disabled selected>Selecciona un servicio</option>
                             <option value="Adiestramiento básico">Adiestramiento básico</option>
@@ -111,9 +116,16 @@
                             <option value="Paseos y ejercicio">Paseos y ejercicio</option>
                         </select>
                     </div>
-                    <div class="col-md-4"><input class="form-control" placeholder="Descripción" id="servDescripcion" required></div>
-                    <div class="col-md-2"><input class="form-control" type="number" placeholder="Precio" id="servPrecio" required></div>
-                    <div class="col-md-3"><button class="btn btn-olive w-100" id="servSubmitBtn">Agregar</button></div>
+                    <div class="col-md-5"><input class="form-control" placeholder="Descripción" id="servDescripcion" required></div>
+                    <div class="col-md-3"><input class="form-control" type="number" placeholder="Precio" id="servPrecio" required></div>
+                    <div class="col-md-9">
+                        <label class="form-label small text-muted mb-1" for="servImagen">Foto del servicio (JPG, PNG o WEBP, máx. 4 MB)</label>
+                        <input class="form-control" type="file" accept="image/png,image/jpeg,image/webp" id="servImagen">
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end gap-2">
+                        <button class="btn btn-olive w-100" id="servSubmitBtn">Agregar</button>
+                        <button type="button" class="btn btn-outline-secondary d-none" id="servCancelBtn" title="Cancelar edición">✕</button>
+                    </div>
                 </form>
                 <!-- Aquí se muestran los errores o confirmaciones (duplicado, sin permiso, etc.) -->
                 <div id="servMsg" class="small mt-2"></div>
@@ -121,14 +133,13 @@
             <div class="admin-card">
                 <h6 class="fw-bold mb-3">Servicios existentes</h6>
                 <table class="table admin-table">
-                    <thead><tr><th>Nombre</th><th>Precio</th><th></th></tr></thead>
+                    <thead><tr><th>Servicio</th><th>Precio</th><th></th></tr></thead>
                     <tbody id="serviciosBody"></tbody>
                 </table>
             </div>
         </section>
 
-        <!-- Productos: crear/editar/eliminar. Nombre y categoría van separados
-             (nombre = texto libre real del producto, categoría = para filtrar en la tienda) -->
+        <!-- Productos: crear/editar/eliminar, con stock -->
         <section class="admin-section d-none" id="section-productos">
             <div class="admin-card mb-4">
                 <h6 class="fw-bold mb-3">Agregar / editar producto</h6>
@@ -149,17 +160,34 @@
                         </select>
                     </div>
                     <div class="col-md-3"><input class="form-control" placeholder="Descripción" id="prodDescripcion" required></div>
-                    <div class="col-md-2"><input class="form-control" type="number" placeholder="Precio" id="prodPrecio" required></div>
-                    <div class="col-md-2"><button class="btn btn-olive w-100" id="prodSubmitBtn">Agregar</button></div>
+                    <div class="col-md-2"><input class="form-control" type="number" min="0" placeholder="Precio" id="prodPrecio" required></div>
+                    <div class="col-md-2" id="prodStockCol"><input class="form-control" type="number" min="0" step="1" placeholder="Stock inicial" id="prodStock" title="Unidades con las que empieza el producto"></div>
+                    <div class="col-md-9">
+                        <label class="form-label small text-muted mb-1" for="prodImagen">Foto del producto (JPG, PNG o WEBP, máx. 4 MB)</label>
+                        <input class="form-control" type="file" accept="image/png,image/jpeg,image/webp" id="prodImagen">
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end gap-2">
+                        <button class="btn btn-olive w-100" id="prodSubmitBtn">Agregar</button>
+                        <button type="button" class="btn btn-outline-secondary d-none" id="prodCancelBtn" title="Cancelar edición">✕</button>
+                    </div>
                 </form>
+                <p class="text-muted small mt-2 mb-0">El stock baja solo con cada compra. Cuando llegue mercancía nueva, usa "Reponer" en la tabla de abajo.</p>
                 <div id="prodMsg" class="small mt-2"></div>
             </div>
             <div class="admin-card">
                 <h6 class="fw-bold mb-3">Productos existentes</h6>
                 <table class="table admin-table">
-                    <thead><tr><th>Nombre</th><th>Precio</th><th></th></tr></thead>
+                    <thead><tr><th>Producto</th><th>Stock</th><th>Precio</th><th>Reponer</th><th></th></tr></thead>
                     <tbody id="productosBody"></tbody>
                 </table>
+            </div>
+        </section>
+
+        <!-- Pedidos de la tienda -->
+        <section class="admin-section d-none" id="section-pedidos">
+            <div class="admin-card">
+                <h6 class="fw-bold mb-3">Pedidos de la tienda</h6>
+                <div id="pedidosContainer"></div>
             </div>
         </section>
 
@@ -168,6 +196,23 @@
             <div class="admin-card">
                 <h6 class="fw-bold mb-3">Reseñas de clientes</h6>
                 <div id="resenasContainer"></div>
+            </div>
+        </section>
+
+        <!-- Mensajes: lo que escriben los visitantes desde la página de Contacto -->
+        <section class="admin-section d-none" id="section-mensajes">
+            <div class="admin-card">
+                <h6 class="fw-bold mb-3">Mensajes de contacto</h6>
+                <div id="mensajesContainer"></div>
+            </div>
+        </section>
+
+        <!-- Imágenes fijas del sitio: banner de la tienda, fotos de Nosotros y galería del inicio -->
+        <section class="admin-section d-none" id="section-imagenes">
+            <div class="admin-card">
+                <h6 class="fw-bold mb-1">Imágenes del sitio</h6>
+                <p class="text-muted small mb-3">Sube aquí las fotos fijas de las páginas. Mientras una no tenga foto, el sitio muestra un recuadro neutro.</p>
+                <div id="imagenesContainer"></div>
             </div>
         </section>
     </main>
@@ -199,6 +244,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function esc(t) {
         return String(t ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
+    const fmt = n => '$' + Math.round(n).toLocaleString('es-CO');
 
     // Envía una petición y, si el servidor responde con error, lanza un Error con el mensaje en español
     async function enviar(url, metodo, datos) {
@@ -227,6 +273,24 @@ document.addEventListener('DOMContentLoaded', function () {
         el.textContent = texto;
     }
 
+    // Sube un archivo (multipart). No se pone Content-Type: el navegador lo calcula solo.
+    async function subirImagen(url, archivo) {
+        const datos = new FormData();
+        datos.append('imagen', archivo);
+        const r = await fetch(url, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: datos });
+        let cuerpo = {};
+        try { cuerpo = await r.json(); } catch (e) { /* sin cuerpo */ }
+        if (!r.ok) throw new Error(cuerpo.error || cuerpo.detail || 'No se pudo subir la imagen.');
+        return cuerpo;
+    }
+
+    // Miniatura para las tablas (si no hay foto, un ícono)
+    function miniatura(ruta) {
+        return ruta
+            ? `<img src="${esc(ruta)}" class="rounded me-2" width="38" height="38" style="object-fit:cover" alt="">`
+            : '<span class="d-inline-flex align-items-center justify-content-center rounded bg-light text-muted me-2" style="width:38px;height:38px"><i class="bi bi-image"></i></span>';
+    }
+
     // ============================================
     // Navegación entre secciones del sidebar
     // ============================================
@@ -244,8 +308,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 cargarCalendario();
                 calendarioIniciado = true;
             }
-            // Las reseñas se recargan cada vez que se abre la sección
+            // Estas secciones se recargan cada vez que se abren
             if (this.dataset.section === 'resenas') cargarResenas();
+            if (this.dataset.section === 'mensajes') cargarMensajes();
+            if (this.dataset.section === 'pedidos') cargarPedidos();
+            if (this.dataset.section === 'imagenes') cargarImagenesSitio();
         });
     });
 
@@ -370,17 +437,21 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ============================================
-    // Servicios: listar, crear, editar, eliminar
+    // Servicios: listar, crear, editar, eliminar (con foto)
     // ============================================
+    let serviciosCache = {};   // guarda los servicios en memoria para editarlos sin meter datos en el HTML
+
     function cargarServicios() {
         fetch(`${API}/services/`).then(r => r.json()).then(servicios => {
+            serviciosCache = {};
+            servicios.forEach(s => { serviciosCache[s.id] = s; });
             document.getElementById('statServicios').textContent = servicios.length;
             document.getElementById('serviciosBody').innerHTML = servicios.map(s =>
                 `<tr>
-                    <td>${esc(s.nombre)}</td>
+                    <td>${miniatura(s.imagen)}${esc(s.nombre)}</td>
                     <td>$${formatearPrecioCOP(s.precio)}</td>
                     <td>
-                        <button class="btn btn-sm btn-outline-secondary me-1" onclick='editarServicio(${JSON.stringify(s)})'>Editar</button>
+                        <button class="btn btn-sm btn-outline-secondary me-1" onclick="editarServicio('${s.id}')">Editar</button>
                         <button class="btn btn-sm btn-outline-danger" onclick="eliminarServicio('${s.id}')">Eliminar</button>
                     </td>
                 </tr>`
@@ -389,28 +460,50 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     cargarServicios();
 
-    window.editarServicio = function (servicio) {
+    function limpiarServicio() {
+        document.getElementById('servicioForm').reset();
+        document.getElementById('servId').value = '';
+        document.getElementById('servSubmitBtn').textContent = 'Agregar';
+        document.getElementById('servCancelBtn').classList.add('d-none');
+    }
+    document.getElementById('servCancelBtn').onclick = limpiarServicio;
+
+    window.editarServicio = function (id) {
+        const servicio = serviciosCache[id];
+        if (!servicio) return;
         document.getElementById('servId').value = servicio.id;
         document.getElementById('servNombre').value = servicio.nombre;
         document.getElementById('servDescripcion').value = servicio.descripcion;
         document.getElementById('servPrecio').value = servicio.precio;
         document.getElementById('servSubmitBtn').textContent = 'Guardar cambios';
+        document.getElementById('servCancelBtn').classList.remove('d-none');
+        aviso('servMsg', 'Editando "' + servicio.nombre + '". Si eliges una foto, reemplaza la anterior.', true);
     };
 
     document.getElementById('servicioForm').onsubmit = async function (e) {
         e.preventDefault();
         const id = document.getElementById('servId').value;
+        const archivo = document.getElementById('servImagen').files[0];
         const datos = {
             nombre: document.getElementById('servNombre').value,
             descripcion: document.getElementById('servDescripcion').value,
             precio: parseFloat(document.getElementById('servPrecio').value)
         };
         try {
-            await enviar(id ? `${API}/services/${id}/` : `${API}/services/`, id ? 'PUT' : 'POST', datos);
-            aviso('servMsg', id ? 'Servicio actualizado.' : 'Servicio creado.', true);
-            this.reset();
-            document.getElementById('servId').value = '';
-            document.getElementById('servSubmitBtn').textContent = 'Agregar';
+            const res = await enviar(id ? `${API}/services/${id}/` : `${API}/services/`, id ? 'PUT' : 'POST', datos);
+            let idServicio = id || res.id;
+            if (!idServicio) {          // por si la respuesta de crear no trae el id: se busca por nombre
+                const lista = await (await fetch(`${API}/services/`)).json();
+                const creado = lista.find(s => s.nombre === datos.nombre);
+                idServicio = creado ? creado.id : null;
+            }
+            let texto = id ? 'Servicio actualizado.' : 'Servicio creado.';
+            if (archivo && idServicio) {
+                try { await subirImagen(`${API}/services/${idServicio}/imagen/`, archivo); texto += ' Foto guardada.'; }
+                catch (errImg) { texto += ' Pero la foto no se pudo subir: ' + errImg.message; }
+            }
+            aviso('servMsg', texto, true);
+            limpiarServicio();
             cargarServicios();
         } catch (err) {
             aviso('servMsg', err.message, false);
@@ -428,17 +521,51 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     // ============================================
-    // Productos: listar, crear, editar, eliminar (con nombre + categoría separados)
+    // Productos: listar, crear, editar, eliminar, reponer stock (con foto)
     // ============================================
+    const STOCK_BAJO = 10;   // por debajo de este número se avisa
+
+    function insigniaStock(n) {
+        const clase = n === 0 ? 'bg-danger' : (n < STOCK_BAJO ? 'bg-warning text-dark' : 'bg-success');
+        return `<span class="badge ${clase}">${n === 0 ? 'Agotado' : n}</span>`;
+    }
+
+    // Aviso en el Resumen con los productos que se están acabando
+    function pintarAlertaStock(productos) {
+        const caja = document.getElementById('alertaStock');
+        const bajos = productos.filter(p => p.stock < STOCK_BAJO).sort((a, b) => a.stock - b.stock);
+        if (!bajos.length) { caja.classList.add('d-none'); caja.innerHTML = ''; return; }
+        caja.classList.remove('d-none');
+        caja.innerHTML = `
+            <div class="alert alert-warning mb-4">
+                <strong><i class="bi bi-exclamation-triangle-fill me-1"></i>Stock bajo: ${bajos.length} producto${bajos.length > 1 ? 's' : ''} con menos de ${STOCK_BAJO} unidades</strong>
+                <ul class="mb-0 mt-2 small">
+                    ${bajos.map(p => `<li>${esc(p.nombre)} — ${p.stock === 0 ? '<b>agotado</b>' : p.stock + ' unidades'}</li>`).join('')}
+                </ul>
+            </div>`;
+    }
+
+    let productosCache = {};   // igual que arriba: los productos se guardan en memoria
+
     function cargarProductos() {
         fetch(`${API}/products/`).then(r => r.json()).then(productos => {
+            productosCache = {};
+            productos.forEach(p => { productosCache[p.id] = p; });
             document.getElementById('statProductos').textContent = productos.length;
+            pintarAlertaStock(productos);
             document.getElementById('productosBody').innerHTML = productos.map(p =>
                 `<tr>
-                    <td>${esc(p.nombre)}</td>
+                    <td>${miniatura(p.imagen)}${esc(p.nombre)}</td>
+                    <td>${insigniaStock(p.stock)}</td>
                     <td>$${formatearPrecioCOP(p.precio)}</td>
                     <td>
-                        <button class="btn btn-sm btn-outline-secondary me-1" onclick='editarProducto(${JSON.stringify(p)})'>Editar</button>
+                        <div class="input-group input-group-sm" style="width:125px">
+                            <input type="number" min="1" class="form-control" id="add-${p.id}" placeholder="+ uds">
+                            <button class="btn btn-outline-secondary" onclick="reponerStock('${p.id}')">Reponer</button>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-secondary me-1" onclick="editarProducto('${p.id}')">Editar</button>
                         <button class="btn btn-sm btn-outline-danger" onclick="eliminarProducto('${p.id}')">Eliminar</button>
                     </td>
                 </tr>`
@@ -447,30 +574,67 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     cargarProductos();
 
-    window.editarProducto = function (producto) {
+    function limpiarProducto() {
+        document.getElementById('productoForm').reset();
+        document.getElementById('prodId').value = '';
+        document.getElementById('prodSubmitBtn').textContent = 'Agregar';
+        document.getElementById('prodCancelBtn').classList.add('d-none');
+        document.getElementById('prodStockCol').classList.remove('d-none');
+    }
+    document.getElementById('prodCancelBtn').onclick = limpiarProducto;
+
+    window.editarProducto = function (id) {
+        const producto = productosCache[id];
+        if (!producto) return;
         document.getElementById('prodId').value = producto.id;
         document.getElementById('prodNombre').value = producto.nombre;
         document.getElementById('prodCategoria').value = producto.categoria;
         document.getElementById('prodDescripcion').value = producto.descripcion;
         document.getElementById('prodPrecio').value = producto.precio;
+        document.getElementById('prodStockCol').classList.add('d-none');   // al editar no se toca el stock
         document.getElementById('prodSubmitBtn').textContent = 'Guardar cambios';
+        document.getElementById('prodCancelBtn').classList.remove('d-none');
+        aviso('prodMsg', 'Editando "' + producto.nombre + '". Si eliges una foto, reemplaza la anterior.', true);
     };
 
     document.getElementById('productoForm').onsubmit = async function (e) {
         e.preventDefault();
         const id = document.getElementById('prodId').value;
+        const archivo = document.getElementById('prodImagen').files[0];
         const datos = {
             nombre: document.getElementById('prodNombre').value,
             categoria: document.getElementById('prodCategoria').value,
             descripcion: document.getElementById('prodDescripcion').value,
             precio: parseFloat(document.getElementById('prodPrecio').value)
         };
+        if (!id) {      // el stock inicial solo se pide al crear
+            const stockInicial = document.getElementById('prodStock').value;
+            if (stockInicial === '') { aviso('prodMsg', 'Escribe el stock inicial del producto.', false); return; }
+            datos.stock = parseInt(stockInicial, 10);
+        }
         try {
-            await enviar(id ? `${API}/products/${id}/` : `${API}/products/`, id ? 'PUT' : 'POST', datos);
-            aviso('prodMsg', id ? 'Producto actualizado.' : 'Producto creado.', true);
-            this.reset();
-            document.getElementById('prodId').value = '';
-            document.getElementById('prodSubmitBtn').textContent = 'Agregar';
+            const res = await enviar(id ? `${API}/products/${id}/` : `${API}/products/`, id ? 'PUT' : 'POST', datos);
+            const idProducto = id || res.id;
+            let texto = id ? 'Producto actualizado.' : 'Producto creado.';
+            if (archivo && idProducto) {
+                try { await subirImagen(`${API}/products/${idProducto}/imagen/`, archivo); texto += ' Foto guardada.'; }
+                catch (errImg) { texto += ' Pero la foto no se pudo subir: ' + errImg.message; }
+            }
+            aviso('prodMsg', texto, true);
+            limpiarProducto();
+            cargarProductos();
+        } catch (err) {
+            aviso('prodMsg', err.message, false);
+        }
+    };
+
+    window.reponerStock = async function (id) {
+        const campo = document.getElementById('add-' + id);
+        const cantidad = parseInt(campo.value, 10);
+        if (!cantidad || cantidad < 1) { aviso('prodMsg', 'Escribe cuántas unidades entraron.', false); return; }
+        try {
+            const res = await enviar(`${API}/products/${id}/stock/`, 'POST', { cantidad });
+            aviso('prodMsg', `${res.mensaje} Ahora hay ${res.stock}.`, true);
             cargarProductos();
         } catch (err) {
             aviso('prodMsg', err.message, false);
@@ -484,6 +648,58 @@ document.addEventListener('DOMContentLoaded', function () {
             cargarProductos();
         } catch (err) {
             aviso('prodMsg', err.message, false);
+        }
+    };
+
+    // ============================================
+    // Pedidos de la tienda: ver y cambiar estado
+    // ============================================
+    const ESTADOS_PEDIDO = [
+        ['pendiente', 'Pendiente'], ['confirmado', 'Confirmado'], ['enviado', 'Enviado'],
+        ['entregado', 'Entregado'], ['cancelado', 'Cancelado']
+    ];
+
+    function cargarPedidos() {
+        fetch(`${API}/orders/`, { headers }).then(r => r.json()).then(lista => {
+            const cont = document.getElementById('pedidosContainer');
+            if (!Array.isArray(lista) || !lista.length) {
+                cont.innerHTML = '<p class="text-muted mb-0">Aún no hay pedidos.</p>';
+                return;
+            }
+            cont.innerHTML = lista.map(p => `
+                <div class="border rounded-3 p-3 mb-3 ${p.estado === 'cancelado' ? 'bg-light' : ''}">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                        <div>
+                            <strong>Pedido #${p.id}</strong>
+                            <span class="text-muted small ms-2">${esc(new Date(p.creado_en).toLocaleString('es-CO'))}</span>
+                            <div class="small">${esc(p.cliente_nombre)} · ${esc(p.cliente_email)}</div>
+                        </div>
+                        <strong>${fmt(p.total)}</strong>
+                    </div>
+                    ${p.items.map(i => `<div class="d-flex justify-content-between small"><span>${i.cantidad} × ${esc(i.nombre)}</span><span>${fmt(i.subtotal)}</span></div>`).join('')}
+                    <p class="text-muted small mt-2 mb-2"><i class="bi bi-geo-alt me-1"></i>${esc(p.direccion)}, ${esc(p.ciudad)} · ${esc(p.telefono)}${p.notas ? '<br><em>' + esc(p.notas) + '</em>' : ''}</p>
+                    <div class="d-flex gap-2 align-items-center">
+                        <select class="form-select form-select-sm" style="width:auto" id="estado-${p.id}" ${p.estado === 'cancelado' ? 'disabled' : ''}>
+                            ${ESTADOS_PEDIDO.map(([v, t]) => `<option value="${v}" ${v === p.estado ? 'selected' : ''}>${t}</option>`).join('')}
+                        </select>
+                        ${p.estado === 'cancelado' ? '<span class="small text-muted">Cancelado (el stock ya volvió al inventario)</span>'
+                            : `<button class="btn btn-sm btn-olive" onclick="guardarEstadoPedido(${p.id})">Guardar estado</button>`}
+                    </div>
+                    <div id="pedMsg-${p.id}" class="small mt-1"></div>
+                </div>`).join('');
+        });
+    }
+
+    window.guardarEstadoPedido = async function (id) {
+        const estado = document.getElementById('estado-' + id).value;
+        try {
+            await enviar(`${API}/orders/${id}/`, 'PATCH', { estado });
+            cargarPedidos();
+            cargarProductos();     // si se canceló, el stock cambió
+        } catch (err) {
+            const msg = document.getElementById('pedMsg-' + id);
+            msg.className = 'small mt-1 text-danger';
+            msg.textContent = err.message;
         }
     };
 
@@ -556,6 +772,87 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (err) {
             msg.className = 'small mt-1 text-danger';
             msg.textContent = err.message;
+        }
+    };
+
+    // ============================================
+    // Mensajes de contacto
+    // ============================================
+    function cargarMensajes() {
+        fetch(`${API}/contact/`, { headers }).then(r => r.json()).then(lista => {
+            const contenedor = document.getElementById('mensajesContainer');
+            if (!Array.isArray(lista) || !lista.length) {
+                contenedor.innerHTML = '<p class="text-muted mb-0">Aún no hay mensajes.</p>';
+                return;
+            }
+            contenedor.innerHTML = lista.map(m => `
+                <div class="border rounded-3 p-3 mb-3 ${m.leido ? 'bg-light' : ''}">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-1">
+                        <div>
+                            <strong>${esc(m.nombre)}</strong>
+                            <span class="text-muted small ms-2">${esc(m.email)}${m.telefono ? ' · ' + esc(m.telefono) : ''}</span>
+                        </div>
+                        <div>
+                            <span class="badge bg-secondary">${esc(m.motivo_texto)}</span>
+                            ${m.leido ? '' : '<span class="badge bg-danger ms-1">Nuevo</span>'}
+                        </div>
+                    </div>
+                    <p class="mb-2">${esc(m.mensaje)}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">${esc(new Date(m.creado_en).toLocaleString('es-CO'))}</span>
+                        ${m.leido
+                            ? '<span class="small text-success"><i class="bi bi-check-circle-fill me-1"></i>Leído</span>'
+                            : `<button class="btn btn-sm btn-olive" onclick="marcarLeido(${m.id})">Marcar como leído</button>`}
+                    </div>
+                </div>`).join('');
+        });
+    }
+
+    window.marcarLeido = async function (id) {
+        try {
+            await enviar(`${API}/contact/${id}/leido/`, 'POST');
+            cargarMensajes();
+        } catch (err) { /* si falla, la lista queda como estaba */ }
+    };
+
+    // ============================================
+    // Imágenes del sitio: banner de la tienda, Nosotros y galería del inicio
+    // ============================================
+    function cargarImagenesSitio() {
+        fetch(`${API}/site-images/`, { headers }).then(r => r.json()).then(lista => {
+            document.getElementById('imagenesContainer').innerHTML = lista.map(i => `
+                <div class="d-flex flex-wrap align-items-center gap-3 border rounded-3 p-3 mb-2">
+                    ${i.imagen
+                        ? `<img src="${esc(i.imagen)}" width="90" height="64" class="rounded" style="object-fit:cover" alt="">`
+                        : '<span class="d-inline-flex align-items-center justify-content-center rounded bg-light text-muted" style="width:90px;height:64px"><i class="bi bi-image fs-4"></i></span>'}
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">${esc(i.descripcion)}</div>
+                        <div class="small ${i.imagen ? 'text-success' : 'text-muted'}">${i.imagen ? 'Foto subida' : 'Sin foto todavía'}</div>
+                        <div id="imgMsg-${i.clave}" class="small text-danger"></div>
+                    </div>
+                    <input type="file" class="form-control form-control-sm" style="max-width:240px" accept="image/png,image/jpeg,image/webp" id="imgFile-${i.clave}">
+                    <button class="btn btn-sm btn-olive" onclick="subirImagenSitio('${i.clave}')">Subir</button>
+                    ${i.imagen ? `<button class="btn btn-sm btn-outline-danger" onclick="quitarImagenSitio('${i.clave}')">Quitar</button>` : ''}
+                </div>`).join('');
+        });
+    }
+
+    window.subirImagenSitio = async function (clave) {
+        const archivo = document.getElementById('imgFile-' + clave).files[0];
+        const msg = document.getElementById('imgMsg-' + clave);
+        if (!archivo) { msg.textContent = 'Elige una imagen primero.'; return; }
+        try {
+            await subirImagen(`${API}/site-images/${clave}/`, archivo);
+            cargarImagenesSitio();
+        } catch (err) { msg.textContent = err.message; }
+    };
+
+    window.quitarImagenSitio = async function (clave) {
+        try {
+            await enviar(`${API}/site-images/${clave}/`, 'DELETE');
+            cargarImagenesSitio();
+        } catch (err) {
+            document.getElementById('imgMsg-' + clave).textContent = err.message;
         }
     };
 });

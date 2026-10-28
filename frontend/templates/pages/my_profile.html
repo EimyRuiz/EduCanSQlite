@@ -33,7 +33,7 @@
 
         <!-- Tarjetas de acceso -->
         <div class="row g-4 mb-4">
-            <div class="col-md-4">
+            <div class="col-md-6 col-lg-3">
                 <div class="panel-card" data-section="datos">
                     <div class="panel-card-head">
                         <span class="panel-card-icon"><i class="bi bi-person-fill"></i></span>
@@ -43,7 +43,7 @@
                     <button type="button" class="btn-panel">Editar perfil</button>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6 col-lg-3">
                 <div class="panel-card" data-section="mascotas">
                     <div class="panel-card-head">
                         <span class="panel-card-icon"><i class="bi bi-heart-fill"></i></span>
@@ -53,7 +53,7 @@
                     <button type="button" class="btn-panel">Gestionar mascotas</button>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6 col-lg-3">
                 <div class="panel-card" data-section="solicitudes">
                     <div class="panel-card-head">
                         <span class="panel-card-icon"><i class="bi bi-clipboard2-check-fill"></i></span>
@@ -61,6 +61,16 @@
                     </div>
                     <p id="cardSolicitudesText">Cargando...</p>
                     <button type="button" class="btn-panel">Ver solicitudes</button>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="panel-card" data-section="pedidos">
+                    <div class="panel-card-head">
+                        <span class="panel-card-icon"><i class="bi bi-box-seam-fill"></i></span>
+                        <h5>Mis pedidos</h5>
+                    </div>
+                    <p id="cardPedidosText">Cargando...</p>
+                    <button type="button" class="btn-panel">Ver pedidos</button>
                 </div>
             </div>
         </div>
@@ -165,25 +175,35 @@
                 <div id="misSolicitudesPerfil"></div>
             </div>
         </section>
+
+        <!-- ================= Sección: Mis pedidos (compras de la tienda) ================= -->
+        <section class="panel-section d-none" id="section-pedidos">
+            <div class="admin-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold mb-0">Mis pedidos de la tienda</h6>
+                    <a href="{% url 'shop' %}" class="btn btn-sm btn-olive"><i class="bi bi-bag me-1"></i>Ir a la tienda</a>
+                </div>
+                <div id="pedidosError" class="alert alert-danger d-none"></div>
+                <div id="misPedidosPerfil"></div>
+            </div>
+        </section>
     </div>
 </div>
 
-<!-- Ventana flotante con la ficha de la mascota (fuera de los bloques ocultos).
-     El contenido lo genera renderPetCard() de ui-cards.js; los estilos son .pet-* en style.css -->
+<!-- Modal flotante tipo "vidrio" con el detalle de una mascota (fuera de los bloques ocultos) -->
 <div class="modal fade" id="petDetailModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable pet-dialog">
-        <div class="modal-content pet-modal">
-            <button type="button" class="pet-close" data-bs-dismiss="modal" aria-label="Cerrar"><i class="bi bi-x-lg"></i></button>
-            <div class="modal-body p-0" id="petDetailBody"></div>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-card">
+            <div class="modal-body p-4">
+                <button type="button" class="btn-close float-end" data-bs-dismiss="modal"></button>
+                <div id="petDetailBody"></div>
+            </div>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-{% load static %}
-<!-- Generador de las fichas flotantes (debe cargarse antes del script de esta página) -->
-<script src="{% static 'js/ui-cards.js' %}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const SESSION_KEYS = ['access_token', 'user_nombre', 'user_rol', 'user_foto'];
@@ -368,12 +388,24 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     cargarMascotas();
 
-    // Ventana flotante con la ficha completa de la mascota
-    // (el diseño lo arma renderPetCard en ui-cards.js)
+    // Tarjeta flotante con el detalle completo de la mascota
     window.mostrarDetalleMascota = function (id) {
         const m = mascotasCache[id];
         if (!m) return;
-        document.getElementById('petDetailBody').innerHTML = renderPetCard(m);
+        document.getElementById('petDetailBody').innerHTML = `
+            <div class="text-center mb-3">
+                <img src="${esc(m.foto || 'https://via.placeholder.com/100')}" class="rounded-circle mb-2" width="100" height="100" style="object-fit:cover;">
+                <h5 class="fw-bold mb-0">${esc(m.nombre)}</h5>
+                <span class="text-muted">${esc(m.raza)}</span>
+            </div>
+            <p class="mb-1"><strong>Edad:</strong> ${esc(m.edad)} años</p>
+            <p class="mb-1"><strong>Peso:</strong> ${esc(m.peso)} kg</p>
+            <p class="mb-1"><strong>Sexo:</strong> ${esc(m.sexo)}</p>
+            <p class="mb-1"><strong>Esterilizado:</strong> ${m.esterilizado ? 'Sí' : 'No'}</p>
+            <p class="mb-1"><strong>Vacunas al día:</strong> ${m.vacunas_al_dia ? 'Sí' : 'No'}</p>
+            ${m.conducta ? `<p class="mb-1"><strong>Conducta:</strong> ${esc(m.conducta)}</p>` : ''}
+            ${m.salud ? `<p class="mb-0"><strong>Salud:</strong> ${esc(m.salud)}</p>` : ''}
+        `;
         new bootstrap.Modal(document.getElementById('petDetailModal')).show();
     };
 
@@ -509,7 +541,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <p class="small fw-bold mb-1">Tu calificación:</p>
                 <div class="mb-1 text-warning">${'★'.repeat(resena.estrellas)}${'☆'.repeat(5 - resena.estrellas)}</div>
                 ${resena.comentario ? `<p class="small text-muted mb-1">"${esc(resena.comentario)}"</p>` : ''}
-                ${resena.respuesta_admin ? `<div class="alert alert-light small mb-0 mt-2"><strong>Respuesta de EDUCAN:</strong> ${esc(resena.respuesta_admin)}</div>` : ''}
+                ${resena.respuesta_admin ? `<div class="alert alert-light small mb-0 mt-2"><strong>Respuesta de ${esc(resena.respondido_por_nombre || 'EDUCAN')}${resena.respondido_por_rol === 'adiestrador' ? ' (adiestrador)' : ''}:</strong> ${esc(resena.respuesta_admin)}</div>` : ''}
             `;
         } else {
             zona.innerHTML = `
@@ -559,6 +591,71 @@ document.addEventListener('DOMContentLoaded', function () {
             cargarSolicitudesPerfil();
         });
     };
+
+    // ============================================
+    // Mis pedidos (compras de la tienda)
+    // ============================================
+    const fmt = n => '$' + Math.round(n).toLocaleString('es-CO');
+    const ESTADOS_PEDIDO = {
+        pendiente:  { texto: 'Pendiente',  clase: 'bg-warning text-dark' },
+        confirmado: { texto: 'Confirmado', clase: 'bg-info text-dark' },
+        enviado:    { texto: 'Enviado',    clase: 'bg-primary' },
+        entregado:  { texto: 'Entregado',  clase: 'bg-success' },
+        cancelado:  { texto: 'Cancelado',  clase: 'bg-secondary' }
+    };
+
+    function cargarPedidos() {
+        api('/orders/', { headers }).then(pedidos => {
+            const cont = document.getElementById('misPedidosPerfil');
+            if (!Array.isArray(pedidos)) {
+                const box = document.getElementById('pedidosError');
+                box.textContent = (pedidos && pedidos.error) || 'No se pudieron cargar tus pedidos.';
+                box.classList.remove('d-none');
+                document.getElementById('cardPedidosText').textContent = 'No se pudieron cargar.';
+                return;
+            }
+
+            // Texto real de la tarjeta de acceso
+            const enCurso = pedidos.filter(p => ['pendiente', 'confirmado', 'enviado'].includes(p.estado)).length;
+            document.getElementById('cardPedidosText').textContent = pedidos.length
+                ? `${pedidos.length} pedido${pedidos.length !== 1 ? 's' : ''} · ${enCurso} en curso.`
+                : 'Aún no has hecho ninguna compra.';
+
+            if (!pedidos.length) {
+                cont.innerHTML = '<p class="text-muted mb-0">Aún no has hecho ninguna compra en la tienda.</p>';
+                return;
+            }
+            cont.innerHTML = pedidos.map(p => {
+                const est = ESTADOS_PEDIDO[p.estado] || { texto: p.estado, clase: 'bg-secondary' };
+                return `
+                <div class="border rounded-3 p-3 mb-2">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                        <div>
+                            <strong>Pedido #${p.id}</strong>
+                            <span class="text-muted small ms-2">${esc(new Date(p.creado_en).toLocaleString('es-CO'))}</span>
+                        </div>
+                        <span class="badge ${est.clase}">${est.texto}</span>
+                    </div>
+                    ${p.items.map(i => `<div class="d-flex justify-content-between small"><span>${esc(i.cantidad)} × ${esc(i.nombre)}</span><span>${fmt(i.subtotal)}</span></div>`).join('')}
+                    <div class="d-flex justify-content-between fw-bold border-top mt-2 pt-2"><span>Total (pago contra entrega)</span><span>${fmt(p.total)}</span></div>
+                    <p class="text-muted small mt-2 mb-0"><i class="bi bi-geo-alt me-1"></i>${esc(p.direccion)}, ${esc(p.ciudad)} · ${esc(p.telefono)}</p>
+                    ${p.estado === 'pendiente' ? `<button type="button" class="btn btn-outline-danger btn-sm mt-2" onclick="cancelarPedido(${p.id})">Cancelar pedido</button>` : ''}
+                </div>`;
+            }).join('');
+        });
+    }
+    cargarPedidos();
+
+    window.cancelarPedido = function (id) {
+        if (!confirm('¿Seguro que quieres cancelar este pedido?')) return;
+        api(`/orders/${id}/cancelar/`, { method: 'POST', headers }).then(result => {
+            if (result && result.error) alert(result.error);
+            cargarPedidos();
+        });
+    };
+
+    // Si llegas desde la tienda con /mi-perfil/#pedidos, la sección se abre sola
+    if (window.location.hash === '#pedidos') mostrarSeccion('pedidos');
 });
 </script>
 {% endblock %}
