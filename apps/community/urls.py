@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from . import views, admin_users
 
 urlpatterns = [
     path('me/', views.MeView.as_view()),
@@ -15,4 +15,8 @@ urlpatterns = [
     path('moderation/comments/<int:pk>/', views.ModeracionComentarioView.as_view()),
     path('moderation/posts/<int:pk>/', views.ModeracionPublicacionView.as_view()),
     path('moderation/users/<int:pk>/', views.ModeracionUsuarioView.as_view()),
+
+    # Panel del administrador: lista de usuarios y eliminar usuario
+    path('moderation/usuarios/', admin_users.AdminUsuariosView.as_view()),
+    path('moderation/users/<int:pk>/eliminar/', admin_users.AdminUsuarioEliminarView.as_view()),
 ]

@@ -22,6 +22,9 @@ class Usuario(models.Model):
     rol = models.CharField(max_length=20, choices=ROLES, default='cliente')
     foto = models.CharField(max_length=255, null=True, blank=True)
 
+    # Fecha en que se registró (los usuarios anteriores a este cambio quedan sin fecha)
+    creado_en = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+
     # Solo aplican si rol == 'adiestrador'
     estado_aprobacion = models.CharField(max_length=20, choices=ESTADOS, default='aprobado')
     certificado = models.CharField(max_length=255, null=True, blank=True)
