@@ -134,6 +134,74 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     updateAuthButton();
 
+    
+    // ============================================
+    // VALIDACIÓN DE CAMPOS: cada campo solo acepta lo que le corresponde
+    // (también limpia lo que se pegue con Ctrl+V)
+    // ============================================
+    const QUITAR_NO_LETRAS = /[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'-]/g;   // deja letras, espacios, apóstrofo y guion
+    const QUITAR_NO_NUMEROS = /\D/g;                          // deja solo números
+
+    function limitarCampo(id, quitar, maxLen) {
+        const campo = document.getElementById(id);
+        if (!campo) return;                                   // si la página no tiene ese campo, no pasa nada
+        if (maxLen) campo.maxLength = maxLen;
+        campo.addEventListener('input', function () {
+            const limpio = this.value.replace(quitar, '');
+            if (limpio !== this.value) this.value = limpio;
+        });
+    }
+
+    // Registro: nombre, apellido y ciudad solo con letras; teléfono solo con números
+    ['registerNombre', 'registerApellido', 'registerCiudad'].forEach(id => limitarCampo(id, QUITAR_NO_LETRAS, 40));
+    limitarCampo('registerTelefono', QUITAR_NO_NUMEROS, 10);
+    const campoTel = document.getElementById('registerTelefono');
+    if (campoTel) {
+        campoTel.inputMode = 'numeric';
+        campoTel.pattern = '[0-9]{7,10}';
+        campoTel.title = 'Escribe solo números (entre 7 y 10 dígitos).';
+    }
+
+        // Mi perfil (página /mi-perfil/): mismos controles que el registro
+    ['pNombre', 'pApellido', 'pCiudad'].forEach(id => limitarCampo(id, QUITAR_NO_LETRAS, 40));
+    limitarCampo('pTelefono', QUITAR_NO_NUMEROS, 10);
+    const pTel = document.getElementById('pTelefono');
+    if (pTel) {
+        pTel.inputMode = 'numeric';
+        pTel.pattern = '[0-9]{7,10}';
+        pTel.title = 'Escribe solo números (entre 7 y 10 dígitos).';
+    }
+
+    // Mascotas: nombre y raza solo con letras; edad y peso solo con números positivos
+    limitarCampo('petNombre', QUITAR_NO_LETRAS, 30);
+    limitarCampo('petRaza', QUITAR_NO_LETRAS, 40);
+    const petEdad = document.getElementById('petEdad');
+    const petPeso = document.getElementById('petPeso');
+    if (petEdad) { petEdad.min = 0; petEdad.max = 30; petEdad.step = 1; }
+    if (petPeso) { petPeso.min = 0.1; petPeso.max = 150; petPeso.step = 0.1; }
+    [petEdad, petPeso].forEach(campo => {
+        if (!campo) return;
+        // en un campo numérico el navegador deja escribir e, +, - : aquí se bloquean
+        campo.addEventListener('keydown', e => { if (['e', 'E', '+', '-'].includes(e.key)) e.preventDefault(); });
+    });
+    if (petEdad) petEdad.addEventListener('keydown', e => { if (e.key === '.' || e.key === ',') e.preventDefault(); });   // la edad va en años enteros
+    ['petConducta', 'petSalud'].forEach(id => { const c = document.getElementById(id); if (c) c.maxLength = 200; });
+
+        // Contacto (/contacto/): nombre solo letras, teléfono solo números
+    limitarCampo('cNombre', QUITAR_NO_LETRAS, 60);
+    limitarCampo('cTelefono', QUITAR_NO_NUMEROS, 10);
+    const cTel = document.getElementById('cTelefono');
+    if (cTel) cTel.inputMode = 'numeric';
+
+    // Tienda, datos de entrega: ciudad solo letras, teléfono solo números,
+    // dirección con letras, números y los signos típicos (# - . , °)
+    const QUITAR_DIRECCION = /[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9\s#\-.,°ºª]/g;
+    limitarCampo('coCiudad', QUITAR_NO_LETRAS, 40);
+    limitarCampo('coTelefono', QUITAR_NO_NUMEROS, 10);
+    limitarCampo('coDireccion', QUITAR_DIRECCION, 120);
+    const coTel = document.getElementById('coTelefono');
+    if (coTel) coTel.inputMode = 'numeric';
+
     // --- Formulario de Login ---
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
@@ -287,7 +355,7 @@ document.addEventListener('DOMContentLoaded', function () {
         filtroCategoria.addEventListener('change', filtrarProductos);
     }
 
-
+    
     // ============================================
     // SOLICITUD DE SERVICIO (página /solicitar-servicio/)
     // Solo la usa un cliente logueado
@@ -304,6 +372,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // reqHeaders se declara AQUÍ, antes de usarse en cualquier función de este bloque
             const reqHeaders = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+            
+            // Fecha de hoy en hora local, formato AAAA-MM-DD (el que usa el <input type="date">)
+            function hoyISO() {
+                const d = new Date();
+                return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            }
+            // El calendario no deja elegir días que ya pasaron (ni ayer, ni meses anteriores)
+            document.getElementById('reqFecha').min = hoyISO();
 
             // Llena el <select> de mascotas con las que el cliente ya tiene registradas
             function cargarMisMascotas() {
@@ -321,39 +397,61 @@ document.addEventListener('DOMContentLoaded', function () {
             cargarMisMascotas();
 
             // Carga y pinta las solicitudes que este cliente ya ha hecho
+            const MESES_SOL = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+                        // Huella de patita (para el círculo de cada solicitud)
+            const PATA_RS = '<ellipse cx="5.5" cy="11" rx="2" ry="2.6"/><ellipse cx="9.5" cy="6.5" rx="2" ry="2.8"/><ellipse cx="14.5" cy="6.5" rx="2" ry="2.8"/><ellipse cx="18.5" cy="11" rx="2" ry="2.6"/><path d="M12 11c-3 0-5.5 3-5.5 5.7 0 2 1.6 2.8 3 2.8 1 0 1.7-.5 2.5-.5s1.5.5 2.5.5c1.4 0 3-.8 3-2.8C17.5 14 15 11 12 11z"/>';
+            function escSol(t) {
+                return String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            }
+            // "2026-10-30" -> "30 oct 2026"
+            function fechaCorta(iso) {
+                const p = String(iso || '').split('-');
+                if (p.length < 3) return escSol(iso || '');
+                return parseInt(p[2], 10) + ' ' + MESES_SOL[parseInt(p[1], 10) - 1] + ' ' + p[0];
+            }
+
             function cargarMisSolicitudes() {
                 fetch(`${API_BASE}/requests/`, { headers: reqHeaders })
                     .then(r => r.json())
                     .then(solicitudes => {
                         const cont = document.getElementById('misSolicitudes');
-                        if (!solicitudes.length) {
-                            cont.innerHTML = '<p class="text-muted small">Aún no has hecho ninguna solicitud.</p>';
+                        if (!Array.isArray(solicitudes) || !solicitudes.length) {
+                            cont.innerHTML = '<div class="rs-vacio"><i class="bi bi-inbox"></i>Aún no has hecho ninguna solicitud.</div>';
                             return;
                         }
-                        const badgeColor = { pendiente: 'bg-warning text-dark', aceptada: 'bg-success', rechazada: 'bg-danger' };
-                        cont.innerHTML = solicitudes.map(s => `
-                            <div class="border rounded-3 p-3 mb-2">
-                            <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <strong>${s.servicio}</strong> — ${s.perro_nombre}
-                                        <div class="text-muted small">Inicio: ${s.fecha_inicio}</div>
-                                        ${s.estado === 'pendiente' ? `<div class="text-warning small">Esperando desde ${tiempoTranscurrido(s.creado_en)}</div>` : ''}
+                        cont.innerHTML = solicitudes.map(s => {
+                            const estado = ['pendiente', 'aceptada', 'rechazada', 'completado'].includes(s.estado) ? s.estado : '';
+                            const a = s.adiestrador_info;
+                            const entrenador = ((s.estado === 'aceptada' || s.estado === 'completado') && a) ? `
+                                <div class="rs-trainer">
+                                    ${a.foto
+                                        ? `<img class="rs-trainer-av" src="${escSol(a.foto)}" alt="">`
+                                        : `<span class="rs-trainer-av">${escSol(((a.nombre || '?').charAt(0) + (a.apellido || '').charAt(0)).toUpperCase())}</span>`}
+                                    <div class="info">
+                                        <b>${escSol(a.nombre)} ${escSol(a.apellido)}</b>
+                                        <div class="rs-chips">${(a.especialidades || []).map(e => `<span>${escSol(e)}</span>`).join('')}</div>
                                     </div>
-                                    <span class="badge ${badgeColor[s.estado] || 'bg-secondary'}">${s.estado}</span>
-                                </div>
-                                ${s.estado === 'aceptada' && s.adiestrador_info ? `
-                                    <hr>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <img src="${s.adiestrador_info.foto || 'https://via.placeholder.com/50'}" class="rounded-circle" width="50" height="50" style="object-fit:cover;">
+                                    ${a.certificado ? `<a href="${escSol(a.certificado)}" target="_blank" rel="noopener" class="rs-cert"><i class="bi bi-file-earmark-text"></i>Ver certificado</a>` : ''}
+                                </div>` : '';
+                            return `
+                            <div class="rs-sol ${estado}">
+                                <div class="rs-sol-top">
+                                    <div class="rs-sol-main">
+                                        <span class="rs-ico rs-ico-sm"><svg viewBox="0 0 24 24" aria-hidden="true">${PATA_RS}</svg></span>
                                         <div>
-                                            <strong>${s.adiestrador_info.nombre} ${s.adiestrador_info.apellido}</strong>
-                                            <div class="text-muted small">${(s.adiestrador_info.especialidades || []).join(', ')}</div>
-                                            ${s.adiestrador_info.certificado ? `<a href="${s.adiestrador_info.certificado}" target="_blank" class="small">Ver certificado</a>` : ''}
+                                            <h3>${escSol(s.servicio)}</h3>
+                                            <div class="rs-meta">
+                                                <span><i class="bi bi-heart"></i>${escSol(s.perro_nombre)}</span>
+                                                <span><i class="bi bi-calendar3"></i>Inicio: ${fechaCorta(s.fecha_inicio)}</span>
+                                            </div>
+                                            ${s.estado === 'pendiente' ? `<div class="rs-espera"><i class="bi bi-clock"></i>Esperando desde ${escSol(tiempoTranscurrido(s.creado_en))}</div>` : ''}
                                         </div>
                                     </div>
-                                ` : ''}
-                            </div>
-                        `).join('');
+                                    <span class="rs-pill ${estado}">${escSol(s.estado)}</span>
+                                </div>
+                                ${entrenador}
+                            </div>`;
+                        }).join('');
                     });
             }
             cargarMisSolicitudes();
@@ -372,6 +470,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     fecha_inicio: document.getElementById('reqFecha').value,
                     mascota_id: parseInt(document.getElementById('reqMascota').value)
                 };
+
+                
+                // Por si escriben la fecha a mano: no se acepta una fecha que ya pasó
+                if (payload.fecha_inicio < hoyISO()) {
+                    errorBox.textContent = 'La fecha de inicio no puede ser una fecha que ya pasó.';
+                    errorBox.classList.remove('d-none');
+                    return;
+                }
 
                 try {
                     const res = await fetch(`${API_BASE}/requests/`, {

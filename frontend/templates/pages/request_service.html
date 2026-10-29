@@ -3,17 +3,102 @@
 
 {% block content %}
 
-<!-- Encabezado de la página -->
-<section class="page-header">
-    <div class="page-header-overlay"></div>
-    <div class="container position-relative text-center text-white py-5">
-        <p class="text-uppercase fw-bold small mb-2" style="letter-spacing: 2px;">Agenda tu sesión</p>
-        <h1 class="fw-bold display-5">Solicitar un servicio</h1>
+<style>
+    /* Estilos de esta página (solicitar servicio) */
+    .rs-wrap { --rs-olive: #768626; --rs-olive-d: #5e6b1f; --rs-ink: #2b2b24; --rs-muted: #7a7a6c; --rs-line: #e6e1d3; --rs-soft: #f1f3e6; }
+    .rs-card { background: #fff; border: 1px solid var(--rs-line); border-radius: 22px; padding: 1.6rem 1.75rem; box-shadow: 0 6px 22px rgba(60, 60, 30, .06); margin-bottom: 1.25rem; }
+    .rs-head { display: flex; align-items: center; gap: .9rem; margin-bottom: 1.25rem; }
+    .rs-ico { width: 46px; height: 46px; border-radius: 50%; background: var(--rs-soft); color: var(--rs-olive); display: inline-flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; }
+    .rs-ico svg { width: 24px; height: 24px; fill: currentColor; }
+    .rs-ico-sm { width: 42px; height: 42px; }
+    .rs-ico-sm svg { width: 20px; height: 20px; }
+    .rs-sol-main { display: flex; gap: .9rem; align-items: flex-start; }
+    .rs-head h2 { font-size: 1.15rem; font-weight: 800; margin: 0; color: var(--rs-ink); }
+    .rs-head p { margin: .1rem 0 0; font-size: .88rem; color: var(--rs-muted); }
+    .rs-label { display: block; font-size: .85rem; font-weight: 700; margin-bottom: .4rem; color: var(--rs-ink); }
+
+    /* Encabezado tipo Tienda */
+    .rs-top { padding-top: 7.5rem; }
+    .rs-crumbs { display: flex; gap: .6rem; align-items: center; font-size: 1rem; color: var(--rs-muted); margin-bottom: 1.4rem; }
+    .rs-crumbs a { color: var(--rs-muted); text-decoration: none; }
+    .rs-crumbs a:hover { color: var(--rs-olive-d); }
+    .rs-crumbs b { color: var(--rs-ink); font-weight: 600; }
+    .rs-hero { position: relative; border-radius: 28px; min-height: 330px; display: flex; align-items: center; padding: 2.6rem 3rem; color: #fff; overflow: hidden;
+        background-image: linear-gradient(90deg, rgba(36, 48, 16, .90) 0%, rgba(36, 48, 16, .55) 55%, rgba(36, 48, 16, .12) 100%), var(--rs-img, none), linear-gradient(120deg, #4d5a1b, #768626);
+        background-size: cover; background-position: center; }
+    .rs-hero-txt { max-width: 620px; }
+    .rs-eyebrow { text-transform: uppercase; letter-spacing: 2px; font-weight: 700; font-size: .82rem; margin: 0 0 .8rem; opacity: .95; }
+    .rs-hero h1 { font-size: clamp(2.1rem, 4.6vw, 3.4rem); font-weight: 800; line-height: 1.08; margin: 0 0 1rem; color: #fff; }
+    .rs-hero-sub { font-size: 1.1rem; line-height: 1.5; margin: 0 0 1.5rem; opacity: .95; }
+    .rs-hero-btn { display: inline-flex; align-items: center; gap: .6rem; background: #4a3a30; color: #fff; border-radius: 999px; padding: .8rem 1.5rem; font-weight: 700; text-decoration: none; transition: background .15s, transform .15s; }
+    .rs-hero-btn:hover { background: #382b23; color: #fff; transform: translateY(-1px); }
+    .rs-ventajas { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem 2.4rem; padding: 1.6rem 0 .5rem; color: var(--rs-ink); }
+    .rs-ventajas i { color: var(--rs-olive); margin-right: .5rem; }
+    #formulario { scroll-margin-top: 7rem; }
+    @media (max-width: 576px) { .rs-hero { padding: 1.8rem 1.4rem; min-height: 280px; } .rs-top { padding-top: 6rem; } }
+
+    .rs-wrap .form-select, .rs-wrap .form-control { border: 1px solid var(--rs-line); border-radius: 14px; padding: .75rem 1rem; font-size: .95rem; background-color: #fff; color: var(--rs-ink); }
+    .rs-wrap .form-select:focus, .rs-wrap .form-control:focus { border-color: var(--rs-olive); box-shadow: 0 0 0 .2rem rgba(118, 134, 38, .18); }
+    .rs-wrap .alert { border: 0; border-radius: 14px; }
+    .rs-note { display: flex; align-items: center; gap: .6rem; background: var(--rs-soft); color: var(--rs-olive-d); border-radius: 14px; padding: .8rem 1rem; font-size: .88rem; margin-bottom: 1.1rem; }
+    .rs-note i { font-size: 1.05rem; }
+    .rs-submit { display: flex; align-items: center; justify-content: center; gap: .6rem; width: 100%; border: 0; border-radius: 999px; padding: .95rem 1.5rem; background: var(--rs-olive); color: #fff; font-weight: 700; font-size: 1.05rem; box-shadow: 0 8px 18px rgba(118, 134, 38, .28); transition: background .15s, transform .15s; }
+    .rs-submit:hover { background: var(--rs-olive-d); color: #fff; transform: translateY(-1px); }
+
+    .rs-lista-head { display: flex; align-items: center; gap: .9rem; margin: 2.6rem 0 1.1rem; }
+    .rs-sol { background: #fff; border: 1px solid var(--rs-line); border-left: 5px solid var(--rs-c, #ccc); border-radius: 18px; padding: 1.1rem 1.3rem; margin-bottom: .85rem; box-shadow: 0 4px 14px rgba(60, 60, 30, .05); }
+    .rs-sol.pendiente { --rs-c: #f5b800; }
+    .rs-sol.aceptada { --rs-c: #2fb85a; }
+    .rs-sol.rechazada { --rs-c: #d8656b; }
+    .rs-sol.completado { --rs-c: #8a9a6c; }
+    .rs-sol-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+    .rs-sol h3 { font-size: 1.05rem; font-weight: 800; margin: 0 0 .35rem; color: var(--rs-ink); }
+    .rs-meta { display: flex; flex-wrap: wrap; gap: .3rem 1.1rem; font-size: .86rem; color: var(--rs-muted); }
+    .rs-meta i { margin-right: .3rem; color: var(--rs-olive); }
+    .rs-pill { display: inline-flex; align-items: center; gap: .4rem; padding: .32rem .85rem; border-radius: 999px; font-size: .78rem; font-weight: 700; text-transform: capitalize; background: #eceee2; color: var(--rs-olive-d); }
+    .rs-pill::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .rs-pill.pendiente { background: #fff4d1; color: #9a6b00; }
+    .rs-pill.aceptada { background: #dff3e4; color: #1d7a3b; }
+    .rs-pill.rechazada { background: #fbe3e4; color: #b23b43; }
+    .rs-espera { margin-top: .55rem; font-size: .84rem; color: #9a6b00; }
+    .rs-espera i { margin-right: .3rem; }
+    .rs-trainer { display: flex; align-items: center; gap: .9rem; margin-top: .95rem; padding: .85rem 1rem; background: var(--rs-soft); border-radius: 14px; flex-wrap: wrap; }
+    .rs-trainer-av { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; background: #c9d1b0; color: #2d4723; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .rs-trainer .info { flex: 1; min-width: 200px; }
+    .rs-trainer b { display: block; color: var(--rs-ink); }
+    .rs-chips { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .35rem; }
+    .rs-chips span { background: #fff; border: 1px solid var(--rs-line); border-radius: 999px; padding: .15rem .65rem; font-size: .76rem; color: var(--rs-olive-d); }
+    .rs-cert { display: inline-flex; align-items: center; gap: .4rem; border: 1px solid var(--rs-olive); color: var(--rs-olive-d); border-radius: 999px; padding: .4rem .95rem; font-size: .84rem; font-weight: 600; text-decoration: none; background: #fff; }
+    .rs-cert:hover { background: var(--rs-olive); color: #fff; }
+    .rs-vacio { text-align: center; padding: 2rem 1rem; color: var(--rs-muted); background: #fff; border: 1px dashed var(--rs-line); border-radius: 18px; }
+    .rs-vacio i { font-size: 1.8rem; display: block; margin-bottom: .4rem; color: var(--rs-olive); }
+    @media (max-width: 576px) { .rs-card { padding: 1.2rem; } }
+</style>
+
+<!-- Encabezado de la página: migas de pan + tarjeta con título (mismo estilo que la Tienda) -->
+<section class="rs-top rs-wrap">
+    <div class="container" style="max-width: 1200px;">
+        <nav class="rs-crumbs" aria-label="Ruta"><a href="/">Inicio</a><span>/</span><b>Solicitar servicio</b></nav>
+
+        <div class="rs-hero" id="rsHero">
+            <div class="rs-hero-txt">
+                <p class="rs-eyebrow">Agenda tu sesión</p>
+                <h1>Solicitar un servicio</h1>
+                <p class="rs-hero-sub">Cuéntanos qué necesita tu mascota y un adiestrador profesional la acompañará paso a paso.</p>
+                <a href="#formulario" class="rs-hero-btn">Ir al formulario <i class="bi bi-arrow-down"></i></a>
+            </div>
+        </div>
+
+        <div class="rs-ventajas">
+            <span><i class="bi bi-patch-check"></i>Adiestradores verificados</span>
+            <span><i class="bi bi-calendar-check"></i>Tú eliges la fecha</span>
+            <span><i class="bi bi-bell"></i>Sigue el estado de tu solicitud</span>
+        </div>
     </div>
 </section>
 
-<section class="py-5 my-4">
-    <div class="container" style="max-width: 800px;">
+<section class="pt-4 pb-5 mb-4" id="formulario">
+    <div class="container rs-wrap" style="max-width: 800px;">
 
         <!-- Se muestra si NO hay sesión de cliente activa (controlado por JS en main.js) -->
         <div id="noAuthMsg" class="alert alert-warning d-none">
@@ -28,11 +113,17 @@
             <form id="requestForm">
 
                 <!-- Datos del servicio que se quiere solicitar -->
-                <div class="admin-card mb-4">
-                    <h6 class="fw-bold mb-3">Datos del servicio</h6>
+                <div class="rs-card">
+                    <div class="rs-head">
+                        <span class="rs-ico"><i class="bi bi-clipboard2-check"></i></span>
+                        <div>
+                            <h2>Datos del servicio</h2>
+                            <p>Cuéntanos qué necesitas y cuándo quieres empezar.</p>
+                        </div>
+                    </div>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label small fw-bold">¿Qué servicio necesitas?</label>
+                            <label class="rs-label" for="reqServicio">¿Qué servicio necesitas?</label>
                             <select class="form-select" id="reqServicio" required>
                                 <option value="" disabled selected>Selecciona un servicio</option>
                                 <option value="Adiestramiento básico">Adiestramiento básico</option>
@@ -45,7 +136,7 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-bold">Duración estimada</label>
+                            <label class="rs-label" for="reqDuracion">Duración estimada</label>
                             <select class="form-select" id="reqDuracion" required>
                                 <option value="" disabled selected>Selecciona una duración</option>
                                 <option value="corto">Corto plazo (menos de 1 mes)</option>
@@ -55,7 +146,7 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small fw-bold">Fecha en que te gustaría iniciar</label>
+                            <label class="rs-label" for="reqFecha">Fecha en que te gustaría iniciar</label>
                             <input type="date" class="form-control" id="reqFecha" required>
                         </div>
                     </div>
@@ -63,8 +154,14 @@
 
                 <!-- Selección de la mascota ya registrada en "Mi perfil" -->
                 <!-- Ya NO se escriben los datos del perro a mano: se eligen de las mascotas del cliente -->
-                <div class="admin-card mb-4">
-                    <h6 class="fw-bold mb-3">¿Para cuál de tus mascotas?</h6>
+                <div class="rs-card">
+                    <div class="rs-head">
+                        <span class="rs-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="5.5" cy="11" rx="2" ry="2.6"/><ellipse cx="9.5" cy="6.5" rx="2" ry="2.8"/><ellipse cx="14.5" cy="6.5" rx="2" ry="2.8"/><ellipse cx="18.5" cy="11" rx="2" ry="2.6"/><path d="M12 11c-3 0-5.5 3-5.5 5.7 0 2 1.6 2.8 3 2.8 1 0 1.7-.5 2.5-.5s1.5.5 2.5.5c1.4 0 3-.8 3-2.8C17.5 14 15 11 12 11z"/></svg></span>
+                        <div>
+                            <h2>¿Para cuál de tus mascotas?</h2>
+                            <p>Elige a quién vamos a entrenar.</p>
+                        </div>
+                    </div>
 
                     <!-- Se muestra solo si el cliente todavía no ha registrado ninguna mascota -->
                     <div id="sinMascotasMsg" class="alert alert-warning d-none">
@@ -72,21 +169,40 @@
                     </div>
 
                     <!-- Este select se llena dinámicamente desde main.js, con las mascotas reales del cliente -->
+                    <label class="rs-label" for="reqMascota">Tu mascota</label>
                     <select class="form-select" id="reqMascota">
                         <option value="" disabled selected>Selecciona una mascota</option>
                     </select>
                 </div>
 
-                <button type="submit" class="btn btn-olive btn-lg w-100 rounded-pill">Enviar solicitud</button>
+                <div class="rs-note"><i class="bi bi-info-circle"></i>Tu solicitud queda <b>pendiente</b> hasta que un adiestrador la acepte.</div>
+
+                <button type="submit" class="rs-submit"><i class="bi bi-send"></i>Enviar solicitud</button>
             </form>
         </div>
 
         <!-- Historial de solicitudes que el cliente ya ha hecho, con su estado (pendiente/aceptada/rechazada) -->
-        <div class="mt-5">
-            <h5 class="fw-bold mb-3">Mis solicitudes</h5>
-            <div id="misSolicitudes"></div>
+        <div class="rs-lista-head">
+            <span class="rs-ico"><i class="bi bi-calendar-check"></i></span>
+            <div class="rs-head" style="margin:0">
+                <div>
+                    <h2>Mis solicitudes</h2>
+                    <p>El estado de cada servicio que has pedido.</p>
+                </div>
+            </div>
         </div>
+        <div id="misSolicitudes"></div>
 
     </div>
 </section>
+
+<script>
+    // La foto del encabezado sale de la base de datos: se usa la foto del primer servicio que tenga imagen.
+    (function () {
+        fetch('/api/services/').then(r => r.json()).then(servicios => {
+            const con = (servicios || []).find(s => s.imagen);
+            if (con) document.getElementById('rsHero').style.setProperty('--rs-img', 'url(' + JSON.stringify(con.imagen) + ')');
+        }).catch(() => { /* sin foto: se queda el degradado verde */ });
+    })();
+</script>
 {% endblock %}
