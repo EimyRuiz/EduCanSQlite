@@ -18,3 +18,4 @@ rpds-py==2026.6.3
 sqlparse==0.6.0
 tzdata==2026.3
 uritemplate==4.2.0
+whitenoise==6.9.0
