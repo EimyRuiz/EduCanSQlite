@@ -37,7 +37,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 const primero = Object.values(cuerpo)[0];
                 msg = Array.isArray(primero) ? primero[0] : null;
             }
-            if (r.status === 403) msg = msg || 'No tienes permiso para hacer esto.';
+            if (r.status === 403) msg = msg || 'No tienes permiso para hacer esto.';;
+            if (r.status === 401) msg = 'Tu sesión venció. Cierra sesión y vuelve a entrar.';
             throw new Error(msg || 'No se pudo completar la acción.');
         }
         return cuerpo;
@@ -165,16 +166,16 @@ document.addEventListener('DOMContentLoaded', function () {
     // ============================================
     // Menús desplegables: campana y usuario
     // ============================================
-    document.querySelectorAll('.ad-dd > button').forEach(b => {
-        b.addEventListener('click', function (e) {
-            e.stopPropagation();
-            const caja = this.parentElement;
-            const abierto = caja.classList.contains('open');
-            document.querySelectorAll('.ad-dd').forEach(d => d.classList.remove('open'));
-            if (!abierto) caja.classList.add('open');
-        });
+    // Un solo "escuchador" para todo: abre el menú que se tocó y cierra los demás (o todos si se toca afuera).
+    // La marca _adDd evita que se procese dos veces si por error el script llegara a cargarse dos veces.
+    document.addEventListener('click', function (e) {
+        if (e._adDd) return;
+        e._adDd = true;
+        const b = e.target.closest('.ad-dd > button');
+        const abierto = !!b && b.parentElement.classList.contains('open');
+        document.querySelectorAll('.ad-dd').forEach(d => d.classList.remove('open'));
+        if (b && !abierto) b.parentElement.classList.add('open');
     });
-    document.addEventListener('click', () => document.querySelectorAll('.ad-dd').forEach(d => d.classList.remove('open')));
 
     document.getElementById('btnSalir').addEventListener('click', function () {
         ['access_token', 'user_nombre', 'user_rol', 'user_foto'].forEach(k => localStorage.removeItem(k));
@@ -420,7 +421,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    
     // ============================================
     // Resumen: tarjetas, aviso de stock y gráficas (todo con datos reales)
     // ============================================
@@ -549,6 +549,49 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (err) { /* sin aviso si falla */ }
     }
 
+        // ============================================
+    // Ayudas para las secciones (miniaturas, tiempo, botones)
+    // ============================================
+    // La huella de la patita (sin el <svg> de afuera) para dibujarla dentro de otras ilustraciones
+    const PATA_DIBUJO = '<ellipse cx="5.5" cy="11" rx="2" ry="2.6"/><ellipse cx="9.5" cy="6.5" rx="2" ry="2.8"/><ellipse cx="14.5" cy="6.5" rx="2" ry="2.8"/><ellipse cx="18.5" cy="11" rx="2" ry="2.6"/><path d="M12 11c-3 0-5.5 3-5.5 5.7 0 2 1.6 2.8 3 2.8 1 0 1.7-.5 2.5-.5s1.5.5 2.5.5c1.4 0 3-.8 3-2.8C17.5 14 15 11 12 11z"/>';
+
+    // Foto pequeña para las tablas (si no hay foto, un ícono gris)
+    function thumb(ruta) {
+        return ruta
+            ? `<img class="ad-thumb" src="${esc(ruta)}" alt="">`
+            : '<span class="ad-thumb ad-thumb-ph"><i class="bi bi-image"></i></span>';
+    }
+
+    // "hace 2 horas", "hace 3 días"...
+    function hace(iso) {
+        if (!iso) return '';
+        const seg = (Date.now() - new Date(iso).getTime()) / 1000;
+        if (isNaN(seg)) return '';
+        if (seg < 60) return 'hace un momento';
+        const min = Math.floor(seg / 60);
+        if (min < 60) return 'hace ' + plural(min, 'minuto', 'minutos');
+        const h = Math.floor(min / 60);
+        if (h < 24) return 'hace ' + plural(h, 'hora', 'horas');
+        const d = Math.floor(h / 24);
+        if (d < 30) return 'hace ' + plural(d, 'día', 'días');
+        const m = Math.floor(d / 30);
+        if (m < 12) return 'hace ' + plural(m, 'mes', 'meses');
+        return 'hace ' + plural(Math.floor(m / 12), 'año', 'años');
+    }
+
+    // Círculo con las iniciales de una persona
+    function avatarIni(nombreCompleto, extra) {
+        return `<span class="ad-av ${extra || ''}">${esc(iniciales(nombreCompleto))}</span>`;
+    }
+
+    // Cambia el texto de un botón sin perder su ícono
+    function ponerBoton(id, icono, texto) {
+        document.getElementById(id).innerHTML = `<i class="bi ${icono}"></i>${texto}`;
+    }
+
+    // Botones de la tabla (Editar / Eliminar)
+    const btnEditar = fn => `<button type="button" class="ad-btn ad-btn-sm ad-btn-line" onclick="${fn}"><i class="bi bi-pencil"></i>Editar</button>`;
+    const btnEliminar = fn => `<button type="button" class="ad-btn ad-btn-sm ad-btn-soft" onclick="${fn}"><i class="bi bi-trash"></i>Eliminar</button>`;
 
     // ============================================
     // Servicios: listar, crear, editar, eliminar (con foto)
@@ -560,16 +603,14 @@ document.addEventListener('DOMContentLoaded', function () {
             serviciosCache = {};
             servicios.forEach(s => { serviciosCache[s.id] = s; });
             document.getElementById('statServicios').textContent = servicios.length;
-            document.getElementById('serviciosBody').innerHTML = servicios.map(s =>
+            document.getElementById('serviciosBody').innerHTML = servicios.length ? servicios.map((s, i) =>
                 `<tr>
-                    <td>${miniatura(s.imagen)}${esc(s.nombre)}</td>
+                    <td>${i + 1}</td>
+                    <td><div class="ad-prod">${thumb(s.imagen)}<span>${esc(s.nombre)}</span></div></td>
                     <td>$${formatearPrecioCOP(s.precio)}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-secondary me-1" onclick="editarServicio('${s.id}')">Editar</button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="eliminarServicio('${s.id}')">Eliminar</button>
-                    </td>
+                    <td><div class="ad-acciones">${btnEditar(`editarServicio('${s.id}')`)}${btnEliminar(`eliminarServicio('${s.id}')`)}</div></td>
                 </tr>`
-            ).join('');
+            ).join('') : '<tr><td colspan="4" class="ad-vacio-grande">Aún no hay servicios.</td></tr>';
         });
     }
     cargarServicios();
@@ -577,7 +618,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function limpiarServicio() {
         document.getElementById('servicioForm').reset();
         document.getElementById('servId').value = '';
-        document.getElementById('servSubmitBtn').textContent = 'Agregar';
+        ponerBoton('servSubmitBtn', 'bi-plus-circle', 'Agregar');
         document.getElementById('servCancelBtn').classList.add('d-none');
     }
     document.getElementById('servCancelBtn').onclick = limpiarServicio;
@@ -589,9 +630,10 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('servNombre').value = servicio.nombre;
         document.getElementById('servDescripcion').value = servicio.descripcion;
         document.getElementById('servPrecio').value = servicio.precio;
-        document.getElementById('servSubmitBtn').textContent = 'Guardar cambios';
+        ponerBoton('servSubmitBtn', 'bi-check-circle', 'Guardar cambios');
         document.getElementById('servCancelBtn').classList.remove('d-none');
         aviso('servMsg', 'Editando "' + servicio.nombre + '". Si eliges una foto, reemplaza la anterior.', true);
+        document.querySelector('.ad-main').scrollTop = 0;
     };
 
     document.getElementById('servicioForm').onsubmit = async function (e) {
@@ -625,6 +667,8 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     window.eliminarServicio = async function (id) {
+        const s = serviciosCache[id];
+        if (!confirm('¿Eliminar el servicio "' + (s ? s.nombre : '') + '"?')) return;
         try {
             await enviar(`${API}/services/${id}/`, 'DELETE');
             aviso('servMsg', 'Servicio eliminado.', true);
@@ -634,16 +678,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    
     // ============================================
     // Productos: listar, crear, editar, eliminar, reponer stock (con foto)
     // ============================================
-
-    function insigniaStock(n) {
-        const clase = n === 0 ? 'bg-danger' : (n < STOCK_BAJO ? 'bg-warning text-dark' : 'bg-success');
-        return `<span class="badge ${clase}">${n === 0 ? 'Agotado' : n}</span>`;
+    // Stock en píldora de color: verde (bien), amarillo (poco) o rojo (agotado)
+    function pillStock(n) {
+        if (n === 0) return '<span class="ad-pill ad-pill-red">Agotado</span>';
+        if (n < STOCK_BAJO) return `<span class="ad-pill ad-pill-amber">${n}</span>`;
+        return `<span class="ad-pill">${n}</span>`;
     }
-
 
     let productosCache = {};   // igual que arriba: los productos se guardan en memoria
 
@@ -654,23 +697,21 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('statProductos').textContent = productos.length;
             pintarAlertaStock(productos);
             actualizarStock(productos);
-            document.getElementById('productosBody').innerHTML = productos.map(p =>
+            document.getElementById('productosBody').innerHTML = productos.length ? productos.map(p =>
                 `<tr>
-                    <td>${miniatura(p.imagen)}${esc(p.nombre)}</td>
-                    <td>${insigniaStock(p.stock)}</td>
+                    <td><div class="ad-prod">${thumb(p.imagen)}<span>${esc(p.nombre)}</span></div></td>
+                    <td>${pillStock(p.stock)}</td>
                     <td>$${formatearPrecioCOP(p.precio)}</td>
                     <td>
-                        <div class="input-group input-group-sm" style="width:125px">
-                            <input type="number" min="1" class="form-control" id="add-${p.id}" placeholder="+ uds">
-                            <button class="btn btn-outline-secondary" onclick="reponerStock('${p.id}')">Reponer</button>
+                        <div class="ad-repo">
+                            <input type="number" min="1" value="1" id="add-${p.id}" aria-label="Unidades que entraron">
+                            <button type="button" onclick="reponerStock('${p.id}')"><i class="bi bi-plus-lg"></i>Reponer</button>
                         </div>
                     </td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-secondary me-1" onclick="editarProducto('${p.id}')">Editar</button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="eliminarProducto('${p.id}')">Eliminar</button>
-                    </td>
+                    <td><div class="ad-acciones">${btnEditar(`editarProducto('${p.id}')`)}${btnEliminar(`eliminarProducto('${p.id}')`)}</div></td>
                 </tr>`
-            ).join('');
+            ).join('') : '<tr><td colspan="5" class="ad-vacio-grande">Aún no hay productos.</td></tr>';
+            if (typeof pintarPedidos === 'function') pintarPedidos();   // las fotos de los pedidos salen de aquí
         });
     }
     cargarProductos();
@@ -678,7 +719,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function limpiarProducto() {
         document.getElementById('productoForm').reset();
         document.getElementById('prodId').value = '';
-        document.getElementById('prodSubmitBtn').textContent = 'Agregar';
+        ponerBoton('prodSubmitBtn', 'bi-plus-circle', 'Agregar');
         document.getElementById('prodCancelBtn').classList.add('d-none');
         document.getElementById('prodStockCol').classList.remove('d-none');
     }
@@ -693,9 +734,10 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('prodDescripcion').value = producto.descripcion;
         document.getElementById('prodPrecio').value = producto.precio;
         document.getElementById('prodStockCol').classList.add('d-none');   // al editar no se toca el stock
-        document.getElementById('prodSubmitBtn').textContent = 'Guardar cambios';
+        ponerBoton('prodSubmitBtn', 'bi-check-circle', 'Guardar cambios');
         document.getElementById('prodCancelBtn').classList.remove('d-none');
         aviso('prodMsg', 'Editando "' + producto.nombre + '". Si eliges una foto, reemplaza la anterior.', true);
+        document.querySelector('.ad-main').scrollTop = 0;
     };
 
     document.getElementById('productoForm').onsubmit = async function (e) {
@@ -743,6 +785,8 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     window.eliminarProducto = async function (id) {
+        const p = productosCache[id];
+        if (!confirm('¿Eliminar el producto "' + (p ? p.nombre : '') + '"?')) return;
         try {
             await enviar(`${API}/products/${id}/`, 'DELETE');
             aviso('prodMsg', 'Producto eliminado.', true);
@@ -759,37 +803,65 @@ document.addEventListener('DOMContentLoaded', function () {
         ['pendiente', 'Pendiente'], ['confirmado', 'Confirmado'], ['enviado', 'Enviado'],
         ['entregado', 'Entregado'], ['cancelado', 'Cancelado']
     ];
+    let pedidosLista = [];
 
     function cargarPedidos() {
         fetch(`${API}/orders/`, { headers }).then(r => r.json()).then(lista => {
-            const cont = document.getElementById('pedidosContainer');
-            if (!Array.isArray(lista) || !lista.length) {
-                cont.innerHTML = '<p class="text-muted mb-0">Aún no hay pedidos.</p>';
-                return;
-            }
-            cont.innerHTML = lista.map(p => `
-                <div class="border rounded-3 p-3 mb-3 ${p.estado === 'cancelado' ? 'bg-light' : ''}">
-                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
-                        <div>
-                            <strong>Pedido #${p.id}</strong>
-                            <span class="text-muted small ms-2">${esc(new Date(p.creado_en).toLocaleString('es-CO'))}</span>
-                            <div class="small">${esc(p.cliente_nombre)} · ${esc(p.cliente_email)}</div>
-                        </div>
-                        <strong>${fmt(p.total)}</strong>
-                    </div>
-                    ${p.items.map(i => `<div class="d-flex justify-content-between small"><span>${i.cantidad} × ${esc(i.nombre)}</span><span>${fmt(i.subtotal)}</span></div>`).join('')}
-                    <p class="text-muted small mt-2 mb-2"><i class="bi bi-geo-alt me-1"></i>${esc(p.direccion)}, ${esc(p.ciudad)} · ${esc(p.telefono)}${p.notas ? '<br><em>' + esc(p.notas) + '</em>' : ''}</p>
-                    <div class="d-flex gap-2 align-items-center">
-                        <select class="form-select form-select-sm" style="width:auto" id="estado-${p.id}" ${p.estado === 'cancelado' ? 'disabled' : ''}>
-                            ${ESTADOS_PEDIDO.map(([v, t]) => `<option value="${v}" ${v === p.estado ? 'selected' : ''}>${t}</option>`).join('')}
-                        </select>
-                        ${p.estado === 'cancelado' ? '<span class="small text-muted">Cancelado (el stock ya volvió al inventario)</span>'
-                            : `<button class="btn btn-sm btn-olive" onclick="guardarEstadoPedido(${p.id})">Guardar estado</button>`}
-                    </div>
-                    <div id="pedMsg-${p.id}" class="small mt-1"></div>
-                </div>`).join('');
+            pedidosLista = Array.isArray(lista) ? lista : [];
+            pintarPedidos();
         });
     }
+
+    // La foto de un item sale del producto que tenga el mismo nombre
+    function fotoDeProducto(nombreItem) {
+        const p = Object.values(productosCache).find(x => x.nombre === nombreItem);
+        return p ? p.imagen : '';
+    }
+
+    function pintarPedidos() {
+        const cont = document.getElementById('pedidosContainer');
+        if (!pedidosLista.length) {
+            cont.innerHTML = '<div class="ad-vacio-grande"><i class="bi bi-cart fs-3 d-block mb-2"></i>Aún no hay pedidos.</div>';
+            return;
+        }
+        const orden = document.getElementById('pedOrden').value;
+        const lista = pedidosLista.slice().sort((a, b) => {
+            const dif = new Date(b.creado_en) - new Date(a.creado_en);
+            return orden === 'viejos' ? -dif : dif;
+        });
+        cont.innerHTML = lista.map(p => {
+            const cancelado = p.estado === 'cancelado';
+            const items = p.items.map(i => `
+                <div class="ad-ped-item">${thumb(fotoDeProducto(i.nombre))}<span>${i.cantidad} × ${esc(i.nombre)}</span><b>${fmt(i.subtotal)}</b></div>`).join('');
+            const estado = cancelado
+                ? `<span class="ad-pill ad-pill-red ad-pill-dot">Cancelado</span><span class="small text-muted ms-2">Cancelado (el stock ya volvió al inventario)</span>`
+                : `<div class="ad-ped-guardar">
+                        <div class="ad-select"><select id="estado-${p.id}">${ESTADOS_PEDIDO.map(([v, t]) => `<option value="${v}" ${v === p.estado ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+                        <button type="button" class="ad-btn ad-btn-green" onclick="guardarEstadoPedido(${p.id})"><i class="bi bi-floppy"></i>Guardar estado</button>
+                   </div>`;
+            return `
+            <div class="ad-pedido ${cancelado ? 'cancelado' : ''}">
+                <div class="ad-ped-main">
+                    <div class="ad-ped-head">
+                        <span class="ad-ped-ico"><i class="bi bi-bag"></i></span>
+                        <div>
+                            <div><b class="ad-ped-num">Pedido #${p.id}</b> <span class="ad-ped-fecha">${esc(new Date(p.creado_en).toLocaleString('es-CO'))}</span></div>
+                            <div class="ad-ped-cli">${esc(p.cliente_nombre)} · ${esc(p.cliente_email)}</div>
+                        </div>
+                    </div>
+                    <div class="ad-ped-items">${items}</div>
+                </div>
+                <div class="ad-ped-side">
+                    <div class="ad-total"><span class="ad-total-ico"><i class="bi bi-currency-dollar"></i></span><div><small>Total del pedido</small><b>${fmt(p.total)}</b></div></div>
+                    <p class="ad-ped-dir"><i class="bi bi-geo-alt"></i>${esc(p.direccion)}, ${esc(p.ciudad)} · ${esc(p.telefono)}</p>
+                    ${p.notas ? `<p class="ad-ped-notas">${esc(p.notas)}</p>` : ''}
+                    <div class="ad-ped-estado">${estado}</div>
+                    <div id="pedMsg-${p.id}" class="small mt-1"></div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+    document.getElementById('pedOrden').addEventListener('change', pintarPedidos);
 
     window.guardarEstadoPedido = async function (id) {
         const estado = document.getElementById('estado-' + id).value;
@@ -805,13 +877,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    // ============================================
+        // ============================================
     // Reseñas: ver las calificaciones y responderlas
     // ============================================
+    let resenasCache = {};
+
     function estrellasHTML(n) {
         let html = '';
         for (let i = 1; i <= 5; i++) {
-            html += `<i class="bi ${i <= n ? 'bi-star-fill' : 'bi-star'}" style="color:#e0a526"></i>`;
+            html += `<i class="bi ${i <= n ? 'bi-star-fill' : 'bi-star'}"></i>`;
         }
         return html;
     }
@@ -820,57 +894,70 @@ document.addEventListener('DOMContentLoaded', function () {
     function quienRespondio(r) {
         const esAdiestrador = r.respondido_por_rol === 'adiestrador';
         return `<strong>${esc(r.respondido_por_nombre)}</strong>
-                <span class="badge ms-1 ${esAdiestrador ? 'bg-olive text-white' : 'bg-dark'}">${esAdiestrador ? 'Adiestrador' : 'Administrador'}</span>`;
+                <span class="ad-tag ${esAdiestrador ? 'ad-tag-olive' : 'ad-tag-dark'}">${esAdiestrador ? 'Adiestrador' : 'Administrador'}</span>`;
+    }
+
+    // Respuesta ya publicada (con botón Editar)
+    function bloqueRespuesta(r) {
+        return `
+            <div class="ad-res-row">
+                <span class="ad-res-ok"><i class="bi bi-check-circle-fill"></i>Respondida por ${quienRespondio(r)}</span>
+                <button type="button" class="ad-btn ad-btn-sm ad-btn-line" onclick="editarResena(${r.id})"><i class="bi bi-pencil"></i>Editar</button>
+            </div>
+            <div class="ad-quote"><i class="bi bi-chat-dots-fill"></i><div><b>Respuesta de EDUCAN</b><p>${esc(r.respuesta_admin)}</p></div></div>`;
+    }
+
+    // Casilla para escribir (o editar) la respuesta
+    function formRespuesta(r, editando) {
+        return `
+            <div class="ad-res-form">
+                <input class="ad-input" id="resp-${r.id}" maxlength="500" placeholder="Escribe una respuesta pública" value="${esc(r.respuesta_admin)}">
+                <button type="button" class="ad-btn ad-btn-green ad-btn-sm" onclick="guardarResena(${r.id})"><i class="bi bi-send"></i>${editando ? 'Guardar' : 'Responder'}</button>
+                ${editando ? `<button type="button" class="ad-btn ad-btn-line ad-btn-sm" onclick="cancelarResena(${r.id})">Cancelar</button>` : ''}
+            </div>`;
     }
 
     function tarjetaResena(r) {
-        const respondida = !!r.respuesta_admin;
         return `
-            <div class="border rounded-3 p-3 mb-3 ${respondida ? 'bg-light' : ''}">
-                <div class="d-flex justify-content-between align-items-start mb-1">
-                    <div>
-                        <strong>${esc(r.cliente_nombre)}</strong>
-                        <span class="text-muted small ms-2">${esc(r.servicio)}</span>
-                    </div>
-                    <div>${estrellasHTML(r.estrellas)}</div>
+            <div class="ad-resena">
+                <div class="ad-res-top">
+                    ${avatarIni(r.cliente_nombre, 'ad-av-md')}
+                    <div class="flex-grow-1"><b>${esc(r.cliente_nombre)}</b><span>${esc(r.servicio)}</span></div>
+                    <div class="ad-stars">${estrellasHTML(r.estrellas)}</div>
                 </div>
-                <p class="mb-2">${esc(r.comentario) || '<span class="text-muted">Sin comentario.</span>'}</p>
-                ${respondida ? `<div class="small text-success mb-1"><i class="bi bi-check-circle-fill me-1"></i>Respondida por ${quienRespondio(r)}</div>` : ''}
-                <div class="d-flex gap-2">
-                    <input class="form-control form-control-sm" id="resp-${r.id}" maxlength="500"
-                           placeholder="Escribe una respuesta pública" value="${esc(r.respuesta_admin)}"
-                           ${respondida ? 'disabled' : ''}>
-                    <button class="btn btn-sm ${respondida ? 'btn-outline-secondary' : 'btn-olive'}" id="btn-${r.id}"
-                            onclick="accionResena(${r.id})">${respondida ? 'Editar' : 'Responder'}</button>
-                </div>
+                <p class="ad-res-txt">${esc(r.comentario) || '<span class="text-muted">Sin comentario.</span>'}</p>
+                <div id="respBox-${r.id}">${r.respuesta_admin ? bloqueRespuesta(r) : formRespuesta(r, false)}</div>
                 <div id="respMsg-${r.id}" class="small mt-1"></div>
             </div>`;
     }
 
     function cargarResenas() {
         fetch(`${API}/reviews/`, { headers }).then(r => r.json()).then(resenas => {
+            resenasCache = {};
+            resenas.forEach(r => { resenasCache[r.id] = r; });
             document.getElementById('resenasContainer').innerHTML = resenas.length
                 ? resenas.map(tarjetaResena).join('')
-                : '<p class="text-muted mb-0">Aún no hay reseñas.</p>';
+                : '<div class="ad-vacio-grande"><i class="bi bi-star fs-3 d-block mb-2"></i>Aún no hay reseñas.</div>';
         });
     }
 
-    // Un solo botón: si la casilla está bloqueada (ya respondida) la habilita para editar; si no, guarda.
-    window.accionResena = async function (id) {
+    // Editar: la respuesta se convierte en una casilla para cambiarla
+    window.editarResena = function (id) {
+        const r = resenasCache[id];
+        if (!r) return;
+        document.getElementById('respBox-' + id).innerHTML = formRespuesta(r, true);
+        document.getElementById('resp-' + id).focus();
+    };
+    window.cancelarResena = function (id) {
+        const r = resenasCache[id];
+        if (r) document.getElementById('respBox-' + id).innerHTML = r.respuesta_admin ? bloqueRespuesta(r) : formRespuesta(r, false);
+    };
+    window.guardarResena = async function (id) {
         const input = document.getElementById('resp-' + id);
-        const boton = document.getElementById('btn-' + id);
         const msg = document.getElementById('respMsg-' + id);
-
-        if (input.disabled) {
-            input.disabled = false;
-            input.focus();
-            boton.textContent = 'Guardar';
-            boton.className = 'btn btn-sm btn-olive';
-            return;
-        }
         try {
             await enviar(`${API}/reviews/${id}/responder/`, 'POST', { respuesta: input.value.trim() });
-            cargarResenas();   // se vuelve a dibujar: casilla gris + "Respondida por ..."
+            cargarResenas();   // se vuelve a dibujar con "Respondida por ..."
         } catch (err) {
             msg.className = 'small mt-1 text-danger';
             msg.textContent = err.message;
@@ -880,31 +967,47 @@ document.addEventListener('DOMContentLoaded', function () {
     // ============================================
     // Mensajes de contacto
     // ============================================
+    // Ilustración para cuando todavía no hay mensajes: sobre con patita (todo dibujado con SVG)
+    const ILUSTRACION_MENSAJES = `
+        <svg viewBox="0 0 400 270" class="ad-ilus" aria-hidden="true">
+            <circle cx="200" cy="130" r="105" fill="#f1f3e6"/>
+            <g fill="#e9eddb"><g transform="translate(40 168) scale(2.6)">${PATA_DIBUJO}</g><g transform="translate(318 120) scale(3) rotate(12 12 12)">${PATA_DIBUJO}</g></g>
+            <rect x="120" y="86" width="150" height="102" rx="12" fill="#a9bd8d"/>
+            <path d="M126 98 L195 148 L264 98" stroke="#f1f3e6" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="268" cy="188" r="38" fill="#e3e8d3"/>
+            <g fill="#6d8b45" transform="translate(246 166) scale(1.85)">${PATA_DIBUJO}</g>
+            <g stroke="#6d8b45" stroke-width="6" stroke-linecap="round" opacity=".8"><path d="M96 110l16 8"/><path d="M92 138l16-6"/><path d="M296 82l-8 16"/><path d="M304 112l16-4"/></g>
+        </svg>`;
+
     function cargarMensajes() {
         fetch(`${API}/contact/`, { headers }).then(r => r.json()).then(lista => {
             const contenedor = document.getElementById('mensajesContainer');
             if (!Array.isArray(lista) || !lista.length) {
-                contenedor.innerHTML = '<p class="text-muted mb-0">Aún no hay mensajes.</p>';
+                contenedor.innerHTML = `
+                    <div class="ad-vacio-ilus">
+                        ${ILUSTRACION_MENSAJES}
+                        <span class="ad-pill ad-pill-soft"><i class="bi bi-envelope-fill"></i>Bandeja de contacto</span>
+                        <h5>Aún no hay mensajes</h5>
+                        <p>Cuando alguien se comunique con EDUCAN desde el formulario de contacto, sus mensajes aparecerán aquí.</p>
+                    </div>`;
                 return;
             }
             contenedor.innerHTML = lista.map(m => `
-                <div class="border rounded-3 p-3 mb-3 ${m.leido ? 'bg-light' : ''}">
-                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-1">
+                <div class="ad-mensaje ${m.leido ? 'leido' : ''}">
+                    <div class="ad-res-top">
+                        ${avatarIni(m.nombre, 'ad-av-md')}
+                        <div class="flex-grow-1"><b>${esc(m.nombre)}</b><span>${esc(m.email)}${m.telefono ? ' · ' + esc(m.telefono) : ''}</span></div>
                         <div>
-                            <strong>${esc(m.nombre)}</strong>
-                            <span class="text-muted small ms-2">${esc(m.email)}${m.telefono ? ' · ' + esc(m.telefono) : ''}</span>
-                        </div>
-                        <div>
-                            <span class="badge bg-secondary">${esc(m.motivo_texto)}</span>
-                            ${m.leido ? '' : '<span class="badge bg-danger ms-1">Nuevo</span>'}
+                            <span class="ad-pill ad-pill-grey">${esc(m.motivo_texto)}</span>
+                            ${m.leido ? '' : '<span class="ad-pill ad-pill-red ms-1">Nuevo</span>'}
                         </div>
                     </div>
-                    <p class="mb-2">${esc(m.mensaje)}</p>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-muted small">${esc(new Date(m.creado_en).toLocaleString('es-CO'))}</span>
+                    <p class="ad-res-txt">${esc(m.mensaje)}</p>
+                    <div class="ad-res-row">
+                        <span class="ad-ped-fecha">${esc(new Date(m.creado_en).toLocaleString('es-CO'))} · ${esc(hace(m.creado_en))}</span>
                         ${m.leido
-                            ? '<span class="small text-success"><i class="bi bi-check-circle-fill me-1"></i>Leído</span>'
-                            : `<button class="btn btn-sm btn-olive" onclick="marcarLeido(${m.id})">Marcar como leído</button>`}
+                            ? '<span class="ad-res-ok"><i class="bi bi-check-circle-fill"></i>Leído</span>'
+                            : `<button type="button" class="ad-btn ad-btn-green ad-btn-sm" onclick="marcarLeido(${m.id})"><i class="bi bi-check2"></i>Marcar como leído</button>`}
                     </div>
                 </div>`).join('');
         });
@@ -918,7 +1021,6 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (err) { /* si falla, la lista queda como estaba */ }
     };
 
-    
     // ============================================
     // Comunidad: moderación del blog
     // ============================================
@@ -938,6 +1040,15 @@ document.addEventListener('DOMContentLoaded', function () {
                    : 'Sin fecha de fin (hasta que la reactives)';
     }
 
+    // Avatar del autor: su foto si tiene, si no sus iniciales
+    function avatarAutor(autor) {
+        return autor && autor.foto
+            ? `<span class="ad-av"><img src="${esc(autor.foto)}" alt=""></span>`
+            : avatarIni(autor ? autor.nombre : '?');
+    }
+
+    const msgTodoBien = txt => `<div class="ad-ok"><i class="bi bi-check-circle-fill"></i>${txt}</div>`;
+
     async function cargarComunidad() {
         let d;
         try {
@@ -953,61 +1064,66 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // ---- Por revisar ----
         const bloque = (tipo, etiqueta, x, contexto) => `
-            <div class="border border-danger-subtle rounded-3 p-3 mb-2 bg-danger-subtle bg-opacity-25">
-                <div class="d-flex justify-content-between flex-wrap gap-2 mb-1">
-                    <div>
-                        <span class="badge bg-secondary me-1">${etiqueta}</span>
+            <div class="ad-cm-row bloqueado">
+                ${avatarAutor(x.autor)}
+                <div class="ad-cm-cuerpo">
+                    <div class="ad-cm-meta">
+                        <span class="ad-tag ad-tag-grey">${etiqueta}</span>
                         <strong>${esc(x.autor.nombre)}</strong>
-                        <span class="text-muted small ms-1">${esc(x.autor.email)} · ${esc(new Date(x.creado_en).toLocaleString('es-CO'))}</span>
+                        <span class="text-muted">${esc(x.autor.email)} · ${esc(hace(x.creado_en))}</span>
+                        <span class="ad-pill ad-pill-red">Palabra detectada: ${esc(x.palabra)}</span>
                     </div>
-                    <span class="badge bg-danger">Palabra detectada: ${esc(x.palabra)}</span>
+                    <div class="ad-cm-txt">${esc(x.texto)}</div>
+                    ${contexto ? `<div class="ad-cm-ctx">En la publicación: "${esc(contexto)}..."</div>` : ''}
+                    <div class="ad-acciones mt-2">
+                        <button type="button" class="ad-btn ad-btn-sm ad-btn-green" onclick="moderarContenido('${tipo}', ${x.id}, 'restaurar')"><i class="bi bi-arrow-counterclockwise"></i>Restaurar (no es ofensivo)</button>
+                        <button type="button" class="ad-btn ad-btn-sm ad-btn-soft" onclick="moderarContenido('${tipo}', ${x.id}, 'eliminar')"><i class="bi bi-trash"></i>Eliminar</button>
+                        <button type="button" class="ad-btn ad-btn-sm ad-btn-line" onclick="moderarUsuario(${x.autor.id}, 'desactivar')"><i class="bi bi-person-slash"></i>Desactivar cuenta</button>
+                    </div>
                 </div>
-                <p class="mb-1">${esc(x.texto)}</p>
-                ${contexto ? `<p class="text-muted small mb-2">En la publicación: "${esc(contexto)}..."</p>` : ''}
-                <button class="btn btn-sm btn-olive me-1" onclick="moderarContenido('${tipo}', ${x.id}, 'restaurar')">Restaurar (no es ofensivo)</button>
-                <button class="btn btn-sm btn-outline-danger me-1" onclick="moderarContenido('${tipo}', ${x.id}, 'eliminar')">Eliminar</button>
-                <button class="btn btn-sm btn-outline-dark" onclick="moderarUsuario(${x.autor.id}, 'desactivar')">Desactivar cuenta</button>
             </div>`;
         const pendientes = d.comentarios_bloqueados.map(c => bloque('comments', 'Comentario', c, c.publicacion))
             .concat(d.publicaciones_bloqueadas.map(p => bloque('posts', 'Publicación', p, '')));
-        document.getElementById('comPorRevisar').innerHTML = pendientes.join('')
-            || '<p class="text-muted mb-0"><i class="bi bi-check-circle text-success me-1"></i>No hay nada por revisar.</p>';
+        document.getElementById('comPorRevisar').innerHTML = pendientes.join('') || msgTodoBien('No hay nada por revisar.');
 
         // ---- Cuentas suspendidas ----
         document.getElementById('comRestricciones').innerHTML = d.restricciones.map(r => `
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 border rounded-3 p-3 mb-2">
-                <div>
-                    <strong>${esc(r.usuario.nombre)}</strong> <span class="text-muted small">${esc(r.usuario.email)}</span>
+            <div class="ad-cm-row">
+                ${avatarAutor(r.usuario)}
+                <div class="ad-cm-cuerpo">
+                    <div class="ad-cm-meta"><strong>${esc(r.usuario.nombre)}</strong> <span class="text-muted">${esc(r.usuario.email)}</span></div>
                     <div class="small ${r.activa ? 'text-danger' : 'text-muted'}">${esc(r.motivo)} · ${esc(hastaTexto(r.hasta))}${r.activa ? '' : ' (ya venció)'}</div>
                 </div>
-                <button class="btn btn-sm btn-outline-success" onclick="moderarUsuario(${r.usuario.id}, 'reactivar')">Reactivar cuenta</button>
-            </div>`).join('') || '<p class="text-muted mb-0">No hay cuentas suspendidas.</p>';
+                <button type="button" class="ad-btn ad-btn-sm ad-btn-green" onclick="moderarUsuario(${r.usuario.id}, 'reactivar')"><i class="bi bi-person-check"></i>Reactivar cuenta</button>
+            </div>`).join('') || msgTodoBien('No hay cuentas suspendidas.');
 
         // ---- Recientes ----
+        const botonesFila = (tipo, x) => `
+            <div class="ad-acciones">
+                <button type="button" class="ad-btn ad-btn-sm ad-btn-soft" onclick="borrarContenidoComunidad('${tipo}', ${x.id})"><i class="bi bi-trash"></i>Eliminar</button>
+                <button type="button" class="ad-btn ad-btn-sm ad-btn-line" onclick="moderarUsuario(${x.autor.id}, 'desactivar')"><i class="bi bi-person-slash"></i>Desactivar cuenta</button>
+            </div>`;
         const filaPub = p => `
-            <div class="d-flex justify-content-between align-items-start gap-2 border rounded-3 p-2 mb-2">
-                <div class="d-flex gap-2">
-                    ${miniatura(p.imagen)}
-                    <div><span class="badge bg-secondary me-1">Publicación</span><strong class="small">${esc(p.autor.nombre)}</strong>
-                        <div class="small">${esc(p.texto)}</div></div>
+            <div class="ad-cm-row">
+                ${p.imagen ? `<img class="ad-thumb ad-thumb-cm" src="${esc(p.imagen)}" alt="">` : avatarAutor(p.autor)}
+                <div class="ad-cm-cuerpo">
+                    <div class="ad-cm-meta"><span class="ad-tag ad-tag-olive">Publicación</span><strong>${esc(p.autor.nombre)}</strong>${p.creado_en ? `<span class="text-muted">· ${esc(hace(p.creado_en))}</span>` : ''}</div>
+                    <div class="ad-cm-txt">${esc(p.texto)}</div>
                 </div>
-                <div class="text-nowrap">
-                    <button class="btn btn-sm btn-outline-danger" onclick="borrarContenidoComunidad('posts', ${p.id})">Eliminar</button>
-                    <button class="btn btn-sm btn-outline-dark" onclick="moderarUsuario(${p.autor.id}, 'desactivar')">Desactivar cuenta</button>
-                </div>
+                ${botonesFila('posts', p)}
             </div>`;
         const filaCom = c => `
-            <div class="d-flex justify-content-between align-items-start gap-2 border rounded-3 p-2 mb-2">
-                <div><span class="badge bg-light text-dark border me-1">Comentario</span><strong class="small">${esc(c.autor.nombre)}</strong>
-                    <div class="small">${esc(c.texto)}</div></div>
-                <div class="text-nowrap">
-                    <button class="btn btn-sm btn-outline-danger" onclick="borrarContenidoComunidad('comments', ${c.id})">Eliminar</button>
-                    <button class="btn btn-sm btn-outline-dark" onclick="moderarUsuario(${c.autor.id}, 'desactivar')">Desactivar cuenta</button>
+            <div class="ad-cm-row">
+                <span class="ad-av ad-av-pata"><svg viewBox="0 0 24 24" fill="#8a9a6c" aria-hidden="true">${PATA_DIBUJO}</svg></span>
+                <div class="ad-cm-cuerpo">
+                    <div class="ad-cm-meta"><span class="ad-tag ad-tag-grey">Comentario</span><strong>${esc(c.autor.nombre)}</strong>${c.creado_en ? `<span class="text-muted">· ${esc(hace(c.creado_en))}</span>` : ''}</div>
+                    <div class="ad-cm-txt">${esc(c.texto)}</div>
                 </div>
+                ${botonesFila('comments', c)}
             </div>`;
         document.getElementById('comRecientes').innerHTML =
             d.recientes_publicaciones.map(filaPub).join('') + d.recientes_comentarios.map(filaCom).join('')
-            || '<p class="text-muted mb-0">Aún no hay publicaciones.</p>';
+            || '<div class="ad-vacio-grande">Aún no hay publicaciones.</div>';
     }
 
     // Restaurar o eliminar un comentario / publicación bloqueado
@@ -1046,18 +1162,20 @@ document.addEventListener('DOMContentLoaded', function () {
     function cargarImagenesSitio() {
         fetch(`${API}/site-images/`, { headers }).then(r => r.json()).then(lista => {
             document.getElementById('imagenesContainer').innerHTML = lista.map(i => `
-                <div class="d-flex flex-wrap align-items-center gap-3 border rounded-3 p-3 mb-2">
+                <div class="ad-img-row">
                     ${i.imagen
-                        ? `<img src="${esc(i.imagen)}" width="90" height="64" class="rounded" style="object-fit:cover" alt="">`
-                        : '<span class="d-inline-flex align-items-center justify-content-center rounded bg-light text-muted" style="width:90px;height:64px"><i class="bi bi-image fs-4"></i></span>'}
-                    <div class="flex-grow-1">
-                        <div class="fw-semibold">${esc(i.descripcion)}</div>
-                        <div class="small ${i.imagen ? 'text-success' : 'text-muted'}">${i.imagen ? 'Foto subida' : 'Sin foto todavía'}</div>
+                        ? `<img class="ad-img-prev" src="${esc(i.imagen)}" alt="">`
+                        : '<span class="ad-img-prev ad-img-vacia"><i class="bi bi-image"></i></span>'}
+                    <div class="ad-img-info">
+                        <b>${esc(i.descripcion)}</b>
+                        <span class="ad-pill ${i.imagen ? 'ad-pill-dot' : 'ad-pill-grey'}">${i.imagen ? 'Foto subida' : 'Sin foto todavía'}</span>
                         <div id="imgMsg-${i.clave}" class="small text-danger"></div>
                     </div>
-                    <input type="file" class="form-control form-control-sm" style="max-width:240px" accept="image/png,image/jpeg,image/webp" id="imgFile-${i.clave}">
-                    <button class="btn btn-sm btn-olive" onclick="subirImagenSitio('${i.clave}')">Subir</button>
-                    ${i.imagen ? `<button class="btn btn-sm btn-outline-danger" onclick="quitarImagenSitio('${i.clave}')">Quitar</button>` : ''}
+                    <input type="file" class="ad-input ad-file" accept="image/png,image/jpeg,image/webp" id="imgFile-${i.clave}">
+                    <div class="ad-img-botones">
+                        <button type="button" class="ad-btn ad-btn-green ad-btn-sm" onclick="subirImagenSitio('${i.clave}')"><i class="bi bi-cloud-upload-fill"></i>Subir</button>
+                        ${i.imagen ? `<button type="button" class="ad-btn ad-btn-soft ad-btn-sm" onclick="quitarImagenSitio('${i.clave}')"><i class="bi bi-trash"></i>Quitar</button>` : ''}
+                    </div>
                 </div>`).join('');
         });
     }

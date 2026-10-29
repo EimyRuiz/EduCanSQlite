@@ -3,7 +3,7 @@
 {% block title %}Panel Admin | EDUCAN{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="{% static 'css/admin_panel.css' %}?v=1">
+<link rel="stylesheet" href="{% static 'css/admin_panel.css' %}?v=2">
 
 <div id="noAccess" class="alert alert-danger d-none m-5">No tienes permiso para ver esta página.</div>
 
@@ -78,7 +78,7 @@
                 </button>
                 <button type="button" class="ad-stat ad-bg-blue" data-ir="productos">
                     <span class="ad-stat-ico ad-c-blue"><i class="bi bi-box-seam"></i></span>
-                    <span class="ad-stat-txt"><span>Productos</span><b id="statProductos">0</b><small>Productos en catálogo</small></span>
+                    <span class="ad-stat-txt"><span>Productos</span><b id="statProductos">0</b><small>En catálogo</small></span>
                     <span class="ad-stat-go"><i class="bi bi-chevron-right"></i></span>
                 </button>
                 <button type="button" class="ad-stat ad-bg-rose" data-ir="pedidos">
@@ -166,12 +166,16 @@
 
         <!-- Servicios: crear/editar/eliminar -->
         <section class="admin-section d-none" id="section-servicios">
-            <div class="admin-card mb-4">
-                <h6 class="fw-bold mb-3">Agregar / editar servicio</h6>
-                <form id="servicioForm" class="row g-2">
+            <div class="ad-panel mb-3">
+                <div class="ad-sec-head">
+                    <span class="ad-sec-ico"><i class="bi bi-journal-text"></i></span>
+                    <div><h5>Agregar / editar servicio</h5><p>Completa la información del servicio que deseas agregar o modificar.</p></div>
+                </div>
+                <form id="servicioForm" class="ad-form ad-form-serv">
                     <input type="hidden" id="servId" value="">
-                    <div class="col-md-4">
-                        <select class="form-select" id="servNombre" required>
+                    <div class="ad-field">
+                        <label for="servNombre">Selecciona un servicio</label>
+                        <select class="ad-input" id="servNombre" required>
                             <option value="" disabled selected>Selecciona un servicio</option>
                             <option value="Adiestramiento básico">Adiestramiento básico</option>
                             <option value="Cachorros y socialización">Cachorros y socialización</option>
@@ -182,39 +186,48 @@
                             <option value="Paseos y ejercicio">Paseos y ejercicio</option>
                         </select>
                     </div>
-                    <div class="col-md-5"><input class="form-control" placeholder="Descripción" id="servDescripcion" required></div>
-                    <div class="col-md-3"><input class="form-control" type="number" placeholder="Precio" id="servPrecio" required></div>
-                    <div class="col-md-9">
-                        <label class="form-label small text-muted mb-1" for="servImagen">Foto del servicio (JPG, PNG o WEBP, máx. 4 MB)</label>
-                        <input class="form-control" type="file" accept="image/png,image/jpeg,image/webp" id="servImagen">
+                    <div class="ad-field"><label for="servDescripcion">Descripción</label><input class="ad-input" placeholder="Descripción" id="servDescripcion" required></div>
+                    <div class="ad-field"><label for="servPrecio">Precio</label><div class="ad-money"><span>$</span><input type="number" placeholder="Precio" id="servPrecio" required></div></div>
+                    <div class="ad-field ad-span2">
+                        <label for="servImagen">Foto del servicio <small>(JPG, PNG o WEBP, máx. 4 MB)</small></label>
+                        <input class="ad-input ad-file" type="file" accept="image/png,image/jpeg,image/webp" id="servImagen">
                     </div>
-                    <div class="col-md-3 d-flex align-items-end gap-2">
-                        <button class="btn btn-olive w-100" id="servSubmitBtn">Agregar</button>
-                        <button type="button" class="btn btn-outline-secondary d-none" id="servCancelBtn" title="Cancelar edición">✕</button>
+                    <div class="ad-field ad-btnrow">
+                        <button class="ad-btn ad-btn-green" id="servSubmitBtn"><i class="bi bi-plus-circle"></i>Agregar</button>
+                        <button type="button" class="ad-btn ad-btn-line d-none" id="servCancelBtn" title="Cancelar edición">✕</button>
                     </div>
                 </form>
                 <!-- Aquí se muestran los errores o confirmaciones (duplicado, sin permiso, etc.) -->
                 <div id="servMsg" class="small mt-2"></div>
             </div>
-            <div class="admin-card">
-                <h6 class="fw-bold mb-3">Servicios existentes</h6>
-                <table class="table admin-table">
-                    <thead><tr><th>Servicio</th><th>Precio</th><th></th></tr></thead>
-                    <tbody id="serviciosBody"></tbody>
-                </table>
+            <div class="ad-panel">
+                <div class="ad-sec-head">
+                    <span class="ad-sec-ico"><i class="bi bi-journal-text"></i></span>
+                    <div><h5>Servicios existentes</h5><p>Aquí puedes ver, editar o eliminar los servicios registrados.</p></div>
+                </div>
+                <div class="table-responsive">
+                    <table class="ad-table">
+                        <thead><tr><th>#</th><th>Servicio</th><th>Precio</th><th>Acciones</th></tr></thead>
+                        <tbody id="serviciosBody"></tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
         <!-- Productos: crear/editar/eliminar, con stock -->
         <section class="admin-section d-none" id="section-productos">
-            <div class="admin-card mb-4">
-                <h6 class="fw-bold mb-3">Agregar / editar producto</h6>
-                <form id="productoForm" class="row g-2">
+            <div class="ad-panel mb-3">
+                <div class="ad-sec-head">
+                    <span class="ad-sec-ico"><i class="bi bi-box-seam"></i></span>
+                    <div><h5>Agregar / editar producto</h5><p>Completa la información del producto que deseas agregar o modificar.</p></div>
+                </div>
+                <form id="productoForm" class="ad-form ad-form-prod">
                     <input type="hidden" id="prodId" value="">
-                    <div class="col-md-3"><input class="form-control" placeholder="Nombre del producto" id="prodNombre" required></div>
-                    <div class="col-md-2">
-                        <select class="form-select" id="prodCategoria" required>
-                            <option value="" disabled selected>Categoría</option>
+                    <div class="ad-field"><label for="prodNombre">Nombre del producto</label><input class="ad-input" placeholder="Nombre del producto" id="prodNombre" required></div>
+                    <div class="ad-field">
+                        <label for="prodCategoria">Categoría</label>
+                        <select class="ad-input" id="prodCategoria" required>
+                            <option value="" disabled selected>Selecciona una categoría</option>
                             <option value="Collar">Collar</option>
                             <option value="Pechera">Pechera</option>
                             <option value="Correa">Correa</option>
@@ -225,82 +238,108 @@
                             <option value="Accesorio">Accesorio</option>
                         </select>
                     </div>
-                    <div class="col-md-3"><input class="form-control" placeholder="Descripción" id="prodDescripcion" required></div>
-                    <div class="col-md-2"><input class="form-control" type="number" min="0" placeholder="Precio" id="prodPrecio" required></div>
-                    <div class="col-md-2" id="prodStockCol"><input class="form-control" type="number" min="0" step="1" placeholder="Stock inicial" id="prodStock" title="Unidades con las que empieza el producto"></div>
-                    <div class="col-md-9">
-                        <label class="form-label small text-muted mb-1" for="prodImagen">Foto del producto (JPG, PNG o WEBP, máx. 4 MB)</label>
-                        <input class="form-control" type="file" accept="image/png,image/jpeg,image/webp" id="prodImagen">
+                    <div class="ad-field"><label for="prodDescripcion">Descripción</label><input class="ad-input" placeholder="Descripción" id="prodDescripcion" required></div>
+                    <div class="ad-field"><label for="prodPrecio">Precio</label><div class="ad-money"><span>$</span><input type="number" min="0" placeholder="Precio" id="prodPrecio" required></div></div>
+                    <div class="ad-field" id="prodStockCol"><label for="prodStock">Stock inicial</label><input class="ad-input" type="number" min="0" step="1" placeholder="Stock inicial" id="prodStock" title="Unidades con las que empieza el producto"></div>
+                    <div class="ad-field ad-span4">
+                        <label for="prodImagen">Foto del producto <small>(JPG, PNG o WEBP, máx. 4 MB)</small></label>
+                        <input class="ad-input ad-file" type="file" accept="image/png,image/jpeg,image/webp" id="prodImagen">
                     </div>
-                    <div class="col-md-3 d-flex align-items-end gap-2">
-                        <button class="btn btn-olive w-100" id="prodSubmitBtn">Agregar</button>
-                        <button type="button" class="btn btn-outline-secondary d-none" id="prodCancelBtn" title="Cancelar edición">✕</button>
+                    <div class="ad-field ad-btnrow">
+                        <button class="ad-btn ad-btn-green" id="prodSubmitBtn"><i class="bi bi-plus-circle"></i>Agregar</button>
+                        <button type="button" class="ad-btn ad-btn-line d-none" id="prodCancelBtn" title="Cancelar edición">✕</button>
                     </div>
                 </form>
-                <p class="text-muted small mt-2 mb-0">El stock baja solo con cada compra. Cuando llegue mercancía nueva, usa "Reponer" en la tabla de abajo.</p>
+                <div class="ad-note mt-3"><i class="bi bi-info-circle"></i>El stock baja solo con cada compra. Cuando llegue mercancía nueva, usa "Reponer" en la tabla de abajo.</div>
                 <div id="prodMsg" class="small mt-2"></div>
             </div>
-            <div class="admin-card">
-                <h6 class="fw-bold mb-3">Productos existentes</h6>
-                <table class="table admin-table">
-                    <thead><tr><th>Producto</th><th>Stock</th><th>Precio</th><th>Reponer</th><th></th></tr></thead>
-                    <tbody id="productosBody"></tbody>
-                </table>
+            <div class="ad-panel">
+                <div class="ad-sec-head">
+                    <span class="ad-sec-ico"><i class="bi bi-box-seam"></i></span>
+                    <div><h5>Productos existentes</h5><p>Aquí puedes ver, editar, eliminar o reponer el stock de los productos registrados.</p></div>
+                </div>
+                <div class="table-responsive">
+                    <table class="ad-table">
+                        <thead><tr><th>Producto</th><th>Stock</th><th>Precio</th><th>Reponer</th><th>Acciones</th></tr></thead>
+                        <tbody id="productosBody"></tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
         <!-- Pedidos de la tienda -->
         <section class="admin-section d-none" id="section-pedidos">
-            <div class="admin-card">
-                <h6 class="fw-bold mb-3">Pedidos de la tienda</h6>
+            <div class="ad-panel">
+                <div class="ad-sec-head">
+                    <span class="ad-sec-ico ad-sec-ico-plain"><i class="bi bi-cart-fill"></i></span>
+                    <div><h5>Pedidos de la tienda</h5><p>Gestiona los pedidos realizados en EDUCAN.</p></div>
+                    <div class="ad-sec-right ad-select ad-select-ico"><i class="bi bi-calendar3"></i>
+                        <select id="pedOrden"><option value="nuevos">Más recientes</option><option value="viejos">Más antiguos</option></select>
+                    </div>
+                </div>
                 <div id="pedidosContainer"></div>
             </div>
         </section>
 
         <!-- Reseñas: el admin ve las calificaciones de los clientes y puede responderlas -->
         <section class="admin-section d-none" id="section-resenas">
-            <div class="admin-card">
-                <h6 class="fw-bold mb-3">Reseñas de clientes</h6>
+            <div class="ad-panel">
+                <div class="ad-sec-head">
+                    <span class="ad-sec-ico ad-sec-ico-sq"><i class="bi bi-star-fill"></i></span>
+                    <div><h5>Reseñas de clientes</h5><p>Aquí puedes ver las reseñas de los clientes y las respuestas de EDUCAN.</p></div>
+                </div>
                 <div id="resenasContainer"></div>
             </div>
         </section>
 
         <!-- Mensajes: lo que escriben los visitantes desde la página de Contacto -->
         <section class="admin-section d-none" id="section-mensajes">
-            <div class="admin-card">
-                <h6 class="fw-bold mb-3">Mensajes de contacto</h6>
+            <div class="ad-panel">
+                <div class="ad-sec-head ad-sec-head-line">
+                    <span class="ad-sec-ico"><i class="bi bi-envelope-fill"></i></span>
+                    <div><h5>Mensajes de contacto</h5><p>Revisa los mensajes que te envían desde el formulario de contacto de EDUCAN.</p></div>
+                </div>
                 <div id="mensajesContainer"></div>
             </div>
         </section>
 
         <!-- Comunidad: moderación del blog (contenido bloqueado por el filtro, cuentas suspendidas y lo más reciente) -->
         <section class="admin-section d-none" id="section-comunidad">
-            <div id="comMensaje" class="small"></div>
+            <div id="comMensaje" class="small mb-2"></div>
 
-            <div class="admin-card mb-4">
-                <h6 class="fw-bold mb-1"><i class="bi bi-shield-exclamation me-1"></i>Por revisar</h6>
-                <p class="text-muted small mb-3">Comentarios y publicaciones que el filtro de vocabulario detuvo. Nadie más los ve.
-                    <strong>Eliminar</strong> confirma la falta (la suspensión sigue). <strong>Restaurar</strong> lo publica y levanta la suspensión.</p>
+            <div class="ad-panel mb-3">
+                <div class="ad-sec-head">
+                    <span class="ad-sec-ico"><i class="bi bi-shield-fill"></i></span>
+                    <div><h5>Por revisar</h5><p>Comentarios y publicaciones que el filtro de vocabulario detuvo. Nadie más los ve.
+                        <strong>Eliminar</strong> confirma la falta (la suspensión sigue). <strong>Restaurar</strong> lo publica y levanta la suspensión.</p></div>
+                </div>
                 <div id="comPorRevisar"></div>
             </div>
 
-            <div class="admin-card mb-4">
-                <h6 class="fw-bold mb-3"><i class="bi bi-person-lock me-1"></i>Cuentas suspendidas o desactivadas</h6>
+            <div class="ad-panel mb-3">
+                <div class="ad-sec-head">
+                    <span class="ad-sec-ico"><i class="bi bi-people-fill"></i></span>
+                    <div><h5>Cuentas suspendidas o desactivadas</h5><p>Aquí puedes ver las cuentas que han sido suspendidas o desactivadas por incumplir las normas de la comunidad.</p></div>
+                </div>
                 <div id="comRestricciones"></div>
             </div>
 
-            <div class="admin-card">
-                <h6 class="fw-bold mb-1"><i class="bi bi-clock-history me-1"></i>Lo más reciente de la comunidad</h6>
-                <p class="text-muted small mb-3">Si algo es inapropiado y no lo atrapó el filtro, puedes eliminarlo o desactivar la cuenta de quien lo publicó.</p>
+            <div class="ad-panel">
+                <div class="ad-sec-head">
+                    <span class="ad-sec-ico"><i class="bi bi-clock"></i></span>
+                    <div><h5>Lo más reciente de la comunidad</h5><p>Si algo es inapropiado y no lo atrapó el filtro, puedes eliminarlo o desactivar la cuenta de quien lo publicó.</p></div>
+                </div>
                 <div id="comRecientes"></div>
             </div>
         </section>
 
         <!-- Imágenes fijas del sitio: banner de la tienda, fotos de Nosotros y galería del inicio -->
         <section class="admin-section d-none" id="section-imagenes">
-            <div class="admin-card">
-                <h6 class="fw-bold mb-1">Imágenes del sitio</h6>
-                <p class="text-muted small mb-3">Sube aquí las fotos fijas de las páginas. Mientras una no tenga foto, el sitio muestra un recuadro neutro.</p>
+            <div class="ad-panel">
+                <div class="ad-sec-head">
+                    <span class="ad-sec-ico ad-sec-ico-sq"><i class="bi bi-images"></i></span>
+                    <div><h5>Imágenes del sitio</h5><p>Sube aquí las fotos fijas de las páginas. Mientras una no tenga foto, el sitio muestra un recuadro neutro.</p></div>
+                </div>
                 <div id="imagenesContainer"></div>
             </div>
         </section>
@@ -311,6 +350,6 @@
 {% load static %}
 <script src="{% static 'js/main.js' %}"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/locales/es.global.min.js"></script>
-<script src="{% static 'js/admin_panel.js' %}?v=1"></script>
+<script src="{% static 'js/admin_panel.js' %}?v=2"></script>
 {% endblock %}
 {% endblock %}
